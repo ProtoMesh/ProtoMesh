@@ -1,0 +1,9 @@
+[submodule "deviceLib/libtomcrypt"]
+	path = deviceLib/libtomcrypt
+	url = https://github.com/libtom/libtomcrypt
+[submodule "deviceLib/crypto/ecc"]
+	path = deviceLib/crypto/ecc
+	url = https://github.com/kmackay/micro-ecc
+[submodule "deviceLib/json/ArduinoJson"]
+	path = deviceLib/json/ArduinoJson
+	url = https://github.com/bblanchon/ArduinoJson/
