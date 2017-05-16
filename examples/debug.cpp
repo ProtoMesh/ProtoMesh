@@ -1,7 +1,7 @@
 #include "../deviceLib/network.h"
 #include "../osLib/linux/linux.hpp"
 #include "../deviceLib/Device.hpp"
-#include "../deviceLib/Registry.hpp"
+#include "../deviceLib/registry/RegistryEntry.hpp"
 
 volatile sig_atomic_t interrupted = 0;
 
