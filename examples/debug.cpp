@@ -23,18 +23,18 @@ int main() {
 //    std::cout << entry.serialize() << std::endl;
 //    RegistryEntry entry2(entry.serialize());
 //    std::cout << entry2.serialize() << std::endl;
-//
+
     std::map<PUB_HASH_T, PUBLIC_KEY_T> keys;
     keys[pair.getPublicHash()] = pair.getPublic();
 
-//    RegistryEntry::Verify res = entry.verifySignature(keys);
-//    if (res == RegistryEntry::Verify::OK) {
-//        printf("VERIFY OK");
-//    } else if (res == RegistryEntry::Verify::PubKeyNotFound) {
-//        printf("VERIFY FAIL: Pub key not found");
-//    } else if (res == RegistryEntry::Verify::SignatureInvalid) {
-//        printf("VERIFY FAIL: Signature invalid");
-//    }
+    RegistryEntry::Verify res = entry.verifySignature(keys);
+    if (res == RegistryEntry::Verify::OK) {
+        printf("VERIFY OK");
+    } else if (res == RegistryEntry::Verify::PubKeyNotFound) {
+        printf("VERIFY FAIL: Pub key not found");
+    } else if (res == RegistryEntry::Verify::SignatureInvalid) {
+        printf("VERIFY FAIL: Signature invalid");
+    }
 
 //    while (interrupted == 0) {
 //        dev.tick(1000);

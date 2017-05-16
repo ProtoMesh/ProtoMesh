@@ -1,5 +1,5 @@
-#ifndef UCL_REGISTRY_HPP
-#define UCL_REGISTRY_HPP
+#ifndef UCL_REGISTRY_ENTRY_HPP
+#define UCL_REGISTRY_ENTRY_HPP
 
 #include <string>
 #include <vector>
@@ -47,4 +47,4 @@ public:
 };
 
 
-#endif //UCL_REGISTRY_HPP
+#endif //UCL_REGISTRY_ENTRY_HPP

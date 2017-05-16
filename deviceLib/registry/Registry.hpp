@@ -1,7 +1,3 @@
-//
-// Created by themegatb on 5/16/17.
-//
-
 #ifndef UCL_REGISTRY_HPP
 #define UCL_REGISTRY_HPP
 
@@ -13,7 +9,7 @@
 using namespace std;
 
 class Registry {
-//    vector<RegistryEntry> entries;
+    vector<RegistryEntry> entries;
     map<string, string> head;
 public:
     Registry() {
