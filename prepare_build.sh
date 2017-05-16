@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 ORIGIN=${PWD}
 
+echo "Setting up submodules..."
+git submodule init
+git submodule update
+
 echo "Concatenating ArduinoJson..."
 
 cd deviceLib/json/ArduinoJson

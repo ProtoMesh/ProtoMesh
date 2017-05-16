@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 add_subdirectory(osLib/linux)
 
 set(ECC_SOURCES deviceLib/crypto/ecc/uECC.h deviceLib/crypto/ecc/uECC.c deviceLib/crypto/ecc/uECC_vli.h deviceLib/crypto/ecc/types.h)
-set(DEVICE_LIB_SOURCE_FILES ${ECC_SOURCES} deviceLib/json/ArduinoJson.hpp deviceLib/network.h deviceLib/Device.cpp deviceLib/Device.hpp deviceLib/Registry.cpp deviceLib/Registry.hpp deviceLib/crypto/crypto.hpp deviceLib/crypto/ecc_old/ecc.h deviceLib/crypto/ecc_old/ecc.c deviceLib/crypto/sha512.hpp)
+set(DEVICE_LIB_SOURCE_FILES ${ECC_SOURCES} deviceLib/json/ArduinoJson.hpp deviceLib/network.h deviceLib/Device.cpp deviceLib/Device.hpp deviceLib/Registry.cpp deviceLib/Registry.hpp deviceLib/crypto/crypto.hpp deviceLib/crypto/sha512.hpp)
 add_library(ucl ${DEVICE_LIB_SOURCE_FILES})
 
 add_executable(ucl_debug examples/debug.cpp osLib/linux/linux.hpp)
