@@ -4,7 +4,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <string>
-#include "../../deviceLib/network.h"
+#include "../../deviceLib/api/network.hpp"
 
 using boost::asio::ip::udp;
 

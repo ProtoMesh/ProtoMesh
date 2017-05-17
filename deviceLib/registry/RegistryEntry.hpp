@@ -11,13 +11,14 @@ using namespace ArduinoJson;
 using namespace std;
 
 enum RegistryEntryType {
-    INSERT,
-    DELETE,
-    UPDATE
+    UPSERT,
+    DELETE
 };
 
 class RegistryEntry {
     string getSignatureText() { return this->uuid + this->key + this->value + to_string(this->type); }
+
+public:
 
     // Metadata
     UUID uuid;
@@ -29,7 +30,6 @@ class RegistryEntry {
     string key;
     string value;
 
-public:
     // Functions
     RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asymmetric::KeyPair pair);
 

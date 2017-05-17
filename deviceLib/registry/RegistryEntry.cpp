@@ -19,9 +19,8 @@ RegistryEntry::RegistryEntry(string serializedEntry) {
     copy_n(begin(pubKeyHash), PUB_HASH_SIZE, begin(this->publicKeyUsed));
     // Type
     string type = root["metadata"]["type"].as<string>();
-    if      (type == "INSERT") this->type = RegistryEntryType::INSERT;
+    if      (type == "UPSERT") this->type = RegistryEntryType::UPSERT;
     else if (type == "DELETE") this->type = RegistryEntryType::DELETE;
-    else if (type == "UPDATE") this->type = RegistryEntryType::UPDATE;
 
     // Contents
     this->key = root["content"]["key"].as<string>();
@@ -46,9 +45,8 @@ string RegistryEntry::serialize() {
     string type(1, this->type);
     meta["type"] = type;
     switch (this->type) {
-        case RegistryEntryType::INSERT: meta["type"] = "INSERT"; break;
+        case RegistryEntryType::UPSERT: meta["type"] = "UPSERT"; break;
         case RegistryEntryType::DELETE: meta["type"] = "DELETE"; break;
-        case RegistryEntryType::UPDATE: meta["type"] = "UPDATE"; break;
     }
 
     JsonObject& content = jsonBuffer.createObject();

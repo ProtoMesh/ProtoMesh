@@ -1,7 +1,7 @@
 #ifndef UCL_DEVICE_HPP
 #define UCL_DEVICE_HPP
 
-#include "network.h"
+#include "api/network.hpp"
 #include "crypto/crypto.hpp"
 
 class Device {
