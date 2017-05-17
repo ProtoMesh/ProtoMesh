@@ -61,3 +61,12 @@ int LinuxMCast::receive(std::string* msg, unsigned int timeout_ms) {
 void LinuxMCast::broadcast(std::string message) {
     socket.send_to(boost::asio::buffer(message), destination);
 }
+
+void LinuxStorage::save(string key, string value) {
+    fs::ofstream file("/tmp/test");
+    file << "THIS IS A TEST";
+}
+
+string LinuxStorage::read(string key) {
+    return "";
+}

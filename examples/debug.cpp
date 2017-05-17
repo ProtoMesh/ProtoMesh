@@ -13,6 +13,9 @@ void onInterrupt(int) {
 int main() {
     signal(SIGINT, onInterrupt);
 
+    LinuxStorage ls;
+    ls.save("", "");
+
     LinuxMCast mcast;
     LinuxUCast ucast;
     Device dev(&ucast, &mcast);
