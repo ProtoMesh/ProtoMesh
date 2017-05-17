@@ -61,7 +61,7 @@ string RegistryEntry::serialize() {
     return serialized;
 }
 
-RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, PUBLIC_KEY_T > keys)  {
+RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, PUBLIC_KEY_T> keys)  {
     // Search for the correct key to use
     auto it = keys.find(this->publicKeyUsed);
     if (it == keys.end()) return Verify::PubKeyNotFound;
@@ -69,4 +69,19 @@ RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, PUBLIC_KEY_
     // Verify the signature
     bool res = Crypto::asymmetric::verify(this->getSignatureText(), this->signature, it->second);
     return res ? Verify::OK : Verify::SignatureInvalid;
+}
+
+string RegistryEntry::getSignatureText() {
+    string type;
+    switch (this->type) {
+        case UPSERT: type = "UPSERT"; break;
+        case DELETE: type = "DELETE"; break;
+    }
+    string uuid;
+    copy(begin(this->uuid), end(this->uuid), begin(uuid));
+    string key;
+    copy(begin(this->key), end(this->key), begin(key));
+    string value;
+    copy(begin(this->value), end(this->value), begin(value));
+    return uuid + key + value + type;
 }

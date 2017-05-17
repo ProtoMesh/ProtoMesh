@@ -16,7 +16,7 @@ enum RegistryEntryType {
 };
 
 class RegistryEntry {
-    string getSignatureText() { return this->uuid + this->key + this->value + to_string(this->type); }
+    string getSignatureText();
 
 public:
 
