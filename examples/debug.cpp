@@ -30,23 +30,22 @@ int main() {
     Registry reg(keys);
     reg.set("someDevice", "someValue", pair);
     reg.del("someDevice", pair2);
-    if (!reg.has("someDevice")) std::cout << "NOTHIN' THERE";
-    else std::cout << reg.get("someDevice") << "|done";
+    if (!reg.has("someDevice")) std::cout << "NOTHIN' THERE\n";
+    else std::cout << reg.get("someDevice") << "|done\n";
 
-//    RegistryEntry entry(RegistryEntryType::INSERT, "someDevice", "someValue", pair);
-//    std::cout << entry.serialize() << std::endl;
-//    RegistryEntry entry2(entry.serialize());
-//    std::cout << entry2.serialize() << std::endl;
-//
-//
-//    RegistryEntry::Verify res = entry.verifySignature(keys);
-//    if (res == RegistryEntry::Verify::OK) {
-//        printf("VERIFY OK");
-//    } else if (res == RegistryEntry::Verify::PubKeyNotFound) {
-//        printf("VERIFY FAIL: Pub key not found");
-//    } else if (res == RegistryEntry::Verify::SignatureInvalid) {
-//        printf("VERIFY FAIL: Signature invalid");
-//    }
+    RegistryEntry entry(RegistryEntryType::UPSERT, "someDevice", "someValue", pair);
+    RegistryEntry entry2(entry.serialize());
+    if (entry.serialize() != entry2.serialize()) printf("NOT EQUAL");
+
+
+    RegistryEntry::Verify res = entry.verifySignature(keys);
+    if (res == RegistryEntry::Verify::OK) {
+        printf("VERIFY OK");
+    } else if (res == RegistryEntry::Verify::PubKeyNotFound) {
+        printf("VERIFY FAIL: Pub key not found");
+    } else if (res == RegistryEntry::Verify::SignatureInvalid) {
+        printf("VERIFY FAIL: Signature invalid");
+    }
 
 //    while (interrupted == 0) {
 //        dev.tick(1000);

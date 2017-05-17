@@ -77,11 +77,5 @@ string RegistryEntry::getSignatureText() {
         case UPSERT: type = "UPSERT"; break;
         case DELETE: type = "DELETE"; break;
     }
-    string uuid;
-    copy(begin(this->uuid), end(this->uuid), begin(uuid));
-    string key;
-    copy(begin(this->key), end(this->key), begin(key));
-    string value;
-    copy(begin(this->value), end(this->value), begin(value));
-    return uuid + key + value + type;
+    return this->uuid + this->key + this->value + type;
 }

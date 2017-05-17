@@ -24,7 +24,8 @@ namespace Crypto {
 
         SIGNATURE_T sign(string text, PRIVATE_KEY_T privKey) {
             // Generate the hash and create a signature from it
-            uint8_t *hash = &Crypto::hash::sha512Vec(text)[0];
+            HASH hashVec = Crypto::hash::sha512Vec(text);
+            uint8_t *hash = &hashVec[0];
             uint8_t sig[SIGNATURE_SIZE] = {0};
             uECC_sign(&privKey[0], hash, sizeof(hash), sig, ECC_CURVE);
 
@@ -35,7 +36,8 @@ namespace Crypto {
         }
 
         bool verify(string text, SIGNATURE_T signature, PUBLIC_KEY_T pubKey) {
-            uint8_t *hash = &Crypto::hash::sha512Vec(text)[0];
+            HASH hashVec = Crypto::hash::sha512Vec(text);
+            uint8_t *hash = &hashVec[0];
             return (bool) uECC_verify(&pubKey[0], hash, sizeof(hash), &signature[0], ECC_CURVE);
         }
 
