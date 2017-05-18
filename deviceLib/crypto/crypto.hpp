@@ -47,33 +47,42 @@ namespace Crypto {
         vector<uint8_t> stringToUint8Array(string hex);
     }
 
-    namespace asymmetric {
+    namespace asym {
         bool verifyKeySize();
 
-        SIGNATURE_T sign(string text, PRIVATE_KEY_T privKey);
-        bool verify(string text, SIGNATURE_T signature, PUBLIC_KEY_T pubKey);
-
-        PUBLIC_KEY_T decompressPublicKey(COMPRESSED_PUBLIC_KEY_T compressedKey);
-        struct KeyPair {
-            PRIVATE_KEY_T privKey;
-            PUBLIC_KEY_T pubKey;
-
-            void setKeys(uint8_t* privKey, uint8_t* pubKey) {
-                // Copy bytes from passed keys into instance properties
-                copy(privKey, privKey + PRIV_KEY_SIZE, begin(this->privKey));
-                copy(pubKey, pubKey + PUB_KEY_SIZE, begin(this->pubKey));
-            }
+        struct PublicKey {
         public:
-            KeyPair();
-            inline KeyPair(uint8_t* privKey, uint8_t* pubKey) { this->setKeys(privKey, pubKey); };
+            array<uint8_t, PUB_KEY_SIZE> raw;
 
-            inline PRIVATE_KEY_T getPrivate() { return this->privKey; }
-            inline PUBLIC_KEY_T getPublic() { return this->pubKey; }
-            COMPRESSED_PUBLIC_KEY_T getCompressedPublic();
-            PUB_HASH_T getPublicHash();
+            PublicKey(COMPRESSED_PUBLIC_KEY_T compressedKey);
+            PublicKey(uint8_t* publicKey);
+            PublicKey(string publicKey); // takes a hex representation of a compressed pub key
 
-            bool verifyPublicKey();
+            string getCompressedString();
+            COMPRESSED_PUBLIC_KEY_T getCompressed();
+            PUB_HASH_T getHash();
         };
+
+        struct KeyPair {
+        public:
+            PRIVATE_KEY_T priv;
+            PublicKey pub;
+            inline KeyPair(uint8_t* privKey, uint8_t* pubKey) : pub(pubKey) {
+                copy(privKey, privKey + PRIV_KEY_SIZE, begin(this->priv));
+            };
+        };
+
+        inline KeyPair generateKeyPair() {
+            // Generate two keys
+            uint8_t privateKey[PRIV_KEY_SIZE] = {0};
+            uint8_t publicKey[PUB_KEY_SIZE] = {0};
+            uECC_make_key(publicKey, privateKey, ECC_CURVE);
+
+            return KeyPair(privateKey, publicKey);
+        }
+
+        SIGNATURE_T sign(string text, PRIVATE_KEY_T privKey);
+        bool verify(string text, SIGNATURE_T signature, PublicKey* pubKey);
     }
 }
 

@@ -69,15 +69,20 @@ std::string getStorageDirectory() {
     return home;
 }
 
-void LinuxStorage::save(string key, string value) {
+void LinuxStorage::set(string key, string value) {
     string home(getStorageDirectory());
     ofstream(home + "/" + key) << value;
 }
 
-string LinuxStorage::read(string key) {
+string LinuxStorage::get(string key) {
     std::stringstream ss;
     string home(getStorageDirectory());
 
-    ss << ifstream( home + "/" + key ).rdbuf();
+    ss << ifstream(home + "/" + key).rdbuf();
     return ss.str();
+}
+
+bool LinuxStorage::has(string key) {
+    string home(getStorageDirectory());
+    return fs::exists(home + "/" + key);
 }

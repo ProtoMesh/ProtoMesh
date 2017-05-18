@@ -1,8 +1,8 @@
 #include "RegistryEntry.hpp"
 
-RegistryEntry::RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asymmetric::KeyPair pair)
-        : type(type), key(key), value(value), uuid(Crypto::generateUUID()), publicKeyUsed(pair.getPublicHash()) {
-    this->signature = Crypto::asymmetric::sign(this->getSignatureText(), pair.getPrivate());
+RegistryEntry::RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asym::KeyPair pair)
+        : type(type), key(key), value(value), uuid(Crypto::generateUUID()), publicKeyUsed(pair.pub.getHash()) {
+    this->signature = Crypto::asym::sign(this->getSignatureText(), pair.priv);
 };
 
 RegistryEntry::RegistryEntry(string serializedEntry) {
@@ -42,8 +42,6 @@ string RegistryEntry::serialize() {
     keyUsed[PUB_HASH_SIZE] = '\0';
     meta["publicKeyUsed"] = keyUsed;
 
-    string type(1, this->type);
-    meta["type"] = type;
     switch (this->type) {
         case RegistryEntryType::UPSERT: meta["type"] = "UPSERT"; break;
         case RegistryEntryType::DELETE: meta["type"] = "DELETE"; break;
@@ -51,23 +49,23 @@ string RegistryEntry::serialize() {
 
     JsonObject& content = jsonBuffer.createObject();
     content["key"] = this->key;
-    content["value"] = this->value;
+    if (this->type == RegistryEntryType::UPSERT) content["value"] = this->value;
 
     root["metadata"] = meta;
     root["content"] = content;
 
     string serialized;
-    root.prettyPrintTo(serialized);
+    root.printTo(serialized);
     return serialized;
 }
 
-RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, PUBLIC_KEY_T> keys)  {
+RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey*> keys)  {
     // Search for the correct key to use
     auto it = keys.find(this->publicKeyUsed);
     if (it == keys.end()) return Verify::PubKeyNotFound;
 
     // Verify the signature
-    bool res = Crypto::asymmetric::verify(this->getSignatureText(), this->signature, it->second);
+    bool res = Crypto::asym::verify(this->getSignatureText(), this->signature, it->second);
     return res ? Verify::OK : Verify::SignatureInvalid;
 }
 

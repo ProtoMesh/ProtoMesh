@@ -31,7 +31,7 @@ public:
     string value;
 
     // Functions
-    RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asymmetric::KeyPair pair);
+    RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asym::KeyPair pair);
 
     RegistryEntry(string serializedEntry);
 
@@ -41,7 +41,7 @@ public:
         SignatureInvalid
     };
 
-    Verify verifySignature(map<PUB_HASH_T, PUBLIC_KEY_T> keys);
+    Verify verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey*> keys);
 
     string serialize();
 };

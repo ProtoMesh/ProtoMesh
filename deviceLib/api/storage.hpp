@@ -7,8 +7,9 @@ using namespace std;
 
 class StorageHandler {
 public:
-    virtual void save(string key, string value)= 0;
-    virtual string read(string key)= 0;
+    virtual void set(string key, string value)= 0;
+    virtual string get(string key)= 0;
+    virtual bool has(string key)= 0;
 };
 
 #endif //UCL_STORAGE_HPP

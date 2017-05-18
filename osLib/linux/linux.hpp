@@ -37,8 +37,9 @@ public:
 
 class LinuxStorage : public StorageHandler {
 public:
-    void save(string key, string value);
-    string read(string key);
+    void set(string key, string value);
+    string get(string key);
+    bool has(string key);
 };
 
 #endif //UCL_LINUX_HPP

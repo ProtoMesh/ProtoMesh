@@ -6,28 +6,32 @@
 #include <map>
 #include "RegistryEntry.hpp"
 #include "../crypto/crypto.hpp"
+#include "../api/storage.hpp"
 
 using namespace std;
 
 class Registry {
+    StorageHandler* stor;
+    string name;
+
     vector<RegistryEntry> entries;
     map<string, string> head;
-    map<PUB_HASH_T, PUBLIC_KEY_T> trustedKeys;
+    map<PUB_HASH_T, Crypto::asym::PublicKey*>* trustedKeys;
 
-    bool headOutdated = false;
+    void updateHead(bool save);
+    void addEntry(RegistryEntry e, bool save = true);
+    void storeRegistry();
 
-    void updateHead();
-    void addEntry(RegistryEntry e);
 public:
-    inline Registry(map<PUB_HASH_T, PUBLIC_KEY_T> keys) : trustedKeys(keys) {}
+    Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey*>* keys, StorageHandler* stor);
 
     std::string get(string key);
-    void set(string key, string value, Crypto::asymmetric::KeyPair pair);
-    void del(string key, Crypto::asymmetric::KeyPair pair);
+    void set(string key, string value, Crypto::asym::KeyPair pair);
+    void del(string key, Crypto::asym::KeyPair pair);
     bool has(string key);
 
-    void addSerializedEntry(string serialized);
-    void setTrustedKeys(map<PUB_HASH_T, PUBLIC_KEY_T> keys);
+    void addSerializedEntry(string serialized, bool save = true);
+    void setTrustedKeys(map<PUB_HASH_T, Crypto::asym::PublicKey*>* keys);
 };
 
 
