@@ -4,9 +4,12 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <string>
 #include "../../deviceLib/api/network.hpp"
 #include "../../deviceLib/api/storage.hpp"
+
+#define STORAGE_PREFIX "/.config/ucl"
 
 using boost::asio::ip::udp;
 namespace fs = boost::filesystem;

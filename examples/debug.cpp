@@ -14,7 +14,8 @@ int main() {
     signal(SIGINT, onInterrupt);
 
     LinuxStorage ls;
-    ls.save("", "");
+    ls.save("testfile", "SomeTestString2");
+    std::cout << ls.read("testfile") << std::endl;
 
     LinuxMCast mcast;
     LinuxUCast ucast;

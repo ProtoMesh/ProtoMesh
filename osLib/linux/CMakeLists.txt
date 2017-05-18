@@ -8,6 +8,6 @@ IF (Boost_FOUND)
 endif ()
 set(Boost_USE_STATIC_LIBS ON) # enable dynamic linking
 set(Boost_USE_MULTITHREAD OFF)  # enable multithreading
-find_package(Boost COMPONENTS REQUIRED system)
+find_package(Boost COMPONENTS REQUIRED system filesystem)
 
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})

@@ -62,11 +62,22 @@ void LinuxMCast::broadcast(std::string message) {
     socket.send_to(boost::asio::buffer(message), destination);
 }
 
+std::string getStorageDirectory() {
+    string home = getenv("HOME");
+    home += STORAGE_PREFIX;
+    fs::create_directories(home);
+    return home;
+}
+
 void LinuxStorage::save(string key, string value) {
-    fs::ofstream file("/tmp/test");
-    file << "THIS IS A TEST";
+    string home(getStorageDirectory());
+    ofstream(home + "/" + key) << value;
 }
 
 string LinuxStorage::read(string key) {
-    return "";
+    std::stringstream ss;
+    string home(getStorageDirectory());
+
+    ss << ifstream( home + "/" + key ).rdbuf();
+    return ss.str();
 }
