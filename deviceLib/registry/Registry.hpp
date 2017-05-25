@@ -46,7 +46,7 @@ public:
 
     inline void print() {
         for (auto &entry : this->entries) {
-            std::cout << entry.serialize() << std::endl;
+            std::cout << string(entry) << std::endl;
         }
     };
     vector<RegistryEntry> entries;

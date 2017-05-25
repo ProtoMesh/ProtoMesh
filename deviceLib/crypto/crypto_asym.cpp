@@ -1,5 +1,10 @@
-#include <catch.hpp>
 #include "crypto.hpp"
+
+#ifdef UNIT_TESTING
+
+#include "catch.hpp"
+
+#endif
 
 const struct uECC_Curve_t* ECC_CURVE = uECC_secp256k1();
 
@@ -73,6 +78,7 @@ namespace Crypto {
             return (bool) uECC_verify(&pubKey->raw[0], hash, sizeof(hash), &signature[0], ECC_CURVE);
         }
 
+#ifdef UNIT_TESTING
         SCENARIO("Elliptic curve cryptography", "[crypto][asym]") {
             THEN("the key sizes should be valid") {
                 REQUIRE(verifyKeySize());
@@ -134,5 +140,7 @@ namespace Crypto {
                 }
             }
         }
+
+#endif
     }
 }

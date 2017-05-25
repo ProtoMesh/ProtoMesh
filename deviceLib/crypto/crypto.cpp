@@ -1,5 +1,10 @@
 #include "crypto.hpp"
+
+#ifdef UNIT_TESTING
+
 #include "catch.hpp"
+
+#endif
 
 namespace Crypto {
     string generateUUID() {
@@ -25,6 +30,7 @@ namespace Crypto {
         return ss.str();
     }
 
+#ifdef UNIT_TESTING
     SCENARIO("UUID Creation", "[crypto][uuid]") {
         GIVEN("A uuid version 4") {
             string uuid(Crypto::generateUUID());
@@ -42,6 +48,8 @@ namespace Crypto {
         }
     }
 
+#endif
+
     namespace hash {
         string sha512(string message) { return sw::sha512::calculate(message); }
         HASH sha512Vec(string message) {
@@ -50,6 +58,7 @@ namespace Crypto {
             return sha512Vector;
         }
 
+#ifdef UNIT_TESTING
         SCENARIO("SHA512 creation", "[crypto][hash][sha512]") {
             GIVEN("An SHA512 hash of a message") {
                 string msg("someString");
@@ -72,6 +81,8 @@ namespace Crypto {
                 }
             }
         }
+
+#endif
     }
 
     namespace serialize {
@@ -95,7 +106,7 @@ namespace Crypto {
 
             return bytes;
         }
-
+#ifdef UNIT_TESTING
         SCENARIO("uint8_t <=> string conversion", "[crypto][serialize]") {
             GIVEN("An array of uint8_t's") {
                 vector<uint8_t> arr = {200, 101, 230, 29, 49, 185, 102, 57, 69, 5, 9, 111};
@@ -116,5 +127,7 @@ namespace Crypto {
                 }
             }
         }
+
+#endif
     }
 }

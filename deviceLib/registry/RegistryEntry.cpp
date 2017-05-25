@@ -1,5 +1,11 @@
 #include "RegistryEntry.hpp"
 
+#ifdef UNIT_TESTING
+
+#include "catch.hpp"
+
+#endif
+
 RegistryEntry::RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asym::KeyPair pair,
                              string parentUUID)
         : type(type), key(key), value(value), uuid(Crypto::generateUUID()), publicKeyUsed(pair.pub.getHash()),
@@ -31,14 +37,14 @@ RegistryEntry::RegistryEntry(string serializedEntry) {
     this->value = root["content"]["value"].as<string>();
 }
 
-string RegistryEntry::serialize() {
+RegistryEntry::operator string() const {
     DynamicJsonBuffer jsonBuffer(600);
     JsonObject& root = jsonBuffer.createObject();
 
     JsonObject& meta = jsonBuffer.createObject();
     meta["uuid"] = this->uuid;
     meta["parentUUID"] = this->parentUUID;
-    meta["signature"] = Crypto::serialize::uint8ArrToString(&this->signature[0], SIGNATURE_SIZE);
+    meta["signature"] = Crypto::serialize::uint8ArrToString((uint8_t *) &this->signature[0], SIGNATURE_SIZE);
 
     char keyUsed[PUB_HASH_SIZE+1];
     for (int i = 0; i < PUB_HASH_SIZE; ++i) {
@@ -64,7 +70,7 @@ string RegistryEntry::serialize() {
     return serialized;
 }
 
-string RegistryEntry::getSignatureText() {
+string RegistryEntry::getSignatureText() const {
     string type;
     switch (this->type) {
         case UPSERT:
@@ -77,7 +83,7 @@ string RegistryEntry::getSignatureText() {
     return this->uuid + this->key + this->value + type;
 }
 
-RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey*> keys)  {
+RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey *> keys) const {
     // Search for the correct key to use
     auto it = keys.find(this->publicKeyUsed);
     if (it == keys.end()) return Verify::PubKeyNotFound;
@@ -86,3 +92,52 @@ RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, Crypto::asy
     bool res = Crypto::asym::verify(this->getSignatureText(), this->signature, it->second);
     return res ? Verify::OK : Verify::SignatureInvalid;
 }
+
+#ifdef UNIT_TESTING
+
+SCENARIO("RegistryEntries") {
+    // Generate a static Keypair
+    string serializedPriv("c0fbe1f7ffbfc953c0a8be3cecb9ee77b30503fdc9ec7fafa0a38a81b20a706d");
+    string serializedPub(
+            "0a7a644db56de11043670fdb50e9e47f02eecc656ecf46436cbe3e0f916950ba5008a6a6146d20f042dff36c43ebaa22bca994866cbb0f7124c039b043ee8bf2");
+
+    vector<uint8_t> privKey(Crypto::serialize::stringToUint8Array(serializedPriv));
+    vector<uint8_t> pubKey(Crypto::serialize::stringToUint8Array(serializedPub));
+
+    Crypto::asym::KeyPair pair(&privKey[0], &pubKey[0]);
+    PUB_HASH_T pubHash(pair.pub.getHash());
+
+    GIVEN("A basic UPSERT registry entry") {
+        string key("someKey");
+        string val("someValue");
+        string parentUUID("parenthashofdoom");
+        RegistryEntry entry(RegistryEntryType::UPSERT, key, val, pair, parentUUID);
+
+        WHEN("it is serialized") {
+            string serialized(entry);
+
+            THEN("it should be valid") {
+                string pubHashStr(pubHash.begin(), pubHash.end());
+
+                string valid("{\"metadata\":{\"uuid\":\"" + entry.uuid + "\","
+                        "\"parentUUID\":\"" + parentUUID + "\","
+                                     "\"signature\":\"" +
+                             Crypto::serialize::uint8ArrToString(&entry.signature[0], SIGNATURE_SIZE) + "\","
+                                     "\"publicKeyUsed\":\"" + pubHashStr + "\",\"type\":\"UPSERT\"},\"content\":"
+                                     "{\"key\":\"" + key + "\",\"value\":\"" + val + "\"}}");
+
+                REQUIRE(serialized == valid);
+            }
+
+            AND_WHEN("it is reconstructed") {
+                RegistryEntry reconstructedEntry(serialized);
+
+                THEN("it should match the original entry") {
+                    REQUIRE(entry == reconstructedEntry);
+                }
+            }
+        }
+    }
+}
+
+#endif

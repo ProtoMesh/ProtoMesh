@@ -26,7 +26,7 @@ void Registry::updateHead(bool save) {
 
     for (auto &entry : entries) {
         // Save entries
-        serializedEntries.add(entry.serialize());
+        serializedEntries.add(string(entry));
         // Generate hash for the entry
         lastHash = Crypto::hash::sha512(lastHash + entry.getSignatureText());
         this->hashChain.push_back(lastHash);

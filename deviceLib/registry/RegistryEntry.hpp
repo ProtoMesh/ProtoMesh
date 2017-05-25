@@ -39,10 +39,13 @@ public:
         SignatureInvalid
     };
 
-    string getSignatureText();
-    Verify verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey*> keys);
+    string getSignatureText() const;
 
-    string serialize();
+    Verify verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey *> keys) const;
+
+    operator string() const;
+
+    inline bool operator==(const RegistryEntry &other) { return string(*this) == string(other); }
 };
 
 
