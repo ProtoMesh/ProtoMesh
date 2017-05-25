@@ -1,4 +1,5 @@
 #include "crypto.hpp"
+#include "catch.hpp"
 
 namespace Crypto {
     string generateUUID() {
@@ -24,12 +25,52 @@ namespace Crypto {
         return ss.str();
     }
 
+    SCENARIO("UUID Creation", "[crypto][uuid]") {
+        GIVEN("A uuid version 4") {
+            std::string uuid = Crypto::generateUUID();
+
+            CAPTURE(uuid);
+
+            THEN("it should be 36 characters long") {
+                REQUIRE( uuid.size() == 36 );
+            }
+            AND_THEN("it should consist of 5 blocks") {
+                int i = 0;
+                for (char c : uuid) if (c == '-') i++;
+                REQUIRE( i == 4 );
+            }
+        }
+    }
+
     namespace hash {
         string sha512(string message) { return sw::sha512::calculate(message); }
         HASH sha512Vec(string message) {
             string sha512 = Crypto::hash::sha512(message);
             vector<uint8_t> sha512Vector(sha512.begin(), sha512.end());
             return sha512Vector;
+        }
+
+        SCENARIO("SHA512 creation", "[crypto][hash][sha512]") {
+            GIVEN("An SHA512 hash of a message") {
+                std::string msg = "someString";
+                std::string validHash = "bc911c34051d0523314a9c121d06d4907fc4a91ed73312c9a87d6f5ac969095de7a7c88d43cea88ced5888df1d0d01d8a2f13a0313fed05362626260e009dd51";
+                std::string hash = Crypto::hash::sha512(msg);
+
+                CAPTURE(msg);
+
+                THEN("it should be valid") {
+                    REQUIRE( hash == validHash );
+                }
+
+                WHEN("it is converted to a vector") {
+                    HASH vec = Crypto::hash::sha512Vec(msg);
+                    THEN("it should match its string representation") {
+                        std::string convertedToString;
+                        for (uint8_t i : vec) convertedToString += (char) i;
+                        REQUIRE( convertedToString == validHash );
+                    }
+                }
+            }
         }
     }
 
@@ -53,6 +94,27 @@ namespace Crypto {
             }
 
             return bytes;
+        }
+
+        SCENARIO("uint8_t <=> string conversion", "[crypto][serialize]") {
+            GIVEN("An array of uint8_t's") {
+                vector<uint8_t> arr = {200, 101, 230, 29, 49, 185, 102, 57, 69, 5, 9, 111};
+
+                CAPTURE(arr);
+
+                WHEN("it is converted to a string") {
+                    string str(Crypto::serialize::uint8ArrToString(&arr[0], (unsigned int) arr.size()));
+                    THEN("it should be valid") {
+                        REQUIRE( str == "c865e61d31b966394505096f" );
+                    }
+                    AND_WHEN("that is converted back to an array") {
+                        vector<uint8_t> backConverted(Crypto::serialize::stringToUint8Array(str));
+                        THEN("it should match the original one") {
+                            REQUIRE( backConverted == arr );
+                        }
+                    }
+                }
+            }
         }
     }
 }
