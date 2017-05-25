@@ -7,3 +7,6 @@
 [submodule "deviceLib/json/ArduinoJson"]
 	path = deviceLib/json/ArduinoJson
 	url = https://github.com/bblanchon/ArduinoJson/
+[submodule "deviceLib/test/catch"]
+	path = deviceLib/test/catch
+	url = https://github.com/philsquared/Catch
