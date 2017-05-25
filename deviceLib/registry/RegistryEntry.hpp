@@ -16,11 +16,9 @@ enum RegistryEntryType {
 };
 
 class RegistryEntry {
-    string getSignatureText();
-
 public:
-
     // Metadata
+    string parentUUID;
     UUID uuid;
     SIGNATURE_T signature;
     PUB_HASH_T publicKeyUsed;
@@ -31,7 +29,7 @@ public:
     string value;
 
     // Functions
-    RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asym::KeyPair pair);
+    RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asym::KeyPair pair, string parentHash = "");
 
     RegistryEntry(string serializedEntry);
 
@@ -41,6 +39,7 @@ public:
         SignatureInvalid
     };
 
+    string getSignatureText();
     Verify verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey*> keys);
 
     string serialize();

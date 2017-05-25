@@ -1,13 +1,17 @@
 #include "RegistryEntry.hpp"
 
-RegistryEntry::RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asym::KeyPair pair)
-        : type(type), key(key), value(value), uuid(Crypto::generateUUID()), publicKeyUsed(pair.pub.getHash()) {
+RegistryEntry::RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asym::KeyPair pair,
+                             string parentUUID)
+        : type(type), key(key), value(value), uuid(Crypto::generateUUID()), publicKeyUsed(pair.pub.getHash()),
+          parentUUID(parentUUID) {
     this->signature = Crypto::asym::sign(this->getSignatureText(), pair.priv);
 };
 
 RegistryEntry::RegistryEntry(string serializedEntry) {
     DynamicJsonBuffer jsonBuffer(600);
     JsonObject& root = jsonBuffer.parseObject(serializedEntry);
+    // Original hash
+    this->parentUUID = root["metadata"]["parentUUID"].as<string>();
     // UUID
     this->uuid = root["metadata"]["uuid"].as<UUID>();
     // Signature
@@ -33,6 +37,7 @@ string RegistryEntry::serialize() {
 
     JsonObject& meta = jsonBuffer.createObject();
     meta["uuid"] = this->uuid;
+    meta["parentUUID"] = this->parentUUID;
     meta["signature"] = Crypto::serialize::uint8ArrToString(&this->signature[0], SIGNATURE_SIZE);
 
     char keyUsed[PUB_HASH_SIZE+1];
@@ -59,6 +64,19 @@ string RegistryEntry::serialize() {
     return serialized;
 }
 
+string RegistryEntry::getSignatureText() {
+    string type;
+    switch (this->type) {
+        case UPSERT:
+            type = "UPSERT";
+            break;
+        case DELETE:
+            type = "DELETE";
+            break;
+    }
+    return this->uuid + this->key + this->value + type;
+}
+
 RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey*> keys)  {
     // Search for the correct key to use
     auto it = keys.find(this->publicKeyUsed);
@@ -67,13 +85,4 @@ RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, Crypto::asy
     // Verify the signature
     bool res = Crypto::asym::verify(this->getSignatureText(), this->signature, it->second);
     return res ? Verify::OK : Verify::SignatureInvalid;
-}
-
-string RegistryEntry::getSignatureText() {
-    string type;
-    switch (this->type) {
-        case UPSERT: type = "UPSERT"; break;
-        case DELETE: type = "DELETE"; break;
-    }
-    return this->uuid + this->key + this->value + type;
 }

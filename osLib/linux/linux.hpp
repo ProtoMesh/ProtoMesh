@@ -14,25 +14,24 @@
 using boost::asio::ip::udp;
 namespace fs = boost::filesystem;
 
-class LinuxMCast : public MulticastHandler {
+class LinuxNetwork : public NetworkHandler {
     boost::asio::io_service service;
     udp::socket socket;
     udp::endpoint destination;
 public:
-    LinuxMCast() : service(), socket(service) {};
+    inline LinuxNetwork() : service(), socket(service) {};
 
-    void setTarget(std::string multicastGroup, unsigned short port);
+    // UDP related things
+    void setBroadcastTarget(std::string multicastGroup, unsigned short port);
+
     void broadcast(std::string message);
-    int receive(std::string* msg, unsigned int timeout_ms);
-};
 
-class LinuxUCast : public UnicastHandler {
-public:
-    bool openChannel(std::string target, unsigned short port) {
-        return true;
-    };
-    void send(std::string message) {};
-    void receive(std::string* message, unsigned int timeoutMS) {};
+    void send(std::string ip, unsigned short port, std::string message);
+
+    int recv(std::string *msg, unsigned int timeout_ms);
+
+    // TCP related things
+    inline std::unique_ptr<Socket> openChannel(std::string ip) { return nullptr; };
 };
 
 class LinuxStorage : public StorageHandler {

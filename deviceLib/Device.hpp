@@ -6,13 +6,12 @@
 #include "crypto/crypto.hpp"
 
 class Device {
-    MulticastHandler* mcast;
-    UnicastHandler* ucast;
+    NetworkHandler *net;
     StorageHandler* stor;
 public:
-    inline Device(UnicastHandler* ucast, MulticastHandler* mcast, StorageHandler* stor) : mcast(mcast), ucast(ucast), stor(stor) {
+    inline Device(NetworkHandler *net, StorageHandler *stor) : net(net), stor(stor) {
         Crypto::asym::verifyKeySize();
-        mcast->setTarget("224.17.10.20", 1337);
+        net->setBroadcastTarget("224.17.10.20", 1337);
     };
     void tick(unsigned int timeoutMS);
 };
