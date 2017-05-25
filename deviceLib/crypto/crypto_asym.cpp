@@ -1,3 +1,4 @@
+#include <catch.hpp>
 #include "crypto.hpp"
 
 const struct uECC_Curve_t* ECC_CURVE = uECC_secp256k1();
@@ -70,6 +71,68 @@ namespace Crypto {
             HASH hashVec = Crypto::hash::sha512Vec(text);
             uint8_t *hash = &hashVec[0];
             return (bool) uECC_verify(&pubKey->raw[0], hash, sizeof(hash), &signature[0], ECC_CURVE);
+        }
+
+        SCENARIO("Elliptic curve cryptography", "[crypto][asym]") {
+            THEN("the key sizes should be valid") {
+                REQUIRE(verifyKeySize());
+            }
+
+            GIVEN("a generated KeyPair") {
+                KeyPair pair(Crypto::asym::generateKeyPair());
+
+                GIVEN("the public key of this KeyPair") {
+                    PublicKey pub = pair.pub;
+
+                    WHEN("it is compressed into a string") {
+                        string compressedPub(pub.getCompressedString());
+
+                        AND_WHEN("it is converted back into an object") {
+                            PublicKey backConverted(compressedPub);
+
+                            THEN("its raw data should match the original key") {
+                                REQUIRE( backConverted.raw == pub.raw );
+                            }
+                        }
+                    }
+
+                    WHEN("it is compressed into an array") {
+                        COMPRESSED_PUBLIC_KEY_T compressedPub(pub.getCompressed());
+
+                        AND_WHEN("it is converted back into an object") {
+                            PublicKey backConverted(compressedPub);
+
+                            THEN("its raw data should match the original key") {
+                                REQUIRE( backConverted.raw == pub.raw );
+                            }
+                        }
+                    }
+                }
+
+                GIVEN("the signature of a message") {
+                    string msg("someMessage");
+                    SIGNATURE_T sig(sign(msg, pair.priv));
+
+                    THEN("it should be valid when validated w/ the corresponding public key") {
+                        REQUIRE(verify(msg, sig, &pair.pub));
+                    }
+
+                    THEN("it should not be valid when validated w/ a different public key") {
+                        PublicKey otherPub = generateKeyPair().pub;
+                        REQUIRE_FALSE(verify(msg, sig, &otherPub));
+                    }
+
+                    THEN("it should not be valid when validated w/ different text") {
+                        REQUIRE_FALSE(verify(msg+"diff", sig, &pair.pub));
+                    }
+
+                    THEN("it should not be valid when the signature is altered") {
+                        SIGNATURE_T alteredSig(sig);
+                        alteredSig[0] /= 2;
+                        REQUIRE_FALSE(verify(msg, alteredSig, &pair.pub));
+                    }
+                }
+            }
         }
     }
 }

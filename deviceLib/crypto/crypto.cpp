@@ -27,7 +27,7 @@ namespace Crypto {
 
     SCENARIO("UUID Creation", "[crypto][uuid]") {
         GIVEN("A uuid version 4") {
-            std::string uuid = Crypto::generateUUID();
+            string uuid(Crypto::generateUUID());
 
             CAPTURE(uuid);
 
@@ -52,9 +52,9 @@ namespace Crypto {
 
         SCENARIO("SHA512 creation", "[crypto][hash][sha512]") {
             GIVEN("An SHA512 hash of a message") {
-                std::string msg = "someString";
-                std::string validHash = "bc911c34051d0523314a9c121d06d4907fc4a91ed73312c9a87d6f5ac969095de7a7c88d43cea88ced5888df1d0d01d8a2f13a0313fed05362626260e009dd51";
-                std::string hash = Crypto::hash::sha512(msg);
+                string msg("someString");
+                string validHash("bc911c34051d0523314a9c121d06d4907fc4a91ed73312c9a87d6f5ac969095de7a7c88d43cea88ced5888df1d0d01d8a2f13a0313fed05362626260e009dd51");
+                string hash(Crypto::hash::sha512(msg));
 
                 CAPTURE(msg);
 
@@ -63,7 +63,7 @@ namespace Crypto {
                 }
 
                 WHEN("it is converted to a vector") {
-                    HASH vec = Crypto::hash::sha512Vec(msg);
+                    HASH vec(Crypto::hash::sha512Vec(msg));
                     THEN("it should match its string representation") {
                         std::string convertedToString;
                         for (uint8_t i : vec) convertedToString += (char) i;
