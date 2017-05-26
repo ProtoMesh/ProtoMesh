@@ -95,7 +95,7 @@ RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, Crypto::asy
 
 #ifdef UNIT_TESTING
 
-SCENARIO("RegistryEntries") {
+SCENARIO("RegistryEntries", "[registry][entry]") {
     // Generate a static Keypair
     string serializedPriv("c0fbe1f7ffbfc953c0a8be3cecb9ee77b30503fdc9ec7fafa0a38a81b20a706d");
     string serializedPub(

@@ -1,5 +1,11 @@
 #include "Registry.hpp"
 
+#ifdef UNIT_TESTING
+
+#include "catch.hpp"
+
+#endif
+
 Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageHandler *stor,
                    NetworkHandler *net)
         : name(name), trustedKeys(keys), stor(stor), net(net) {
@@ -171,3 +177,12 @@ void Registry::onSyncRequest(string request) {
         std::cerr << "SYNC" << std::endl;
     }
 }
+
+#ifdef UNIT_TESTING
+    SCENARIO("Database/Registry", "[entry]") {
+        GIVEN("a cleared registry and a KeyPair") {
+            Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
+//            Registry reg("someRegistry", )
+        }
+    }
+#endif
