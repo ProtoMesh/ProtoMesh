@@ -21,7 +21,7 @@ Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys
 }
 
 void Registry::updateHead(bool save) {
-    this->head.clear();
+    this->headState.clear();
     this->hashChain.clear();
 
     DynamicJsonBuffer jsonBuffer;
@@ -40,10 +40,10 @@ void Registry::updateHead(bool save) {
         if (entry.verifySignature(*this->trustedKeys) != RegistryEntry::Verify::OK) continue;
         switch (entry.type) {
             case RegistryEntryType::UPSERT:
-                this->head[entry.key] = entry.value;
+                this->headState[entry.key] = entry.value;
                 break;
             case RegistryEntryType::DELETE:
-                this->head.erase(entry.key);
+                this->headState.erase(entry.key);
                 break;
         }
     }
@@ -56,7 +56,7 @@ void Registry::updateHead(bool save) {
     }
 }
 
-std::tuple<vector<unsigned long>, unsigned long> Registry::getBlockBorders(string parentUUID) {
+tuple<vector<unsigned long>, unsigned long> Registry::getBlockBorders(string parentUUID) {
     unsigned long i = this->entries.size();
 
     vector<unsigned long> blockBorders = {this->entries.size()};
@@ -67,7 +67,7 @@ std::tuple<vector<unsigned long>, unsigned long> Registry::getBlockBorders(strin
     while (--i && this->entries[i].uuid != parentUUID)
         if (this->entries[i - 1].uuid != this->entries[i].parentUUID) blockBorders.push_back(i);
 
-    return std::make_tuple(blockBorders, i + 1);
+    return make_tuple(blockBorders, i + 1);
 }
 
 void Registry::addEntry(RegistryEntry e, bool save) {
@@ -76,7 +76,7 @@ void Registry::addEntry(RegistryEntry e, bool save) {
     // If the entry is supposed to have a parent then calculate its new position
     if (e.parentUUID.size()) {
         auto res = this->getBlockBorders(e.parentUUID);
-        vector<unsigned long> blockBorders = std::get<0>(res);
+        vector<unsigned long> blockBorders(std::get<0>(res));
         index = std::get<1>(res);
 
         unsigned long lastBorder = blockBorders.back();
@@ -105,9 +105,9 @@ string Registry::getHeadUUID() {
     return this->entries.back().uuid;
 }
 
-std::string Registry::get(string key) {
-    auto i = this->head.find(key);
-    if (i != this->head.end()) return i->second;
+string Registry::get(string key) {
+    auto i = this->headState.find(key);
+    if (i != this->headState.end()) return i->second;
     return "";
 }
 
@@ -124,8 +124,8 @@ void Registry::del(string key, Crypto::asym::KeyPair pair) {
 }
 
 bool Registry::has(string key) {
-    auto i = this->head.find(key);
-    return i != this->head.end();
+    auto i = this->headState.find(key);
+    return i != this->headState.end();
 }
 
 void Registry::addSerializedEntry(string serialized, bool save) {
@@ -140,7 +140,7 @@ void Registry::clear() {
     this->stor->set(this->name, "");
     this->entries.clear();
     this->hashChain.clear();
-    this->head.clear();
+    this->headState.clear();
 }
 
 void Registry::sync() {
@@ -156,7 +156,7 @@ void Registry::sync() {
     string msg;
     root.printTo(msg);
     this->net->broadcast(msg);
-    std::cout << "SYNC\n";
+    cout << "SYNC\n";
 
     // DEBUG
 //    Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
@@ -174,15 +174,73 @@ void Registry::onSyncRequest(string request) {
 
     if (head != root["head"]) {
         // TODO SYNC STUFF
-        std::cerr << "SYNC" << std::endl;
+        cerr << "SYNC" << endl;
     }
 }
 
+string Registry::getHeadHash() const {
+    return this->hashChain.back();
+}
+
 #ifdef UNIT_TESTING
-    SCENARIO("Database/Registry", "[entry]") {
+    SCENARIO("Database/Registry", "[registry]") {
         GIVEN("a cleared registry and a KeyPair") {
             Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
-//            Registry reg("someRegistry", )
+
+            map<PUB_HASH_T, Crypto::asym::PublicKey *> keys = { { pair.pub.getHash(), &pair.pub } };
+            DummyNetworkHandler dnet;
+            DummyStorageHandler dstor;
+
+            Registry reg("someRegistry", &keys, &dstor, &dnet);
+
+            WHEN("a value is set") {
+                string key("someKey");
+                string val("someValue");
+                reg.set(key, val, pair);
+                string prevHeadHash(reg.getHeadHash());
+
+                THEN("has should be true") {
+                    REQUIRE(reg.has(key));
+                }
+                THEN("the read value should be equal") {
+                    REQUIRE( reg.get(key) == val );
+                }
+
+                AND_WHEN("the registry is cleared") {
+                    reg.clear();
+
+                    THEN("the read value should be empty") {
+                        REQUIRE( reg.get(key) == "" );
+                    }
+                }
+
+                AND_WHEN("the value is deleted") {
+                    reg.del(key, pair);
+
+                    THEN("the read value should be empty") {
+                        REQUIRE( reg.get(key) == "" );
+                    }
+
+                    THEN("the head hash should differ") {
+                        REQUIRE_FALSE( reg.getHeadHash() == prevHeadHash );
+                    }
+                }
+            }
+
+            WHEN("a value is set with a different public key (not in the list of trusted keys)") {
+                string key("someKey");
+                string val("someValue");
+                Crypto::asym::KeyPair otherPair(Crypto::asym::generateKeyPair());
+                reg.set(key, val, otherPair);
+
+                THEN("has should be false") {
+                    REQUIRE_FALSE(reg.has(key));
+                }
+
+                THEN("the read value should be empty") {
+                    REQUIRE( reg.get(key) == "" );
+                }
+            }
         }
     }
 #endif

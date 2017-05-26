@@ -12,4 +12,12 @@ public:
     virtual bool has(string key)= 0;
 };
 
+#ifdef UNIT_TESTING
+    class DummyStorageHandler : public StorageHandler  {
+        inline void set(string key, string value) {};
+        inline string get(string key) { return ""; };
+        inline bool has(string key) { return false; };
+    };
+#endif
+
 #endif //UCL_STORAGE_HPP

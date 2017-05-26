@@ -16,8 +16,7 @@ class Registry {
     NetworkHandler *net;
     string name;
 
-    vector<string> hashChain;
-    map<string, string> head;
+    map<string, string> headState;
     map<PUB_HASH_T, Crypto::asym::PublicKey*>* trustedKeys;
 
     void updateHead(bool save);
@@ -30,13 +29,16 @@ class Registry {
 public:
     Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageHandler *stor, NetworkHandler *net);
 
-    std::string get(string key);
+    string get(string key);
     void set(string key, string value, Crypto::asym::KeyPair pair);
     void del(string key, Crypto::asym::KeyPair pair);
     bool has(string key);
 
     void addSerializedEntry(string serialized, bool save = true);
     void setTrustedKeys(map<PUB_HASH_T, Crypto::asym::PublicKey*>* keys);
+
+    vector<string> hashChain;
+    string getHeadHash() const;
 
     void clear();
 
@@ -45,9 +47,7 @@ public:
     void onSyncRequest(string request);
 
     inline void print() {
-        for (auto &entry : this->entries) {
-            std::cout << string(entry) << std::endl;
-        }
+        for (auto &entry : this->entries) cout << string(entry) << endl;
     };
     vector<RegistryEntry> entries;
 };
