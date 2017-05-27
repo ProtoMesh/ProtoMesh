@@ -32,16 +32,23 @@ public:
 };
 
 #ifdef UNIT_TESTING
-    class DummyNetworkHandler : public NetworkHandler {
+    class DummyBroadcastSocket : public BroadcastSocket {
     public:
-        // UDP related things
-        inline void setBroadcastTarget(std::string multicastGroup, unsigned short port) override {};
+        inline DummyBroadcastSocket(std::string multicastGroup, unsigned short port) {};
 
         inline void broadcast(std::string message) override {};
 
         inline void send(std::string ip, unsigned short port, std::string message) override {};
 
         inline int recv(std::string *msg, unsigned int timeout_ms) override { return 0; };
+    };
+
+    class DummyNetworkHandler : public NetworkHandler {
+    public:
+        // UDP related things
+        inline std::unique_ptr<BroadcastSocket> createBroadcastSocket(std::string multicastGroup, unsigned short port) override {
+            return std::unique_ptr<BroadcastSocket>(new DummyBroadcastSocket(multicastGroup, port));
+        };
 
         // TCP related things
         inline std::unique_ptr<Socket> openChannel(std::string ip) override { return nullptr; };
