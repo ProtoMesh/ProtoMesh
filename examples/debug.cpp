@@ -58,6 +58,7 @@ int main() {
             false);
 
     reg.print();
+    reg.sync();
 
     // Execute this to load it back from the storage
 //    std::map<PUB_HASH_T, Crypto::asym::PublicKey*> keys2;

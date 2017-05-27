@@ -1,0 +1,9 @@
+#ifndef UCL_CONST_HPP
+#define UCL_CONST_HPP
+
+#define MULTICAST_NETWORK "224.17.10.20"
+
+#define REGISTRY_PORT 1337
+#define DEVICE_PORT 1338
+
+#endif //UCL_CONST_HPP

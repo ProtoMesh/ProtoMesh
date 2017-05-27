@@ -5,21 +5,27 @@
 #include <memory>
 
 class Socket {
-    virtual void send()= 0;
+public:
+    virtual void send(std::string ip, unsigned short port, std::string message)= 0;
 
-    virtual std::string recv()= 0;
+    virtual int recv(std::string *msg, unsigned int timeout_ms)= 0;
 };
 
-class NetworkHandler {
+class BroadcastSocket {
 public:
-    // UDP related things
-    virtual void setBroadcastTarget(std::string multicastGroup, unsigned short port)= 0;
+    virtual ~BroadcastSocket()= default;
 
     virtual void broadcast(std::string message)= 0;
 
     virtual void send(std::string ip, unsigned short port, std::string message)= 0;
 
     virtual int recv(std::string *msg, unsigned int timeout_ms)= 0;
+};
+
+class NetworkHandler {
+public:
+    // UDP related things
+    virtual std::unique_ptr<BroadcastSocket> createBroadcastSocket(std::string multicastGroup, unsigned short port)= 0;
 
     // TCP related things
     virtual std::unique_ptr<Socket> openChannel(std::string ip)= 0;
@@ -29,16 +35,16 @@ public:
     class DummyNetworkHandler : public NetworkHandler {
     public:
         // UDP related things
-        inline void setBroadcastTarget(std::string multicastGroup, unsigned short port) {};
+        inline void setBroadcastTarget(std::string multicastGroup, unsigned short port) override {};
 
-        inline void broadcast(std::string message) {};
+        inline void broadcast(std::string message) override {};
 
-        inline void send(std::string ip, unsigned short port, std::string message) {};
+        inline void send(std::string ip, unsigned short port, std::string message) override {};
 
-        inline int recv(std::string *msg, unsigned int timeout_ms) { return 0; };
+        inline int recv(std::string *msg, unsigned int timeout_ms) override { return 0; };
 
         // TCP related things
-        inline std::unique_ptr<Socket> openChannel(std::string ip) { return nullptr; };
+        inline std::unique_ptr<Socket> openChannel(std::string ip) override { return nullptr; };
     };
 #endif
 

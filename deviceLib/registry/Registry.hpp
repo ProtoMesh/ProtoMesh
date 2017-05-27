@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include "RegistryEntry.hpp"
+#include "../const.hpp"
 #include "../crypto/crypto.hpp"
 #include "../api/storage.hpp"
 #include "../api/network.hpp"
@@ -14,6 +15,9 @@ using namespace std;
 class Registry {
     StorageHandler* stor;
     NetworkHandler *net;
+
+    unique_ptr<BroadcastSocket> bcast;
+
     string name;
 
     map<string, string> headState;

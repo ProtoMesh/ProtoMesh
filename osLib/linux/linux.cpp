@@ -2,7 +2,7 @@
 
 #define RECV_POOLING_INTERVAL 150000 // 150ms
 
-void LinuxNetwork::setBroadcastTarget(std::string multicastGroup, unsigned short port) {
+LinuxBroadcastSocket::LinuxBroadcastSocket(std::string multicastGroup, unsigned short port) : service(), socket(service) {
     boost::asio::ip::address address = boost::asio::ip::address::from_string(multicastGroup);
 
     // Open up the socket
@@ -24,7 +24,7 @@ void LinuxNetwork::setBroadcastTarget(std::string multicastGroup, unsigned short
     socket.set_option(ip::multicast::join_group(address));
 }
 
-int LinuxNetwork::recv(std::string *msg, unsigned int timeout_ms) {
+int LinuxBroadcastSocket::recv(std::string *msg, unsigned int timeout_ms) {
     boost::asio::ip::udp::endpoint sender;
     std::vector<char> buffer;
     std::size_t bytes_readable = 0;
@@ -58,11 +58,11 @@ int LinuxNetwork::recv(std::string *msg, unsigned int timeout_ms) {
     return 0;
 }
 
-void LinuxNetwork::broadcast(std::string message) {
+void LinuxBroadcastSocket::broadcast(std::string message) {
     socket.send_to(boost::asio::buffer(message), destination);
 }
 
-void LinuxNetwork::send(std::string ip, unsigned short port, std::string message) {
+void LinuxBroadcastSocket::send(std::string ip, unsigned short port, std::string message) {
     boost::asio::ip::address address = boost::asio::ip::address::from_string(ip);
     udp::endpoint target(address, port);
     socket.send_to(boost::asio::buffer(message), target);

@@ -6,6 +6,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <string>
+#include <utility>
 #include "../../deviceLib/api/network.hpp"
 #include "../../deviceLib/api/storage.hpp"
 
@@ -14,24 +15,29 @@
 using boost::asio::ip::udp;
 namespace fs = boost::filesystem;
 
-class LinuxNetwork : public NetworkHandler {
+class LinuxBroadcastSocket : public BroadcastSocket {
     boost::asio::io_service service;
     udp::socket socket;
     udp::endpoint destination;
 public:
-    inline LinuxNetwork() : service(), socket(service) {};
+    LinuxBroadcastSocket(std::string multicastGroup, unsigned short port);
 
+    void broadcast(std::string message) override;
+
+    void send(std::string ip, unsigned short port, std::string message) override;
+
+    int recv(std::string *msg, unsigned int timeout_ms) override;
+};
+
+class LinuxNetwork : public NetworkHandler {
+public:
     // UDP related things
-    void setBroadcastTarget(std::string multicastGroup, unsigned short port);
-
-    void broadcast(std::string message);
-
-    void send(std::string ip, unsigned short port, std::string message);
-
-    int recv(std::string *msg, unsigned int timeout_ms);
+    inline std::unique_ptr<BroadcastSocket> createBroadcastSocket(std::string multicastGroup, unsigned short port) {
+        return std::unique_ptr<BroadcastSocket>(new LinuxBroadcastSocket(multicastGroup, port));
+    };
 
     // TCP related things
-    inline std::unique_ptr<Socket> openChannel(std::string ip) { return nullptr; };
+    inline std::unique_ptr<Socket> openChannel(std::string ip) override { return nullptr; };
 };
 
 class LinuxStorage : public StorageHandler {
