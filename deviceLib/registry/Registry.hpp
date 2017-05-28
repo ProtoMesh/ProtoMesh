@@ -9,14 +9,17 @@
 #include "../crypto/crypto.hpp"
 #include "../api/storage.hpp"
 #include "../api/network.hpp"
+#include "../api/time.hpp"
 
 using namespace std;
 
 class Registry {
     StorageHandler* stor;
     NetworkHandler *net;
+    REL_TIME_PROV_T relTimeProvider;
 
-    unique_ptr<BroadcastSocket> bcast;
+    BCAST_SOCKET_T bcast;
+    long lastBroadcast;
 
     string name;
 
@@ -31,7 +34,8 @@ class Registry {
     tuple<vector<unsigned long>, unsigned long> getBlockBorders(string parentUUID = "");
 
 public:
-    Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageHandler *stor, NetworkHandler *net);
+    Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageHandler *stor, NetworkHandler *net,
+             REL_TIME_PROV_T relTimeProvider);
 
     string get(string key);
     void set(string key, string value, Crypto::asym::KeyPair pair);
@@ -48,7 +52,7 @@ public:
 
     void sync();
 
-    void onSyncRequest(string request);
+    void onData(string request);
 
     inline void print() {
         for (auto &entry : this->entries) cout << string(entry) << endl;

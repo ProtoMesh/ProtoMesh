@@ -6,4 +6,9 @@
 #define REGISTRY_PORT 1337
 #define DEVICE_PORT 1338
 
+#define RECV_OK 0
+#define RECV_ERR 1
+
+#define REGISTRY_BROADCAST_INTERVAL 5000
+
 #endif //UCL_CONST_HPP

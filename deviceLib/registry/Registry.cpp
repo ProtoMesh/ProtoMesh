@@ -7,8 +7,10 @@
 #endif
 
 Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageHandler *stor,
-                   NetworkHandler *net)
-        : stor(stor), net(net), bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)), name(name), trustedKeys(keys) {
+                   NetworkHandler *net, REL_TIME_PROV_T relTimeProvider)
+        : stor(stor), net(net), relTimeProvider(relTimeProvider),
+          bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
+          lastBroadcast(relTimeProvider->millis()), name(name), trustedKeys(keys) {
     if (this->stor->has(this->name)) {
         DynamicJsonBuffer jsonBuffer;
         string loadedRegistry(this->stor->get(this->name));
@@ -144,7 +146,10 @@ void Registry::clear() {
 }
 
 void Registry::sync() {
-    if (this->hashChain.size() == 0) return;
+    if ((this->relTimeProvider->millis() - this->lastBroadcast) < REGISTRY_BROADCAST_INTERVAL ||
+        !this->hashChain.size())
+        return;
+    this->lastBroadcast = this->relTimeProvider->millis();
 
     DynamicJsonBuffer jsonBuffer;
     JsonObject &root = jsonBuffer.createObject();
@@ -152,19 +157,25 @@ void Registry::sync() {
     root["type"] = "REG_HEAD";
     root["registryName"] = this->name;
     root["head"] = this->hashChain.back();
+    root["length"] = this->entries.size();
 
     string msg;
     root.printTo(msg);
-    this->bcast->broadcast(msg);
-    cout << "SYNC\n";
 
     // DEBUG
-//    Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
-//    this->set("someDevice", "someNewValue", pair);
-    this->onSyncRequest(msg);
+    Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
+    string newVal = "someNewValue";
+    newVal += this->relTimeProvider->millis();
+    this->set("someDevice", newVal, pair);
+//    this->onData(msg);
+    std::cout << "SYNC" << std::endl;
+    // DONE DEBUG
+
+    this->bcast->broadcast(msg);
 }
 
-void Registry::onSyncRequest(string request) {
+void Registry::onData(string request) {
+    std::cerr << "incomnig" << std::endl;
     DynamicJsonBuffer jsonBuffer;
     JsonObject &root = jsonBuffer.parse(request);
 
@@ -190,8 +201,9 @@ string Registry::getHeadHash() const {
             map<PUB_HASH_T, Crypto::asym::PublicKey *> keys = { { pair.pub.getHash(), &pair.pub } };
             DummyNetworkHandler dnet;
             DummyStorageHandler dstor;
+            REL_TIME_PROV_T drelTimeProv(new DummyRelativeTimeProvider);
 
-            Registry reg("someRegistry", &keys, &dstor, &dnet);
+            Registry reg("someRegistry", &keys, &dstor, &dnet, drelTimeProv);
 
             WHEN("a value is set") {
                 string key("someKey");

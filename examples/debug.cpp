@@ -1,7 +1,5 @@
 #include "../osLib/linux/linux.hpp"
 #include "../deviceLib/Device.hpp"
-#include "../deviceLib/registry/RegistryEntry.hpp"
-#include "../deviceLib/registry/Registry.hpp"
 
 volatile sig_atomic_t interrupted = 0;
 
@@ -14,7 +12,8 @@ int main() {
 
     LinuxNetwork net;
     LinuxStorage stor;
-    Device dev(&net, &stor);
+    LinuxRelativeTimeProvider time;
+    Device dev(&net, &stor, time.toPointer());
 
     Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
     Crypto::asym::KeyPair pair2(Crypto::asym::generateKeyPair());
@@ -27,7 +26,7 @@ int main() {
     keys[pair.pub.getHash()] = &pair.pub;
     keys[pair2.pub.getHash()] = &pair2.pub;
 
-    Registry reg("testReg", &keys, &stor, &net);
+    Registry reg("testReg", &keys, &stor, &net, time.toPointer());
     reg.clear();
     reg.set("someDevice", "someValue", pair);
     reg.del("someDevice", pair2);
@@ -58,7 +57,9 @@ int main() {
             false);
 
     reg.print();
-    reg.sync();
+//    reg.sync();
+
+    dev.registries.push_back(reg);
 
     // Execute this to load it back from the storage
 //    std::map<PUB_HASH_T, Crypto::asym::PublicKey*> keys2;
@@ -77,8 +78,7 @@ int main() {
 //    reg2.sync();
 //    reg2.print();
 
-//    while (interrupted == 0) {
-//        dev.tick(1000);
-//        sleep(1);
-//    }
+    while (interrupted == 0) {
+        dev.tick(1000);
+    }
 }

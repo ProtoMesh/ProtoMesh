@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 
+#define SOCKET_T std::shared_ptr<Socket>
 class Socket {
 public:
     virtual void send(std::string ip, unsigned short port, std::string message)= 0;
@@ -11,6 +12,7 @@ public:
     virtual int recv(std::string *msg, unsigned int timeout_ms)= 0;
 };
 
+#define BCAST_SOCKET_T std::shared_ptr<BroadcastSocket>
 class BroadcastSocket {
 public:
     virtual ~BroadcastSocket()= default;
@@ -25,10 +27,10 @@ public:
 class NetworkHandler {
 public:
     // UDP related things
-    virtual std::unique_ptr<BroadcastSocket> createBroadcastSocket(std::string multicastGroup, unsigned short port)= 0;
+    virtual BCAST_SOCKET_T createBroadcastSocket(std::string multicastGroup, unsigned short port) = 0;
 
     // TCP related things
-    virtual std::unique_ptr<Socket> openChannel(std::string ip)= 0;
+    virtual SOCKET_T openChannel(std::string ip) = 0;
 };
 
 #ifdef UNIT_TESTING
@@ -46,12 +48,12 @@ public:
     class DummyNetworkHandler : public NetworkHandler {
     public:
         // UDP related things
-        inline std::unique_ptr<BroadcastSocket> createBroadcastSocket(std::string multicastGroup, unsigned short port) override {
-            return std::unique_ptr<BroadcastSocket>(new DummyBroadcastSocket(multicastGroup, port));
+        inline BCAST_SOCKET_T createBroadcastSocket(std::string multicastGroup, unsigned short port) override {
+            return BCAST_SOCKET_T(new DummyBroadcastSocket(multicastGroup, port));
         };
 
         // TCP related things
-        inline std::unique_ptr<Socket> openChannel(std::string ip) override { return nullptr; };
+        inline SOCKET_T openChannel(std::string ip) override { return nullptr; };
     };
 #endif
 
