@@ -7,8 +7,10 @@
 #include <boost/filesystem/fstream.hpp>
 #include <string>
 #include <utility>
+#include <chrono>
 #include "../../deviceLib/api/network.hpp"
 #include "../../deviceLib/api/storage.hpp"
+#include "../../deviceLib/api/time.hpp"
 
 #define STORAGE_PREFIX "/.config/ucl"
 
@@ -32,12 +34,12 @@ public:
 class LinuxNetwork : public NetworkHandler {
 public:
     // UDP related things
-    inline std::unique_ptr<BroadcastSocket> createBroadcastSocket(std::string multicastGroup, unsigned short port) {
-        return std::unique_ptr<BroadcastSocket>(new LinuxBroadcastSocket(multicastGroup, port));
+    inline BCAST_SOCKET_T createBroadcastSocket(std::string multicastGroup, unsigned short port) {
+        return BCAST_SOCKET_T(new LinuxBroadcastSocket(multicastGroup, port));
     };
 
     // TCP related things
-    inline std::unique_ptr<Socket> openChannel(std::string ip) override { return nullptr; };
+    inline SOCKET_T openChannel(std::string ip) override { return nullptr; };
 };
 
 class LinuxStorage : public StorageHandler {
@@ -45,6 +47,19 @@ public:
     void set(string key, string value);
     string get(string key);
     bool has(string key);
+};
+
+class LinuxRelativeTimeProvider : public RelativeTimeProvider {
+public:
+
+    REL_TIME_PROV_T toPointer() {
+        return REL_TIME_PROV_T(this);
+    }
+
+    inline long millis() {
+        return std::chrono::duration_cast<std::chrono::milliseconds>
+                (std::chrono::system_clock::now().time_since_epoch()).count();
+    }
 };
 
 #endif //UCL_LINUX_HPP

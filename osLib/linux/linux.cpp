@@ -1,4 +1,5 @@
 #include "linux.hpp"
+#include "../../deviceLib/const.hpp"
 
 #define RECV_POOLING_INTERVAL 150000 // 150ms
 
@@ -44,7 +45,7 @@ int LinuxBroadcastSocket::recv(std::string *msg, unsigned int timeout_ms) {
         }
 
         total_time += RECV_POOLING_INTERVAL;
-        if (timeout_ms != 0 && total_time > timeout_ms) return 1;
+        if (timeout_ms != 0 && total_time > timeout_ms) return RECV_ERR;
     }
 
     // Resize the buffer to store all available data.
@@ -55,7 +56,7 @@ int LinuxBroadcastSocket::recv(std::string *msg, unsigned int timeout_ms) {
 
     std::string message(buffer.begin(), buffer.end());
     *msg = message;
-    return 0;
+    return RECV_OK;
 }
 
 void LinuxBroadcastSocket::broadcast(std::string message) {
