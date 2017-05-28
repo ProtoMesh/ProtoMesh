@@ -168,24 +168,20 @@ void Registry::sync() {
     newVal += this->relTimeProvider->millis();
     this->set("someDevice", newVal, pair);
 //    this->onData(msg);
-    std::cout << "SYNC" << std::endl;
+    std::cout << "OUTGOING SYNC REQUEST" << std::endl;
     // DONE DEBUG
 
     this->bcast->broadcast(msg);
 }
 
 void Registry::onData(string request) {
-    std::cerr << "incomnig" << std::endl;
     DynamicJsonBuffer jsonBuffer;
     JsonObject &root = jsonBuffer.parse(request);
-
-    if (root["registryName"] != this->name) return;
-
     string head = this->hashChain.size() > 0 ? this->hashChain.back() : "";
 
-    if (head != root["head"]) {
+    if (root.success() && root["registryName"] == this->name && head != root["head"]) {
         // TODO SYNC STUFF
-        cerr << "SYNC" << endl;
+        cerr << "RECEIVED VALID INCOMING SYNC REQUEST" << endl;
     }
 }
 

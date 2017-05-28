@@ -4,7 +4,6 @@ void Device::tick(unsigned int timeoutMS) {
     // Receive data && let the registries broadcast their stuff
     string registryData;
     if (this->registryBcast->recv(&registryData, timeoutMS / 2) == RECV_OK) {
-        std::cerr << "DATA" << std::endl;
         for (Registry &reg : this->registries) {
             reg.onData(registryData);
             reg.sync();
