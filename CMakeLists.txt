@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.7)
 project(ucl)
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic")
 
 add_subdirectory(osLib/linux)
 include_directories(deviceLib/test/catch/single_include)

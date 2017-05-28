@@ -89,7 +89,7 @@ namespace Crypto {
         string uint8ArrToString(uint8_t *arr, unsigned int len) {
             stringstream ss;
             ss << hex << nouppercase << setfill('0');
-            for (int i = 0; i < len; ++i)
+            for (unsigned int i = 0; i < len; ++i)
                 ss << setw(2) << static_cast<int>(arr[i]);
 
             return ss.str();

@@ -29,7 +29,7 @@ int LinuxBroadcastSocket::recv(std::string *msg, unsigned int timeout_ms) {
     std::vector<char> buffer;
     std::size_t bytes_readable = 0;
 
-    int total_time = 0;
+    unsigned int total_time = 0;
     while (!bytes_readable) {
         // Issue command to socket to get number of bytes readable.
         boost::asio::socket_base::bytes_readable num_of_bytes_readable(true);

@@ -8,10 +8,9 @@
 
 RegistryEntry::RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asym::KeyPair pair,
                              string parentUUID)
-        : type(type), key(key), value(value), uuid(Crypto::generateUUID()), publicKeyUsed(pair.pub.getHash()),
-          parentUUID(parentUUID) {
+        : parentUUID(parentUUID), uuid(Crypto::generateUUID()), publicKeyUsed(pair.pub.getHash()), type(type), key(key), value(value) {
     this->signature = Crypto::asym::sign(this->getSignatureText(), pair.priv);
-};
+}
 
 RegistryEntry::RegistryEntry(string serializedEntry) {
     DynamicJsonBuffer jsonBuffer(600);

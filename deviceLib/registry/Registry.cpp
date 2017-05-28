@@ -8,7 +8,7 @@
 
 Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageHandler *stor,
                    NetworkHandler *net)
-        : name(name), trustedKeys(keys), stor(stor), net(net), bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)) {
+        : stor(stor), net(net), bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)), name(name), trustedKeys(keys) {
     if (this->stor->has(this->name)) {
         DynamicJsonBuffer jsonBuffer;
         string loadedRegistry(this->stor->get(this->name));
