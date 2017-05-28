@@ -42,10 +42,9 @@ int LinuxBroadcastSocket::recv(std::string *msg, unsigned int timeout_ms) {
         // If there is no data available, then sleep.
         if (!bytes_readable) {
             usleep(RECV_POOLING_INTERVAL);
+            total_time += RECV_POOLING_INTERVAL;
+            if (timeout_ms != 0 && total_time > timeout_ms) return RECV_ERR;
         }
-
-        total_time += RECV_POOLING_INTERVAL;
-        if (timeout_ms != 0 && total_time > timeout_ms) return RECV_ERR;
     }
 
     // Resize the buffer to store all available data.

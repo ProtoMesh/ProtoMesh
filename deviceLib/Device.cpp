@@ -17,6 +17,4 @@ void Device::tick(unsigned int timeoutMS) {
     string deviceData;
     if (this->deviceBcast->recv(&deviceData, timeoutMS / 2) == RECV_OK)
         std::cout << deviceData << std::endl; // TODO Handle deviceData
-
-
 }
