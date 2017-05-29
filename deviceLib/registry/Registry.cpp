@@ -6,11 +6,16 @@
 
 #endif
 
+
+random_device rd;
+mt19937 rng(rd());
+uniform_int_distribution<int> broadcastIntervalRange(REGISTRY_BROADCAST_INTERVAL_MIN, REGISTRY_BROADCAST_INTERVAL_MAX);
+
 Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageHandler *stor,
                    NetworkHandler *net, REL_TIME_PROV_T relTimeProvider)
         : stor(stor), net(net), relTimeProvider(relTimeProvider),
           bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
-          lastBroadcast(relTimeProvider->millis()), name(name), trustedKeys(keys) {
+          nextBroadcast(relTimeProvider->millis()), name(name), trustedKeys(keys) {
     if (this->stor->has(this->name)) {
         DynamicJsonBuffer jsonBuffer;
         string loadedRegistry(this->stor->get(this->name));
@@ -146,10 +151,10 @@ void Registry::clear() {
 }
 
 void Registry::sync() {
-    if ((this->relTimeProvider->millis() - this->lastBroadcast) < REGISTRY_BROADCAST_INTERVAL ||
+    if (this->relTimeProvider->millis() < this->nextBroadcast ||
         !this->hashChain.size())
         return;
-    this->lastBroadcast = this->relTimeProvider->millis();
+    this->nextBroadcast = this->relTimeProvider->millis() + broadcastIntervalRange(rng);
 
     DynamicJsonBuffer jsonBuffer;
     JsonObject &root = jsonBuffer.createObject();
@@ -163,11 +168,11 @@ void Registry::sync() {
     root.printTo(msg);
 
     // DEBUG
-    Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
-    string newVal = "someNewValue";
-    newVal += this->relTimeProvider->millis();
-    this->set("someDevice", newVal, pair);
-//    this->onData(msg);
+//    Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
+//    string newVal = "someNewValue";
+//    newVal += this->relTimeProvider->millis();
+//    this->set("someDevice", newVal, pair);
+
     std::cout << "OUTGOING SYNC REQUEST" << std::endl;
     // DONE DEBUG
 

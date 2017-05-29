@@ -10,6 +10,7 @@
 #include "../api/storage.hpp"
 #include "../api/network.hpp"
 #include "../api/time.hpp"
+#include <random>
 
 using namespace std;
 
@@ -19,7 +20,7 @@ class Registry {
     REL_TIME_PROV_T relTimeProvider;
 
     BCAST_SOCKET_T bcast;
-    long lastBroadcast;
+    long nextBroadcast;
 
     string name;
 

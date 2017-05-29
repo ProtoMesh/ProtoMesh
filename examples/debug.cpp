@@ -59,7 +59,9 @@ int main() {
     reg.print();
 //    reg.sync();
 
+    Registry reg2("testReg", &keys, &stor, &net, time.toPointer());
     dev.registries.push_back(reg);
+    dev.registries.push_back(reg2);
 
     // Execute this to load it back from the storage
 //    std::map<PUB_HASH_T, Crypto::asym::PublicKey*> keys2;
