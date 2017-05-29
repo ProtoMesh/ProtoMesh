@@ -81,7 +81,7 @@ void Registry::addEntry(RegistryEntry e, bool save) {
     unsigned long index = 0;
 
     // If the entry is supposed to have a parent then calculate its new position
-    if (e.parentUUID.size()) {
+    if (e.parentUUID.size() && this->entries.size() > 0) {
         auto res = this->getBlockBorders(e.parentUUID);
         vector<unsigned long> blockBorders(std::get<0>(res));
         index = std::get<1>(res);
@@ -102,9 +102,17 @@ void Registry::addEntry(RegistryEntry e, bool save) {
         }
     }
 
-    // Insert the entry at the previously determined position
-    this->entries.insert(this->entries.begin() + index, e);
-    this->updateHead(save);
+    // Check the entries neighbours to avoid dups
+    if ( !( this->entries.size() > 0 && (
+            (index > 0 && this->entries[index-1].uuid == e.uuid)
+            || (index < (this->entries.size()-1) && this->entries[index+1].uuid == e.uuid)
+                                        )
+          )
+    ) {
+        // Insert the entry at the previously determined position
+        this->entries.insert(this->entries.begin() + index, e);
+        this->updateHead(save);
+    }
 }
 
 string Registry::getHeadUUID() {
@@ -190,7 +198,8 @@ void Registry::onData(string request) {
             // TODO SYNC STUFF
             cerr << "RECEIVED VALID INCOMING SYNC REQUEST" << endl;
             long l_remote = root["length"];
-            long l_min = min(l_remote, this->entries.size());
+            long l_min = min(l_remote, (long) this->entries.size());
+
 
         }
     }
@@ -211,6 +220,14 @@ string Registry::getHeadHash() const {
             REL_TIME_PROV_T drelTimeProv(new DummyRelativeTimeProvider);
 
             Registry reg("someRegistry", &keys, &dstor, &dnet, drelTimeProv);
+
+            WHEN("a serialized entry is added twice") {
+                reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"someintermediate\",\"parentUUID\":\"y\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+                reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"someintermediate\",\"parentUUID\":\"y\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+                THEN("the second one should be omitted") {
+                    REQUIRE(reg.entries.size() == 1);
+                }
+            }
 
             WHEN("a value is set") {
                 string key("someKey");
