@@ -184,9 +184,15 @@ void Registry::onData(string request) {
     JsonObject &root = jsonBuffer.parse(request);
     string head = this->hashChain.size() > 0 ? this->hashChain.back() : "";
 
-    if (root.success() && root["registryName"] == this->name && head != root["head"]) {
-        // TODO SYNC STUFF
-        cerr << "RECEIVED VALID INCOMING SYNC REQUEST" << endl;
+    if (root.success() && root["registryName"] == this->name) {
+
+        if (root["type"] == "REG_HEAD" && head != root["head"]) {
+            // TODO SYNC STUFF
+            cerr << "RECEIVED VALID INCOMING SYNC REQUEST" << endl;
+            long l_remote = root["length"];
+            long l_min = min(l_remote, this->entries.size());
+
+        }
     }
 }
 
