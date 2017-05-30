@@ -29,8 +29,12 @@ class Registry {
     map<string, string> headState;
     map<PUB_HASH_T, Crypto::asym::PublicKey*>* trustedKeys;
 
-    tuple<long, UUID, double, double> synchronizationStatus;
-    // long[timestamp of last sync related request], UUID[expected answerID], double[min], double[max] (binary search related)
+    struct {
+        long lastRequestTimestamp;
+        UUID requestID;
+        double min;
+        double max;
+    } synchronizationStatus;
 
     // Functions
     void updateHead(bool save);

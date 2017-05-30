@@ -206,8 +206,7 @@ UUID Registry::requestHash(double index, string target, UUID requestID) {
 }
 
 bool Registry::isSyncInProgress() {
-    long lastRequest = std::get<0>(this->synchronizationStatus);
-    return this->relTimeProvider->millis() - lastRequest < REGISTRY_SYNC_TIMEOUT;
+    return this->relTimeProvider->millis() - this->synchronizationStatus.lastRequestTimestamp < REGISTRY_SYNC_TIMEOUT;
 }
 
 void Registry::onData(string request) {
@@ -237,18 +236,23 @@ void Registry::onData(string request) {
 
         if (root["type"] == "REG_HEAD" && head != root["head"] && root.containsKey("instance") && !this->isSyncInProgress()) {
             // TODO SYNC STUFF
+            cout << "SYNC" << endl;
             double l_remote = root["length"];
             double l_min = min(l_remote, (double) this->entries.size()-1);
 
             UUID requestID(Crypto::generateUUID());
-            this->synchronizationStatus = make_tuple(this->relTimeProvider->millis(), requestID, 0, l_min);
+            this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
+            this->synchronizationStatus.requestID = requestID;
+            this->synchronizationStatus.min = 0;
+            this->synchronizationStatus.max = l_min;
             this->requestHash(ceil(l_min/2), root["instance"], requestID);
 
         }
 
-        if (root["type"] == "REG_HASH" && root.containsKey("hash") && root.containsKey("answerID") && root["answerID"] == std::get<1>(this->synchronizationStatus) && this->isSyncInProgress()) {
-            double min = std::get<2>(this->synchronizationStatus);
-            double max = std::get<3>(this->synchronizationStatus);
+        if (root["type"] == "REG_HASH" && root.containsKey("hash") && root.containsKey("answerID") &&
+            root["answerID"] == this->synchronizationStatus.requestID && this->isSyncInProgress()) {
+            double min = this->synchronizationStatus.min;
+            double max = this->synchronizationStatus.max;
             double index = ceil(min + (max-min)/2);
             cout << "step" << endl;
 
@@ -265,7 +269,10 @@ void Registry::onData(string request) {
                 cout << "HORRAY we've found the index @ " << index << endl;
             } else {
                 UUID requestID(Crypto::generateUUID());
-                this->synchronizationStatus = make_tuple(this->relTimeProvider->millis(), requestID, min, max);
+                this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
+                this->synchronizationStatus.requestID = requestID;
+                this->synchronizationStatus.min = min;
+                this->synchronizationStatus.max = max;
                 this->requestHash(ceil(min + (max-min)/2), root["instance"], requestID);
             }
         }
