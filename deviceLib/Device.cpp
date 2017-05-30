@@ -6,10 +6,10 @@ void Device::tick(unsigned int timeoutMS) {
     if (this->registryBcast->recv(&registryData, timeoutMS / 2) == RECV_OK) {
         for (Registry &reg : this->registries) {
             reg.onData(registryData);
-            reg.sync();
+//            reg.sync();
         }
     } else {
-        for (Registry &reg : this->registries) reg.sync();
+//        for (Registry &reg : this->registries) reg.sync();
     }
 
     // Update the device data

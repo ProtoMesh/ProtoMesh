@@ -15,6 +15,7 @@
 using namespace std;
 
 class Registry {
+    // Variables
     StorageHandler* stor;
     NetworkHandler *net;
     REL_TIME_PROV_T relTimeProvider;
@@ -23,16 +24,24 @@ class Registry {
     long nextBroadcast;
 
     string name;
+    UUID instanceIdentifier;
 
     map<string, string> headState;
     map<PUB_HASH_T, Crypto::asym::PublicKey*>* trustedKeys;
 
+    tuple<long, UUID, double, double> synchronizationStatus;
+    // long[timestamp of last sync related request], UUID[expected answerID], double[min], double[max] (binary search related)
+
+    // Functions
     void updateHead(bool save);
     void addEntry(RegistryEntry e, bool save = true);
 
     string getHeadUUID();
 
     tuple<vector<unsigned long>, unsigned long> getBlockBorders(string parentUUID = "");
+
+    string requestHash(double index, string target, UUID requestID);
+    bool isSyncInProgress();
 
 public:
     Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageHandler *stor, NetworkHandler *net,

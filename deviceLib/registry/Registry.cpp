@@ -15,7 +15,8 @@ Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys
                    NetworkHandler *net, REL_TIME_PROV_T relTimeProvider)
         : stor(stor), net(net), relTimeProvider(relTimeProvider),
           bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
-          nextBroadcast(relTimeProvider->millis()), name(name), trustedKeys(keys) {
+          nextBroadcast(relTimeProvider->millis() + REGISTRY_BROADCAST_INTERVAL_MIN),
+          name(name), instanceIdentifier(Crypto::generateUUID()), trustedKeys(keys) {
     if (this->stor->has(this->name)) {
         DynamicJsonBuffer jsonBuffer;
         string loadedRegistry(this->stor->get(this->name));
@@ -171,6 +172,7 @@ void Registry::sync() {
     root["registryName"] = this->name;
     root["head"] = this->hashChain.back();
     root["length"] = this->entries.size();
+    root["instance"] = this->instanceIdentifier;
 
     string msg;
     root.printTo(msg);
@@ -187,20 +189,85 @@ void Registry::sync() {
     this->bcast->broadcast(msg);
 }
 
+UUID Registry::requestHash(double index, string target, UUID requestID) {
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject &request = jsonBuffer.createObject();
+    request["type"] = "GET_HASH";
+    request["index"] = index;
+    request["requestID"] = requestID;
+    request["targetInstance"] = target;
+    request["registryName"] = this->name;
+
+    string requestStr;
+    request.printTo(requestStr);
+    this->bcast->broadcast(requestStr);
+
+    return requestID;
+}
+
+bool Registry::isSyncInProgress() {
+    long lastRequest = std::get<0>(this->synchronizationStatus);
+    return this->relTimeProvider->millis() - lastRequest < REGISTRY_SYNC_TIMEOUT;
+}
+
 void Registry::onData(string request) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject &root = jsonBuffer.parse(request);
     string head = this->hashChain.size() > 0 ? this->hashChain.back() : "";
 
-    if (root.success() && root["registryName"] == this->name) {
+    if (root.success() && root.containsKey("registryName") && root["registryName"] == this->name && root.containsKey("type")) {
 
-        if (root["type"] == "REG_HEAD" && head != root["head"]) {
+        if (root["type"] == "GET_HASH" && root["targetInstance"] == this->instanceIdentifier) {
+            if (! (root.containsKey("index") && root.containsKey("requestID"))) return;
+            JsonObject &hashBroadcast = jsonBuffer.createObject();
+            hashBroadcast["type"] = "REG_HASH";
+//            hashBroadcast["index"] = root["index"];
+            hashBroadcast["answerID"] = root["requestID"];
+            hashBroadcast["registryName"] = this->name;
+            hashBroadcast["instance"] = this->instanceIdentifier;
+            if (this->hashChain.size() > root["index"].as<double>())
+                hashBroadcast["hash"] = this->hashChain[root["index"].as<double>()];
+            else
+                hashBroadcast["hash"] = "";
+
+            string hashBcast;
+            hashBroadcast.printTo(hashBcast);
+            this->bcast->broadcast(hashBcast);
+        }
+
+        if (root["type"] == "REG_HEAD" && head != root["head"] && root.containsKey("instance") && !this->isSyncInProgress()) {
             // TODO SYNC STUFF
-            cerr << "RECEIVED VALID INCOMING SYNC REQUEST" << endl;
-            long l_remote = root["length"];
-            long l_min = min(l_remote, (long) this->entries.size());
+            double l_remote = root["length"];
+            double l_min = min(l_remote, (double) this->entries.size()-1);
 
+            UUID requestID(Crypto::generateUUID());
+            this->synchronizationStatus = make_tuple(this->relTimeProvider->millis(), requestID, 0, l_min);
+            this->requestHash(ceil(l_min/2), root["instance"], requestID);
 
+        }
+
+        if (root["type"] == "REG_HASH" && root.containsKey("hash") && root.containsKey("answerID") && root["answerID"] == std::get<1>(this->synchronizationStatus) && this->isSyncInProgress()) {
+            double min = std::get<2>(this->synchronizationStatus);
+            double max = std::get<3>(this->synchronizationStatus);
+            double index = ceil(min + (max-min)/2);
+            cout << "step" << endl;
+
+            if (this->hashChain.size() <= index) return;
+
+            if (this->hashChain[index] == root["hash"])
+                min = index+1;
+            else
+                max = index-1;
+
+            if (min > max) {
+                cout << "HORRAY we've found the index @ " << min << endl;
+            } else if (min == index) {
+                cout << "HORRAY we've found the index @ " << index << endl;
+            } else {
+                UUID requestID(Crypto::generateUUID());
+                this->synchronizationStatus = make_tuple(this->relTimeProvider->millis(), requestID, min, max);
+                this->requestHash(ceil(min + (max-min)/2), root["instance"], requestID);
+            }
         }
     }
 }
