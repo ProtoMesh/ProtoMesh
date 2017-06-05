@@ -1,0 +1,7 @@
+-I/home/themegatb/Projects/C++/ucl/deviceLib/test/catch/single_include
+-Wall
+-Wno-long-long
+-pedantic
+-std=gnu++11
+-DUNIT_TESTING=1
+-Wno-unused-parameter
