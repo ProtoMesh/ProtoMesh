@@ -32,19 +32,22 @@ class Registry {
     struct {
         long lastRequestTimestamp;
         UUID requestID;
-        double min;
-        double max;
+        size_t min;
+        size_t max;
+        UUID communicationTarget;
     } synchronizationStatus;
 
     // Functions
     void updateHead(bool save);
-    void addEntry(RegistryEntry e, bool save = true);
+    bool addEntry(RegistryEntry e, bool save = true);
 
     string getHeadUUID();
 
     tuple<vector<unsigned long>, unsigned long> getBlockBorders(string parentUUID = "");
 
-    string requestHash(double index, string target, UUID requestID);
+    string requestHash(size_t index, string target, UUID requestID);
+    void onBinarySearchResult(size_t index);
+    void broadcastEntries(size_t index);
     bool isSyncInProgress();
 
 public:
@@ -56,7 +59,7 @@ public:
     void del(string key, Crypto::asym::KeyPair pair);
     bool has(string key);
 
-    void addSerializedEntry(string serialized, bool save = true);
+    bool addSerializedEntry(string serialized, bool save = true);
     void setTrustedKeys(map<PUB_HASH_T, Crypto::asym::PublicKey*>* keys);
 
     vector<string> hashChain;
@@ -66,10 +69,14 @@ public:
 
     void sync();
 
-    void onData(string request);
+    void onData(string incomingData);
 
     inline void print() {
-        for (auto &entry : this->entries) cout << string(entry) << endl;
+        cout << this->entries.size() << endl;
+        for (int i = 0; i < this->entries.size(); i++) {
+            cout << string(this->entries[i]) << endl;
+        }
+//        for (auto &entry : this->entries) cout << string(entry) << endl;
     };
     vector<RegistryEntry> entries;
 };

@@ -33,6 +33,11 @@ public:
         this->registryBcast->broadcast("test");
     };
     void tick(unsigned int timeoutMS);
+    inline void print() {
+        this->registries[0].print();
+        std::cout << std::endl;
+        this->registries[1].print();
+    }
 };
 
 

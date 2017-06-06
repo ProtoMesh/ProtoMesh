@@ -23,6 +23,7 @@ public:
     SIGNATURE_T signature;
     PUB_HASH_T publicKeyUsed;
     RegistryEntryType type;
+    bool valid;
 
     // Content
     string key;

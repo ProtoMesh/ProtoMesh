@@ -60,25 +60,25 @@ int main() {
 
     Registry reg2("testReg", &keys, &stor, &net, time.toPointer());
 
-    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"x\",\"parentUUID\":\"\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"y\",\"parentUUID\":\"x\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"z\",\"parentUUID\":\"y\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"s\",\"parentUUID\":\"z\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"t\",\"parentUUID\":\"s\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"u\",\"parentUUID\":\"t\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"x\",\"parentUUID\":\"\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"y\",\"parentUUID\":\"x\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"z\",\"parentUUID\":\"y\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"s\",\"parentUUID\":\"z\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"t\",\"parentUUID\":\"s\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"u\",\"parentUUID\":\"t\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
     reg.print();
     std::cout << std::endl;
-    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"x\",\"parentUUID\":\"\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"y\",\"parentUUID\":\"x\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"z\",\"parentUUID\":\"y\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"s\",\"parentUUID\":\"z\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"t\",\"parentUUID\":\"s\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"u\",\"parentUUID\":\"t\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"a\",\"parentUUID\":\"u\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"b\",\"parentUUID\":\"a\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"c\",\"parentUUID\":\"b\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"d\",\"parentUUID\":\"c\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"e\",\"parentUUID\":\"d\",\"signature\":\"someSignature\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"x\",\"parentUUID\":\"\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"y\",\"parentUUID\":\"x\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"z\",\"parentUUID\":\"y\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"s\",\"parentUUID\":\"z\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"t\",\"parentUUID\":\"s\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"u\",\"parentUUID\":\"t\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"a\",\"parentUUID\":\"u\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"b\",\"parentUUID\":\"a\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"c\",\"parentUUID\":\"b\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"d\",\"parentUUID\":\"c\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+    reg2.addSerializedEntry("{\"metadata\":{\"uuid\":\"e\",\"parentUUID\":\"d\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someLastValueThatDefinitelyComesLast\"}}", false);
     reg2.print();
 
 
@@ -106,4 +106,12 @@ int main() {
         dev.tick(1000);
         reg.sync();
     }
+
+    dev.print();
+    cout << endl;
+    cout << endl << "goodbye." << endl;
+    cout << endl;
+    // reg.print();
+    // cout << endl;
+    // reg2.print();
 }

@@ -12,24 +12,57 @@ RegistryEntry::RegistryEntry(RegistryEntryType type, string key, string value, C
     this->signature = Crypto::asym::sign(this->getSignatureText(), pair.priv);
 }
 
-RegistryEntry::RegistryEntry(string serializedEntry) {
+RegistryEntry::RegistryEntry(string serializedEntry) : valid(true) {
+
     DynamicJsonBuffer jsonBuffer(600);
     JsonObject& root = jsonBuffer.parseObject(serializedEntry);
+
+    if (root.success()) {
+        if (root.containsKey("metadata")) {
+            JsonObject& meta = root["metadata"];
+
+            bool sig = meta.containsKey("signature");
+            bool pku = meta.containsKey("publicKeyUsed");
+            bool uid = meta.containsKey("uuid");
+            bool pid = meta.containsKey("parentUUID");
+            bool typ = meta.containsKey("type");
+
+            if (!(sig && pku && uid && pid && typ)) { this->valid = false; return; }
+        } else { this->valid = false; return; }
+
+        if (root.containsKey("content")) {
+            JsonObject& cont = root["content"];
+
+            bool key = cont.containsKey("key");
+            bool val = cont.containsKey("value");
+
+            if (!(key && val)) { this->valid = false; return; }
+        } else { this->valid = false; return; }
+
+    } else { this->valid = false; return; }
+
     // Original hash
     this->parentUUID = root["metadata"]["parentUUID"].as<string>();
+
     // UUID
     this->uuid = root["metadata"]["uuid"].as<UUID>();
+
     // Signature
     string signature(root["metadata"]["signature"].as<string>());
     vector<uint8_t> signatureBytes(Crypto::serialize::stringToUint8Array(signature));
-    copy_n(begin(signatureBytes), SIGNATURE_SIZE, begin(this->signature));
+    if (signatureBytes.size() != SIGNATURE_SIZE) this->valid = false;
+    copy_n(begin(signatureBytes), signatureBytes.size(), begin(this->signature));
+
     // Public key
     string pubKeyHash = root["metadata"]["publicKeyUsed"].as<string>();
-    copy_n(begin(pubKeyHash), PUB_HASH_SIZE, begin(this->publicKeyUsed));
+    if (pubKeyHash.size() != PUB_HASH_SIZE) this->valid = false;
+    copy_n(begin(pubKeyHash), pubKeyHash.size(), begin(this->publicKeyUsed));
+
     // Type
     string type = root["metadata"]["type"].as<string>();
     if      (type == "UPSERT") this->type = RegistryEntryType::UPSERT;
     else if (type == "DELETE") this->type = RegistryEntryType::DELETE;
+    else                       this->valid = false;
 
     // Contents
     this->key = root["content"]["key"].as<string>();
