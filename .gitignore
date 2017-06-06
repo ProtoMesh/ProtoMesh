@@ -39,3 +39,7 @@ gen
 
 # Concatenated header files
 ArduinoJson.hpp
+
+# Build directories
+build
+cmake-build-debug
