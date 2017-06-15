@@ -321,7 +321,9 @@ void Registry::onData(string incomingData) {
 }
 
 string Registry::getHeadHash() const {
-    return this->hashChain.back();
+    if (this->hashChain.size() > 0)
+        return this->hashChain.back();
+    return "";
 }
 
 #ifdef UNIT_TESTING
