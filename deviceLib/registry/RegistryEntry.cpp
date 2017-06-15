@@ -8,7 +8,7 @@
 
 RegistryEntry::RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asym::KeyPair pair,
                              string parentUUID)
-        : parentUUID(parentUUID), uuid(Crypto::generateUUID()), publicKeyUsed(pair.pub.getHash()), type(type), key(key), value(value), valid(true) {
+        : parentUUID(parentUUID), uuid(Crypto::generateUUID()), publicKeyUsed(pair.pub.getHash()), type(type), valid(true) , key(key), value(value){
     this->signature = Crypto::asym::sign(this->getSignatureText(), pair.priv);
 }
 

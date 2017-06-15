@@ -73,7 +73,7 @@ public:
 
     inline void print() {
         cout << this->entries.size() << endl;
-        for (int i = 0; i < this->entries.size(); i++) {
+        for (unsigned int i = 0; i < this->entries.size(); i++) {
             cout << string(this->entries[i]) << endl;
         }
 //        for (auto &entry : this->entries) cout << string(entry) << endl;
