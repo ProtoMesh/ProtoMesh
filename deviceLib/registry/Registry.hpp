@@ -72,7 +72,7 @@ public:
     void onData(string incomingData);
 
     inline void print() {
-        cout << this->entries.size() << endl;
+        cout << this->instanceIdentifier << " | " << this->entries.size() << endl;
         for (unsigned int i = 0; i < this->entries.size(); i++) {
             cout << string(this->entries[i]) << endl;
         }

@@ -98,6 +98,10 @@ bool Registry::addEntry(RegistryEntry e, bool save) {
 
             index = this->entries.size();
             for (auto border = blockBorders.rbegin(); border != blockBorders.rend(); ++border) {
+
+                // If the entry is already present then don't create a duplicate
+                if (this->entries.size() > *border && this->entries[*border].uuid == e.uuid)  return false;
+                
                 // This is the actual "merge". The sorting is done by comparing the UUID's
                 if (*border != this->entries.size() && e.uuid < this->entries[*border].uuid) {
                     index = *border;
@@ -107,20 +111,10 @@ bool Registry::addEntry(RegistryEntry e, bool save) {
         }
     }
 
-    // Check the entries neighbours to avoid dups
-    if ( !( this->entries.size() > 0 && (
-            (index > 0 && this->entries[index-1].uuid == e.uuid)
-            || (index < (this->entries.size()-1) && this->entries[index+1].uuid == e.uuid)
-                                        )
-          )
-    ) {
-        // Insert the entry at the previously determined position
-        this->entries.insert(this->entries.begin() + index, e);
-        this->updateHead(save);
-        return true;
-    }
-
-    return false;
+    // Insert the entry at the previously determined position
+    this->entries.insert(this->entries.begin() + index, e);
+    this->updateHead(save);
+    return true;
 }
 
 string Registry::getHeadUUID() {
@@ -314,8 +308,9 @@ void Registry::onData(string incomingData) {
         }
 
         if (type == "REG_ENTRY" && parsedData.containsKey("entry") && parsedData.containsKey("instance") && parsedData["instance"] != this->instanceIdentifier) {
-            cout << "INSERTING ENTRY" << endl;
-            cout << this->addSerializedEntry(parsedData["entry"].as<string>()) << " | " << this->entries.size() << endl;
+            cout << "[" << this->instanceIdentifier << "] INSERTING ENTRY" << endl;
+            this->addSerializedEntry(parsedData["entry"].as<string>());
+//            cout << this->addSerializedEntry(parsedData["entry"].as<string>()) << " | " << this->entries.size() << endl;
         }
     }
 }

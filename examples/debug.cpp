@@ -105,14 +105,16 @@ int main() {
 
     while (interrupted == 0) {
         dev.tick(1000);
-        reg.sync();
+        reg2.sync();
     }
 
     dev.print();
     cout << endl;
     cout << endl << "goodbye." << endl;
     cout << endl;
-    // reg.print();
-    // cout << endl;
-    // reg2.print();
+
+    delete reg;
+    delete reg2;
+
+    cout << "done" << endl;
 }
