@@ -24,7 +24,7 @@ public:
     virtual int recv(std::string *msg, unsigned int timeout_ms)= 0;
 };
 
-class NetworkHandler {
+class NetworkProvider {
 public:
     // UDP related things
     virtual BCAST_SOCKET_T createBroadcastSocket(std::string multicastGroup, unsigned short port) = 0;
@@ -45,7 +45,7 @@ public:
         inline int recv(std::string *msg, unsigned int timeout_ms) override { return 0; };
     };
 
-    class DummyNetworkHandler : public NetworkHandler {
+    class DummyNetworkHandler : public NetworkProvider {
     public:
         // UDP related things
         inline BCAST_SOCKET_T createBroadcastSocket(std::string multicastGroup, unsigned short port) override {

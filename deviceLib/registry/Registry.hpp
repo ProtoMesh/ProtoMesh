@@ -16,8 +16,8 @@ using namespace std;
 
 class Registry {
     // Variables
-    StorageHandler* stor;
-    NetworkHandler *net;
+    StorageProvider* stor;
+    NetworkProvider *net;
     REL_TIME_PROV_T relTimeProvider;
 
     BCAST_SOCKET_T bcast;
@@ -51,7 +51,7 @@ class Registry {
     bool isSyncInProgress();
 
 public:
-    Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageHandler *stor, NetworkHandler *net,
+    Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageProvider *stor, NetworkProvider *net,
              REL_TIME_PROV_T relTimeProvider);
 
     string get(string key);

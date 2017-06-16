@@ -31,7 +31,7 @@ public:
     int recv(std::string *msg, unsigned int timeout_ms) override;
 };
 
-class LinuxNetwork : public NetworkHandler {
+class LinuxNetwork : public NetworkProvider {
 public:
     // UDP related things
     inline BCAST_SOCKET_T createBroadcastSocket(std::string multicastGroup, unsigned short port) {
@@ -42,7 +42,7 @@ public:
     inline SOCKET_T openChannel(std::string ip) override { return nullptr; };
 };
 
-class LinuxStorage : public StorageHandler {
+class LinuxStorage : public StorageProvider {
 public:
     void set(string key, string value);
     string get(string key);

@@ -5,7 +5,7 @@
 
 using namespace std;
 
-class StorageHandler {
+class StorageProvider {
 public:
     virtual void set(string key, string value)= 0;
     virtual string get(string key)= 0;
@@ -13,7 +13,7 @@ public:
 };
 
 #ifdef UNIT_TESTING
-    class DummyStorageHandler : public StorageHandler  {
+    class DummyStorageHandler : public StorageProvider  {
         inline void set(string key, string value) {};
         inline string get(string key) { return ""; };
         inline bool has(string key) { return false; };

@@ -10,6 +10,11 @@ void onInterrupt(int) {
 int main() {
     signal(SIGINT, onInterrupt);
 
+    Crypto::asym::KeyPair p(Crypto::asym::generateKeyPair());
+    auto key = p.pub.raw;
+    cout << p.pub.getCompressedString() << endl;
+    cout << Crypto::serialize::uint8ArrToString(&key[0], PUB_KEY_SIZE) << endl;
+
     LinuxNetwork net;
     LinuxStorage stor;
     LinuxRelativeTimeProvider time;
@@ -113,8 +118,8 @@ int main() {
     cout << endl << "goodbye." << endl;
     cout << endl;
 
-    delete reg;
-    delete reg2;
+//    delete reg;
+//    delete reg2;
 
     cout << "done" << endl;
 }

@@ -11,8 +11,8 @@ random_device rd;
 mt19937 rng(rd());
 uniform_int_distribution<int> broadcastIntervalRange(REGISTRY_BROADCAST_INTERVAL_MIN, REGISTRY_BROADCAST_INTERVAL_MAX);
 
-Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageHandler *stor,
-                   NetworkHandler *net, REL_TIME_PROV_T relTimeProvider)
+Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageProvider *stor,
+                   NetworkProvider *net, REL_TIME_PROV_T relTimeProvider)
         : stor(stor), net(net), relTimeProvider(relTimeProvider),
           bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
           nextBroadcast(relTimeProvider->millis() + REGISTRY_BROADCAST_INTERVAL_MIN),

@@ -9,8 +9,8 @@
 #include "api/time.hpp"
 
 class Device {
-    NetworkHandler* net;
-    StorageHandler* stor;
+    NetworkProvider* net;
+    StorageProvider* stor;
 
     BCAST_SOCKET_T deviceBcast;
     BCAST_SOCKET_T registryBcast;
@@ -19,19 +19,10 @@ class Device {
 public:
     vector<Registry> registries;
 
-    inline Device(NetworkHandler *net, StorageHandler *stor, REL_TIME_PROV_T relTimeProvider) : net(net), stor(stor),
-                                                                                                deviceBcast(
-                                                                                                        net->createBroadcastSocket(
-                                                                                                                MULTICAST_NETWORK,
-                                                                                                                DEVICE_PORT)),
-                                                                                                registryBcast(
-                                                                                                        net->createBroadcastSocket(
-                                                                                                                MULTICAST_NETWORK,
-                                                                                                                REGISTRY_PORT)),
-                                                                                                relTimeProvider(
-                                                                                                        relTimeProvider) {
-        this->registryBcast->broadcast("test");
-    };
+    inline Device(NetworkProvider *net, StorageProvider *stor, REL_TIME_PROV_T relTimeProvider) : net(net), stor(stor),
+                                            deviceBcast(net->createBroadcastSocket(MULTICAST_NETWORK, DEVICE_PORT)),
+                                            registryBcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
+                                            relTimeProvider(relTimeProvider) {};
     void tick(unsigned int timeoutMS);
     inline void print() {
         this->registries[0].print();
