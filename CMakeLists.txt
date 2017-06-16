@@ -11,7 +11,7 @@ set(DUKTAPE_SOURCES deviceLib/api/javascript/duktape/src/duk_config.h deviceLib/
 include_directories(deviceLib/api/javascript/duktape/src)
 
 set(ECC_SOURCES deviceLib/crypto/ecc/uECC.h deviceLib/crypto/ecc/uECC.c deviceLib/crypto/ecc/uECC_vli.h deviceLib/crypto/ecc/types.h)
-set(DEVICE_LIB_SOURCE_FILES ${ECC_SOURCES} ${DUKTAPE_SOURCES} deviceLib/Network.cpp deviceLib/Network.h deviceLib/const.hpp deviceLib/api/time.hpp deviceLib/json/ArduinoJson.hpp deviceLib/api/network.hpp deviceLib/Device.cpp deviceLib/Device.hpp deviceLib/registry/RegistryEntry.cpp deviceLib/registry/RegistryEntry.hpp deviceLib/crypto/crypto.hpp deviceLib/crypto/sha512.hpp deviceLib/crypto/crypto.cpp deviceLib/crypto/crypto_asym.cpp deviceLib/registry/Registry.cpp deviceLib/registry/Registry.hpp deviceLib/api/storage.hpp deviceLib/api/javascript/javascript.cpp deviceLib/api/javascript/javascript.hpp)
+set(DEVICE_LIB_SOURCE_FILES ${ECC_SOURCES} ${DUKTAPE_SOURCES} deviceLib/Network/Network.cpp deviceLib/Network/Network.hpp deviceLib/const.hpp deviceLib/api/time.hpp deviceLib/json/ArduinoJson.hpp deviceLib/api/network.hpp deviceLib/Device/Device.cpp deviceLib/Device/Device.hpp deviceLib/registry/RegistryEntry.cpp deviceLib/registry/RegistryEntry.hpp deviceLib/crypto/crypto.hpp deviceLib/crypto/sha512.hpp deviceLib/crypto/crypto.cpp deviceLib/crypto/crypto_asym.cpp deviceLib/registry/Registry.cpp deviceLib/registry/Registry.hpp deviceLib/api/storage.hpp deviceLib/api/javascript/javascript.cpp deviceLib/api/javascript/javascript.hpp deviceLib/crypto/crypto_sym.cpp)
 add_library(ucl ${DEVICE_LIB_SOURCE_FILES})
 
 add_executable(ucl_test deviceLib/test/test.cpp deviceLib/test/catch/single_include/catch.hpp ${DEVICE_LIB_SOURCE_FILES})

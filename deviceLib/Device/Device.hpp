@@ -1,12 +1,12 @@
 #ifndef UCL_DEVICE_HPP
 #define UCL_DEVICE_HPP
 
-#include "api/network.hpp"
-#include "api/storage.hpp"
-#include "crypto/crypto.hpp"
-#include "const.hpp"
-#include "registry/Registry.hpp"
-#include "api/time.hpp"
+#include "../api/network.hpp"
+#include "../api/storage.hpp"
+#include "../crypto/crypto.hpp"
+#include "../const.hpp"
+#include "../registry/Registry.hpp"
+#include "../api/time.hpp"
 
 class Device {
     NetworkProvider* net;

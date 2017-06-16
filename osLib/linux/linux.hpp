@@ -34,7 +34,7 @@ public:
 class LinuxNetwork : public NetworkProvider {
 public:
     // UDP related things
-    inline BCAST_SOCKET_T createBroadcastSocket(std::string multicastGroup, unsigned short port) {
+    inline BCAST_SOCKET_T createBroadcastSocket(std::string multicastGroup, unsigned short port) override {
         return BCAST_SOCKET_T(new LinuxBroadcastSocket(multicastGroup, port));
     };
 
