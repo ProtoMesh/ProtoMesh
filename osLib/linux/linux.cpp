@@ -1,3 +1,4 @@
+#include <fstream>
 #include "linux.hpp"
 #include "../../deviceLib/const.hpp"
 
@@ -71,24 +72,34 @@ void LinuxBroadcastSocket::send(std::string ip, unsigned short port, std::string
 std::string getStorageDirectory() {
     string home = getenv("HOME");
     home += STORAGE_PREFIX;
-    fs::create_directories(home);
+
+    struct stat st = {0};
+    if (stat(home.c_str(), &st) == -1) {
+        cout << "creating file dir" << endl;
+        mkdir(home.c_str(), 0700);
+    }
     return home;
 }
 
 void LinuxStorage::set(string key, string value) {
-    string home(getStorageDirectory());
-    ofstream(home + "/" + key) << value;
+    ofstream file;
+    file.open(getStorageDirectory() + '/' + key);
+    if (!file.is_open()) return;
+    file << value;
+    file.close();
 }
 
 string LinuxStorage::get(string key) {
-    std::stringstream ss;
-    string home(getStorageDirectory());
-
-    ss << ifstream(home + "/" + key).rdbuf();
-    return ss.str();
+    ifstream file;
+    file.open(getStorageDirectory() + '/' + key);
+    if (!file.is_open()) return "";
+    string line;
+    getline(file,line);
+    return line;
 }
 
 bool LinuxStorage::has(string key) {
     string home(getStorageDirectory());
-    return fs::exists(home + "/" + key);
+    struct stat buffer;
+    return (stat (key.c_str(), &buffer) == 0);
 }

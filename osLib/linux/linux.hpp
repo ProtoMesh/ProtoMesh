@@ -3,8 +3,9 @@
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <string>
 #include <utility>
 #include <chrono>
@@ -15,7 +16,6 @@
 #define STORAGE_PREFIX "/.config/ucl"
 
 using boost::asio::ip::udp;
-namespace fs = boost::filesystem;
 
 class LinuxBroadcastSocket : public BroadcastSocket {
     boost::asio::io_service service;
