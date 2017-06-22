@@ -18,8 +18,11 @@ int main() {
 
     NetworkManager networkManager(&net, &stor, timePtr);
     Crypto::asym::KeyPair netKeyPair = networkManager.createNetwork();
-    cout << netKeyPair.pub.getCompressedString() << endl;
-    Network network = networkManager.joinNetwork("someNetwork", netKeyPair.pub.getCompressed());
+    if (networkManager.lastJoinedAvailable()) {
+        Network network = networkManager.joinLastNetwork();
+    } else {
+        Network network = networkManager.joinNetwork("someNetwork", netKeyPair.pub.getCompressed());
+    }
 
     Device dev(&net, &stor, timePtr);
 

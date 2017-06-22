@@ -2,8 +2,8 @@
 // Created by themegatb on 5/28/17.
 //
 
-#ifndef UCL_TIME_HPP
-#define UCL_TIME_HPP
+#ifndef OPEN_HOME_TIME_HPP
+#define OPEN_HOME_TIME_HPP
 
 #define REL_TIME_PROV_T std::shared_ptr<RelativeTimeProvider>
 
@@ -20,4 +20,4 @@ public:
 };
 #endif
 
-#endif //UCL_TIME_HPP
+#endif //OPEN_HOME_TIME_HPP

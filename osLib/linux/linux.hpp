@@ -1,5 +1,5 @@
-#ifndef UCL_LINUX_HPP
-#define UCL_LINUX_HPP
+#ifndef OPEN_HOME_LINUX_HPP
+#define OPEN_HOME_LINUX_HPP
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -13,7 +13,7 @@
 #include "../../deviceLib/api/storage.hpp"
 #include "../../deviceLib/api/time.hpp"
 
-#define STORAGE_PREFIX "/.config/ucl"
+#define STORAGE_PREFIX "/.config/openHome"
 
 using boost::asio::ip::udp;
 
@@ -62,4 +62,4 @@ public:
     }
 };
 
-#endif //UCL_LINUX_HPP
+#endif //OPEN_HOME_LINUX_HPP

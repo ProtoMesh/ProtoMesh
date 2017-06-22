@@ -1,4 +1,4 @@
-project(ucl_device_linux)
+project(openHome_device_linux)
 
 add_library(${PROJECT_NAME} linux.hpp linux.cpp)
 

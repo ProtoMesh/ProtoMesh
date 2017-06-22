@@ -74,10 +74,7 @@ std::string getStorageDirectory() {
     home += STORAGE_PREFIX;
 
     struct stat st = {0};
-    if (stat(home.c_str(), &st) == -1) {
-        cout << "creating file dir" << endl;
-        mkdir(home.c_str(), 0700);
-    }
+    if (stat(home.c_str(), &st) == -1) mkdir(home.c_str(), 0700);
     return home;
 }
 
@@ -99,7 +96,8 @@ string LinuxStorage::get(string key) {
 }
 
 bool LinuxStorage::has(string key) {
-    string home(getStorageDirectory());
+    string target(getStorageDirectory() + '/' + key);
+
     struct stat buffer;
-    return (stat (key.c_str(), &buffer) == 0);
+    return (stat (target.c_str(), &buffer) == 0);
 }

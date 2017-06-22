@@ -1,5 +1,5 @@
-#ifndef UCL_LIBRARY_H
-#define UCL_LIBRARY_H
+#ifndef OPEN_HOME_LIBRARY_H
+#define OPEN_HOME_LIBRARY_H
 
 #include <string>
 #include <memory>

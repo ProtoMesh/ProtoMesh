@@ -1,5 +1,5 @@
-#ifndef UCL_CRYPTO_HPP
-#define UCL_CRYPTO_HPP
+#ifndef OPEN_HOME_CRYPTO_HPP
+#define OPEN_HOME_CRYPTO_HPP
 
 #include <random>
 #include <array>
@@ -28,6 +28,7 @@ using namespace std;
 #define COMPRESSED_PUBLIC_KEY_T array<uint8_t, COMPRESSED_PUB_KEY_SIZE>
 #define PRIVATE_KEY_T array<uint8_t, PRIV_KEY_SIZE>
 #define NETWORK_KEY_T COMPRESSED_PUBLIC_KEY_T
+#define NETWORK_KEY_SIZE COMPRESSED_PUB_KEY_SIZE
 #define SIGNATURE_T array<uint8_t, PUB_KEY_SIZE>
 #define HASH vector<uint8_t>
 #define UUID string
@@ -128,4 +129,4 @@ namespace Crypto {
 }
 
 
-#endif //UCL_CRYPTO_HPP
+#endif //OPEN_HOME_CRYPTO_HPP

@@ -1,5 +1,5 @@
-#ifndef UCL_JAVASCRIPT_HPP
-#define UCL_JAVASCRIPT_HPP
+#ifndef OPEN_HOME_JAVASCRIPT_HPP
+#define OPEN_HOME_JAVASCRIPT_HPP
 
 #include <string>
 #include "duktape.h"
@@ -14,4 +14,4 @@ public:
 };
 
 
-#endif //UCL_JAVASCRIPT_HPP
+#endif //OPEN_HOME_JAVASCRIPT_HPP

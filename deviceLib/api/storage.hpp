@@ -1,5 +1,5 @@
-#ifndef UCL_STORAGE_HPP
-#define UCL_STORAGE_HPP
+#ifndef OPEN_HOME_STORAGE_HPP
+#define OPEN_HOME_STORAGE_HPP
 
 #include <string>
 
@@ -20,4 +20,4 @@ public:
     };
 #endif
 
-#endif //UCL_STORAGE_HPP
+#endif //OPEN_HOME_STORAGE_HPP
