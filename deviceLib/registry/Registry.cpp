@@ -11,7 +11,7 @@ random_device rd;
 mt19937 rng(rd());
 uniform_int_distribution<int> broadcastIntervalRange(REGISTRY_BROADCAST_INTERVAL_MIN, REGISTRY_BROADCAST_INTERVAL_MAX);
 
-Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys, StorageProvider *stor,
+Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> keys, StorageProvider *stor,
                    NetworkProvider *net, REL_TIME_PROV_T relTimeProvider)
         : stor(stor), net(net), relTimeProvider(relTimeProvider),
           bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
@@ -29,6 +29,8 @@ Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> *keys
             this->addSerializedEntry(entry, false);
         }
     }
+
+    cout << "initialized registry: " << name << endl;
 }
 
 void Registry::updateHead(bool save) {
@@ -48,7 +50,7 @@ void Registry::updateHead(bool save) {
         lastHash = Crypto::hash::sha512(lastHash + entry.getSignatureText());
         this->hashChain.push_back(lastHash);
         // Update head state
-        if (entry.verifySignature(*this->trustedKeys) != RegistryEntry::Verify::OK) continue;
+        if (entry.verifySignature(this->trustedKeys) != RegistryEntry::Verify::OK) continue;
         switch (entry.type) {
             case RegistryEntryType::UPSERT:
                 this->headState[entry.key] = entry.value;
@@ -157,7 +159,7 @@ bool Registry::addSerializedEntry(string serialized, bool save) {
     return this->addEntry(RegistryEntry(serialized), save);
 }
 
-void Registry::setTrustedKeys(map<PUB_HASH_T, Crypto::asym::PublicKey*>* keys) {
+void Registry::setTrustedKeys(map<PUB_HASH_T, Crypto::asym::PublicKey*> keys) {
     this->trustedKeys = keys;
 }
 
