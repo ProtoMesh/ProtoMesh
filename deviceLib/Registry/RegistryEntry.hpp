@@ -11,6 +11,8 @@ using namespace ArduinoJson;
 using namespace std;
 
 enum RegistryEntryType {
+    INSERT,
+    UPDATE,
     UPSERT,
     DELETE
 };

@@ -46,3 +46,7 @@ deviceLib/api/javascript/duktape
 # Build directories
 build
 cmake-build-debug
+
+# Cap'n Proto output files
+*.capnp.h
+*.capnp.c++

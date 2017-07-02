@@ -5,7 +5,7 @@
 #include "../api/storage.hpp"
 #include "../crypto/crypto.hpp"
 #include "../const.hpp"
-#include "../registry/Registry.hpp"
+#include "../Registry/Registry.hpp"
 #include "../api/time.hpp"
 
 class Device {

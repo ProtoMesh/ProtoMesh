@@ -11,12 +11,11 @@ random_device rd;
 mt19937 rng(rd());
 uniform_int_distribution<int> broadcastIntervalRange(REGISTRY_BROADCAST_INTERVAL_MIN, REGISTRY_BROADCAST_INTERVAL_MAX);
 
-Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> keys, StorageProvider *stor,
-                   NetworkProvider *net, REL_TIME_PROV_T relTimeProvider)
+Registry::Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider)
         : stor(stor), net(net), relTimeProvider(relTimeProvider),
           bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
           nextBroadcast(relTimeProvider->millis() + REGISTRY_BROADCAST_INTERVAL_MIN),
-          name(name), instanceIdentifier(Crypto::generateUUID()), trustedKeys(keys) {
+          name(name), instanceIdentifier(Crypto::generateUUID()) {
 
     this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis() - REGISTRY_SYNC_TIMEOUT;
 
@@ -30,7 +29,7 @@ Registry::Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> keys,
         }
     }
 
-    cout << "initialized registry: " << name << endl;
+    cout << "initialized Registry: " << name << endl;
 }
 
 void Registry::updateHead(bool save) {
@@ -50,7 +49,7 @@ void Registry::updateHead(bool save) {
         lastHash = Crypto::hash::sha512(lastHash + entry.getSignatureText());
         this->hashChain.push_back(lastHash);
         // Update head state
-        if (entry.verifySignature(this->trustedKeys) != RegistryEntry::Verify::OK) continue;
+//        if (entry.verifySignature(this->trustedKeys) != RegistryEntry::Verify::OK) continue; /// TODO Verify signature and add permission check
         switch (entry.type) {
             case RegistryEntryType::UPSERT:
                 this->headState[entry.key] = entry.value;
@@ -157,10 +156,6 @@ bool Registry::has(string key) {
 
 bool Registry::addSerializedEntry(string serialized, bool save) {
     return this->addEntry(RegistryEntry(serialized), save);
-}
-
-void Registry::setTrustedKeys(map<PUB_HASH_T, Crypto::asym::PublicKey*> keys) {
-    this->trustedKeys = keys;
 }
 
 void Registry::clear() {
@@ -341,7 +336,7 @@ string Registry::getHeadHash() const {
             DummyStorageHandler dstor;
             REL_TIME_PROV_T drelTimeProv(new DummyRelativeTimeProvider);
 
-            Registry reg("someRegistry", &keys, &dstor, &dnet, drelTimeProv);
+            Registry reg("someRegistry", &dstor, &dnet, drelTimeProv);
 
             WHEN("a serialized entry is added twice") {
                 reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"someintermediate\",\"parentUUID\":\"y\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);

@@ -27,7 +27,6 @@ class Registry {
     UUID instanceIdentifier;
 
     map<string, string> headState;
-    map<PUB_HASH_T, Crypto::asym::PublicKey*> trustedKeys;
 
     struct {
         long lastRequestTimestamp;
@@ -51,7 +50,7 @@ class Registry {
     bool isSyncInProgress();
 
 public:
-    Registry(string name, map<PUB_HASH_T, Crypto::asym::PublicKey *> keys, StorageProvider *stor, NetworkProvider *net,
+    Registry(string name, StorageProvider *stor, NetworkProvider *net,
              REL_TIME_PROV_T relTimeProvider);
 
     string get(string key);
@@ -60,7 +59,6 @@ public:
     bool has(string key);
 
     bool addSerializedEntry(string serialized, bool save = true);
-    void setTrustedKeys(map<PUB_HASH_T, Crypto::asym::PublicKey*> keys);
 
     vector<string> hashChain;
     string getHeadHash() const;

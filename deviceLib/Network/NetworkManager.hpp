@@ -4,7 +4,7 @@
 #include "../api/time.hpp"
 #include "../api/network.hpp"
 #include "../api/storage.hpp"
-#include "../registry/Registry.hpp"
+#include "../Registry/Registry.hpp"
 #include "../crypto/crypto.hpp"
 #include "Network.hpp"
 

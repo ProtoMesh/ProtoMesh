@@ -5,7 +5,7 @@
 #include "../api/network.hpp"
 #include "../api/storage.hpp"
 #include "../api/time.hpp"
-#include "../registry/Registry.hpp"
+#include "../Registry/Registry.hpp"
 
 class Network {
     NetworkProvider* net;
