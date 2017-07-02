@@ -47,6 +47,5 @@ deviceLib/api/javascript/duktape
 build
 cmake-build-debug
 
-# Cap'n Proto output files
-*.capnp.h
-*.capnp.c++
+# Compiled flatbuffers
+*_generated.h

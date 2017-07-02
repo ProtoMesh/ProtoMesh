@@ -105,8 +105,8 @@ RegistryEntry<VALUE_T>::operator string() const {
     return serialized;
 }
 
-template <typename VALUE_T>
-string RegistryEntry<VALUE_T>::getSignatureText() const {
+template <>
+string RegistryEntry<string>::getSignatureText() const {
     string type;
     switch (this->type) {
         case UPSERT:
