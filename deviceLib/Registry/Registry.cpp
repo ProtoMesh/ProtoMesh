@@ -11,7 +11,8 @@ random_device rd;
 mt19937 rng(rd());
 uniform_int_distribution<int> broadcastIntervalRange(REGISTRY_BROADCAST_INTERVAL_MIN, REGISTRY_BROADCAST_INTERVAL_MAX);
 
-Registry::Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider)
+template <typename VALUE_T>
+Registry<VALUE_T>::Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider)
         : stor(stor), net(net), relTimeProvider(relTimeProvider),
           bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
           nextBroadcast(relTimeProvider->millis() + REGISTRY_BROADCAST_INTERVAL_MIN),
@@ -32,7 +33,8 @@ Registry::Registry(string name, StorageProvider *stor, NetworkProvider *net, REL
     cout << "initialized Registry: " << name << endl;
 }
 
-void Registry::updateHead(bool save) {
+template <typename VALUE_T>
+void Registry<VALUE_T>::updateHead(bool save) {
     this->headState.clear();
     this->hashChain.clear();
 
@@ -68,7 +70,8 @@ void Registry::updateHead(bool save) {
     }
 }
 
-tuple<vector<unsigned long>, unsigned long> Registry::getBlockBorders(string parentUUID) {
+template <typename VALUE_T>
+tuple<vector<unsigned long>, unsigned long> Registry<VALUE_T>::getBlockBorders(string parentUUID) {
     unsigned long i = this->entries.size();
 
     vector<unsigned long> blockBorders = {this->entries.size()};
@@ -82,7 +85,8 @@ tuple<vector<unsigned long>, unsigned long> Registry::getBlockBorders(string par
     return make_tuple(blockBorders, i + 1);
 }
 
-bool Registry::addEntry(RegistryEntry e, bool save) {
+template <typename VALUE_T>
+bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> e, bool save) {
     if (!e.valid) return false;
     unsigned long index = 0;
 
@@ -126,46 +130,54 @@ bool Registry::addEntry(RegistryEntry e, bool save) {
     return false;
 }
 
-string Registry::getHeadUUID() {
+template <typename VALUE_T>
+string Registry<VALUE_T>::getHeadUUID() {
     if (this->entries.size() == 0) return "";
     return this->entries.back().uuid;
 }
 
-string Registry::get(string key) {
+template <typename VALUE_T>
+string Registry<VALUE_T>::get(string key) {
     auto i = this->headState.find(key);
     if (i != this->headState.end()) return i->second;
     return "";
 }
 
-void Registry::set(string key, string value, Crypto::asym::KeyPair pair) {
+template <typename VALUE_T>
+void Registry<VALUE_T>::set(string key, string value, Crypto::asym::KeyPair pair) {
     this->addEntry(
-            RegistryEntry(RegistryEntryType::UPSERT, key, value, pair, this->getHeadUUID())
+            RegistryEntry<VALUE_T>(RegistryEntryType::UPSERT, key, value, pair, this->getHeadUUID())
     );
 }
 
-void Registry::del(string key, Crypto::asym::KeyPair pair) {
+template <typename VALUE_T>
+void Registry<VALUE_T>::del(string key, Crypto::asym::KeyPair pair) {
     this->addEntry(
-            RegistryEntry(RegistryEntryType::DELETE, key, "", pair, this->getHeadUUID())
+            RegistryEntry<VALUE_T>(RegistryEntryType::DELETE, key, "", pair, this->getHeadUUID())
     );
 }
 
-bool Registry::has(string key) {
+template <typename VALUE_T>
+bool Registry<VALUE_T>::has(string key) {
     auto i = this->headState.find(key);
     return i != this->headState.end();
 }
 
-bool Registry::addSerializedEntry(string serialized, bool save) {
-    return this->addEntry(RegistryEntry(serialized), save);
+template <typename VALUE_T>
+bool Registry<VALUE_T>::addSerializedEntry(string serialized, bool save) {
+    return this->addEntry(RegistryEntry<VALUE_T>(serialized), save);
 }
 
-void Registry::clear() {
+template <typename VALUE_T>
+void Registry<VALUE_T>::clear() {
     this->stor->set(this->name, "");
     this->entries.clear();
     this->hashChain.clear();
     this->headState.clear();
 }
 
-void Registry::sync() {
+template <typename VALUE_T>
+void Registry<VALUE_T>::sync() {
     if (this->relTimeProvider->millis() < this->nextBroadcast ||
         !this->hashChain.size())
         return;
@@ -186,11 +198,13 @@ void Registry::sync() {
     this->bcast->broadcast(msg);
 }
 
-bool Registry::isSyncInProgress() {
+template <typename VALUE_T>
+bool Registry<VALUE_T>::isSyncInProgress() {
     return this->relTimeProvider->millis() - this->synchronizationStatus.lastRequestTimestamp < REGISTRY_SYNC_TIMEOUT;
 }
 
-UUID Registry::requestHash(size_t index, string target, UUID requestID) {
+template <typename VALUE_T>
+UUID Registry<VALUE_T>::requestHash(size_t index, string target, UUID requestID) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject &request = jsonBuffer.createObject();
     request["type"] = "REG_GET_HASH";
@@ -206,7 +220,8 @@ UUID Registry::requestHash(size_t index, string target, UUID requestID) {
     return requestID;
 }
 
-void Registry::broadcastEntries(size_t index) { // includes index
+template <typename VALUE_T>
+void Registry<VALUE_T>::broadcastEntries(size_t index) { // includes index
 
     for (size_t i = index; i < this->entries.size(); i++) {
         DynamicJsonBuffer jsonBuffer;
@@ -223,7 +238,8 @@ void Registry::broadcastEntries(size_t index) { // includes index
     }
 }
 
-void Registry::onBinarySearchResult(size_t index) {
+template <typename VALUE_T>
+void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
     this->broadcastEntries(index);
 
     DynamicJsonBuffer jsonBuffer;
@@ -239,7 +255,8 @@ void Registry::onBinarySearchResult(size_t index) {
     this->bcast->broadcast(requestStr);
 }
 
-void Registry::onData(string incomingData) {
+template <typename VALUE_T>
+void Registry<VALUE_T>::onData(string incomingData) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject &parsedData = jsonBuffer.parse(incomingData);
     string head = this->hashChain.size() > 0 ? this->hashChain.back() : "";
@@ -320,11 +337,14 @@ void Registry::onData(string incomingData) {
     }
 }
 
-string Registry::getHeadHash() const {
+template <typename VALUE_T>
+string Registry<VALUE_T>::getHeadHash() const {
     if (this->hashChain.size() > 0)
         return this->hashChain.back();
     return "";
 }
+
+template class Registry<string>;
 
 #ifdef UNIT_TESTING
     SCENARIO("Database/Registry", "[registry]") {
@@ -336,7 +356,7 @@ string Registry::getHeadHash() const {
             DummyStorageHandler dstor;
             REL_TIME_PROV_T drelTimeProv(new DummyRelativeTimeProvider);
 
-            Registry reg("someRegistry", &dstor, &dnet, drelTimeProv);
+            Registry<string> reg("someRegistry", &dstor, &dnet, drelTimeProv);
 
             WHEN("a serialized entry is added twice") {
                 reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"someintermediate\",\"parentUUID\":\"y\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);

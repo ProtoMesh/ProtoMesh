@@ -17,7 +17,7 @@ class Device {
 
     REL_TIME_PROV_T relTimeProvider;
 public:
-    vector<Registry> registries;
+    vector<Registry<string>> registries;
 
     inline Device(NetworkProvider *net, StorageProvider *stor, REL_TIME_PROV_T relTimeProvider) : net(net), stor(stor),
                                             deviceBcast(net->createBroadcastSocket(MULTICAST_NETWORK, DEVICE_PORT)),

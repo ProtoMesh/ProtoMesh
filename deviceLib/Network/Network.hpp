@@ -14,7 +14,7 @@ class Network {
 
     Crypto::asym::PublicKey masterKey;
 
-    map<string, Registry> registries;
+    map<string, Registry<string>> registries;
 
     void loadRegistry(string name);
 public:

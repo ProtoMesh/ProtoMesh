@@ -6,13 +6,15 @@
 
 #endif
 
-RegistryEntry::RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asym::KeyPair pair,
+template <typename VALUE_T>
+RegistryEntry<VALUE_T>::RegistryEntry(RegistryEntryType type, string key, VALUE_T value, Crypto::asym::KeyPair pair,
                              string parentUUID)
         : parentUUID(parentUUID), uuid(Crypto::generateUUID()), publicKeyUsed(pair.pub.getHash()), type(type), valid(true) , key(key), value(value){
     this->signature = Crypto::asym::sign(this->getSignatureText(), pair.priv);
 }
 
-RegistryEntry::RegistryEntry(string serializedEntry) : valid(true) {
+template <typename VALUE_T>
+RegistryEntry<VALUE_T>::RegistryEntry(string serializedEntry) : valid(true) {
 
     DynamicJsonBuffer jsonBuffer(600);
     JsonObject& root = jsonBuffer.parseObject(serializedEntry);
@@ -66,10 +68,11 @@ RegistryEntry::RegistryEntry(string serializedEntry) : valid(true) {
 
     // Contents
     this->key = root["content"]["key"].as<string>();
-    this->value = root["content"]["value"].as<string>();
+    this->value = root["content"]["value"].as<VALUE_T>();
 }
 
-RegistryEntry::operator string() const {
+template <typename VALUE_T>
+RegistryEntry<VALUE_T>::operator string() const {
     DynamicJsonBuffer jsonBuffer(600);
     JsonObject& root = jsonBuffer.createObject();
 
@@ -102,7 +105,8 @@ RegistryEntry::operator string() const {
     return serialized;
 }
 
-string RegistryEntry::getSignatureText() const {
+template <typename VALUE_T>
+string RegistryEntry<VALUE_T>::getSignatureText() const {
     string type;
     switch (this->type) {
         case UPSERT:
@@ -112,18 +116,20 @@ string RegistryEntry::getSignatureText() const {
             type = "DELETE";
             break;
     }
-    return this->uuid + this->key + this->value + type;
+    return this->uuid + this->key + this->value + type; // TODO Not all VALUE_T might implement the + operator
 }
-
-RegistryEntry::Verify RegistryEntry::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey *> keys) const {
+template <typename VALUE_T>
+SignatureVerificationResult RegistryEntry<VALUE_T>::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey *> keys) const {
     // Search for the correct key to use
     auto it = keys.find(this->publicKeyUsed);
-    if (it == keys.end()) return Verify::PubKeyNotFound;
+    if (it == keys.end()) return SignatureVerificationResult::PubKeyNotFound;
 
     // Verify the signature
     bool res = Crypto::asym::verify(this->getSignatureText(), this->signature, it->second);
-    return res ? Verify::OK : Verify::SignatureInvalid;
+    return res ? SignatureVerificationResult::OK : SignatureVerificationResult::SignatureInvalid;
 }
+
+template class RegistryEntry<string>;
 
 #ifdef UNIT_TESTING
 
@@ -143,7 +149,7 @@ SCENARIO("RegistryEntries", "[registry][entry]") {
         string key("someKey");
         string val("someValue");
         string parentUUID("parenthashofdoom");
-        RegistryEntry entry(RegistryEntryType::UPSERT, key, val, pair, parentUUID);
+        RegistryEntry<string> entry(RegistryEntryType::UPSERT, key, val, pair, parentUUID);
 
         WHEN("it is serialized") {
             string serialized(entry);
@@ -162,7 +168,7 @@ SCENARIO("RegistryEntries", "[registry][entry]") {
             }
 
             AND_WHEN("it is reconstructed") {
-                RegistryEntry reconstructedEntry(serialized);
+                RegistryEntry<string> reconstructedEntry(serialized);
 
                 THEN("it should match the original entry") {
                     REQUIRE(entry == reconstructedEntry);

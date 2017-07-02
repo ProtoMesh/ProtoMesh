@@ -14,6 +14,7 @@
 
 using namespace std;
 
+template <class VALUE_T>
 class Registry {
     // Variables
     StorageProvider* stor;
@@ -38,7 +39,7 @@ class Registry {
 
     // Functions
     void updateHead(bool save);
-    bool addEntry(RegistryEntry e, bool save = true);
+    bool addEntry(RegistryEntry<VALUE_T> e, bool save = true);
 
     string getHeadUUID();
 
@@ -76,7 +77,7 @@ public:
         }
 //        for (auto &entry : this->entries) cout << string(entry) << endl;
     };
-    vector<RegistryEntry> entries;
+    vector<RegistryEntry<VALUE_T>> entries;
 };
 
 

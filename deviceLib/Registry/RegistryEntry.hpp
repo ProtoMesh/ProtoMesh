@@ -17,6 +17,13 @@ enum RegistryEntryType {
     DELETE
 };
 
+enum SignatureVerificationResult {
+    OK,
+    PubKeyNotFound,
+    SignatureInvalid
+};
+
+template <class VALUE_T>
 class RegistryEntry {
 public:
     // Metadata
@@ -29,22 +36,16 @@ public:
 
     // Content
     string key;
-    string value;
+    VALUE_T value;
 
     // Functions
-    RegistryEntry(RegistryEntryType type, string key, string value, Crypto::asym::KeyPair pair, string parentHash = "");
+    RegistryEntry(RegistryEntryType type, string key, VALUE_T value, Crypto::asym::KeyPair pair, string parentHash = "");
 
     RegistryEntry(string serializedEntry);
 
-    enum Verify {
-        OK,
-        PubKeyNotFound,
-        SignatureInvalid
-    };
-
     string getSignatureText() const;
 
-    Verify verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey *> keys) const;
+    SignatureVerificationResult verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey *> keys) const;
 
     operator string() const;
 
