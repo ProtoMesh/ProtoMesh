@@ -4,6 +4,7 @@ project(openHome)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic")
 
+set(FLATBUFFERS_DIR deviceLib/buffers)
 include(cmake/BuildFlatbuffers.cmake)
 
 add_subdirectory(osLib/linux)
