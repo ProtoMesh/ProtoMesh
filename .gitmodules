@@ -7,3 +7,6 @@
 [submodule "deviceLib/test/catch"]
 	path = deviceLib/test/catch
 	url = https://github.com/philsquared/Catch
+[submodule "lib/flatbuffers"]
+	path = lib/flatbuffers
+	url = https://github.com/google/flatbuffers
