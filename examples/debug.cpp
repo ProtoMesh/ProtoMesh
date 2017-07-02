@@ -28,17 +28,17 @@ int main() {
 
 //    Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
 //    Crypto::asym::KeyPair pair2(Crypto::asym::generateKeyPair());
-
+//
 //    std::map<PUB_HASH_T, Crypto::asym::PublicKey *> keys;
 //    keys[pair.pub.getHash()] = &pair.pub;
 //    keys[pair2.pub.getHash()] = &pair2.pub;
-
-//    Registry reg("testReg", keys, &stor, &net, timePtr);
+//
+//    Registry<string> reg("testReg", &stor, &net, timePtr);
 //    reg.clear();
-
-//    Registry reg2("testReg", keys, &stor, &net, timePtr);
+//
+//    Registry<string> reg2("testReg", &stor, &net, timePtr);
 //    reg2.clear();
-
+//
 //    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"x\",\"parentUUID\":\"\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
 //    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"y\",\"parentUUID\":\"x\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
 //    reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"z\",\"parentUUID\":\"y\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);

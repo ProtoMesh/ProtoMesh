@@ -73,6 +73,40 @@ RegistryEntry<VALUE_T>::RegistryEntry(string serializedEntry) : valid(true) {
 
 template <typename VALUE_T>
 RegistryEntry<VALUE_T>::operator string() const {
+    flatbuffers::FlatBufferBuilder builder;
+
+    auto key = builder.CreateString(this->key);
+
+    auto value = builder.CreateString(this->value);
+
+    openHome::UUID id = openHome::UUID(1, 2, 3, 4);
+
+    vector<uint8_t> signature(&this->signature[0], &this->signature[this->signature.size() - 1]);
+    auto vec = builder.CreateVector(signature);
+    auto sig = openHome::crypto::CreateSignature(builder, vec, vec);
+
+    EntryBuilder entry_builder(builder);
+
+    // TODO Use reasonable values!
+    entry_builder.add_signature(sig);
+    entry_builder.add_uuid(&id);
+    entry_builder.add_parent(&id);
+    entry_builder.add_value(value);
+    entry_builder.add_key(key);
+    switch (this->type) {
+        case RegistryEntryType::UPSERT: entry_builder.add_type(EntryType_UPSERT); break;
+        case RegistryEntryType::DELETE: entry_builder.add_type(EntryType_DELETE); break;
+    }
+
+    auto entry = entry_builder.Finish();
+    builder.Finish(entry);
+
+    uint8_t *buf = builder.GetBufferPointer();
+    int size = builder.GetSize();
+
+    cout << size << endl;
+
+    // LEGACY CODE
     DynamicJsonBuffer jsonBuffer(600);
     JsonObject& root = jsonBuffer.createObject();
 
@@ -102,6 +136,9 @@ RegistryEntry<VALUE_T>::operator string() const {
 
     string serialized;
     root.printTo(serialized);
+
+    cout << serialized.size() << endl << endl;
+
     return serialized;
 }
 

@@ -1,0 +1,9 @@
+include "entry.fbs";
+
+namespace openHome.registry;
+
+table Registry {
+    entries: [Entry];
+}
+
+root_type Registry;

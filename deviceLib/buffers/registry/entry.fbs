@@ -1,0 +1,23 @@
+include "../uuid.fbs";
+include "../crypto.fbs";
+
+namespace openHome.registry;
+
+enum EntryType:ubyte {
+    UPSERT,
+    DELETE
+}
+
+table Entry {
+    uuid: UUID (required);
+    parent: UUID (required);
+
+    type: EntryType;
+
+    key: string (required);
+    value: string; // TODO Change type to ubyte
+
+    signature: crypto.Signature;
+}
+
+root_type Entry;
