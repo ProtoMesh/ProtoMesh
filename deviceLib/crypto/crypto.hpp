@@ -31,13 +31,59 @@ using namespace std;
 #define NETWORK_KEY_SIZE COMPRESSED_PUB_KEY_SIZE
 #define SIGNATURE_T array<uint8_t, PUB_KEY_SIZE>
 #define HASH vector<uint8_t>
-#define UUID string
+//#define UUID string
 
 // Defining the elliptic curve to use
 extern const struct uECC_Curve_t* ECC_CURVE;
 
 // Define the cryptography namespace
 namespace Crypto {
+    class UUID {
+    public:
+        ulong a, b, c, d;
+
+        static UUID Empty() {
+            return UUID(0, 0, 0, 0);
+        }
+        UUID(ulong a, ulong b, ulong c, ulong d) : a(a), b(b), c(c), d(d) {};
+        UUID() {
+            random_device rd;
+            default_random_engine generator(rd());
+            uniform_int_distribution<uint32_t> distribution(0, numeric_limits<uint32_t>::max());
+
+            a = distribution(generator);
+            b = distribution(generator);
+            c = distribution(generator);
+            d = distribution(generator);
+        }
+
+        operator string() const {
+            stringstream ss;
+            ss << hex << nouppercase << setfill('0');
+
+            ss << setw(8) << (a) << '-';
+            ss << setw(4) << (b >> 16) << '-';
+            ss << setw(4) << (b & 0xFFFF) << '-';
+            ss << setw(4) << (c >> 16) << '-';
+            ss << setw(4) << (c & 0xFFFF);
+            ss << setw(8) << d;
+
+            return ss.str();
+        }
+        inline bool operator==(const UUID &other) {
+            return a == other.a && b == other.b && c == other.c && d == other.d;
+        }
+        inline bool operator!=(const UUID &other) {
+            return !(&other == this);
+        }
+        inline bool operator>(const UUID &other) {
+            return a >= other.a && b >= other.b && c >= other.c && d > other.c;
+        }
+        inline bool operator<(const UUID &other) {
+            return &other >= this;
+        }
+    };
+
     string generateUUID();
 
     namespace hash {

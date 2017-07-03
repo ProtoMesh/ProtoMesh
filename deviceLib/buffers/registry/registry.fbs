@@ -6,4 +6,5 @@ table Registry {
     entries: [Entry];
 }
 
+file_identifier "REGI";
 root_type Registry;

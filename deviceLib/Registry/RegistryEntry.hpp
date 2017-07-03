@@ -15,7 +15,6 @@
 
 using namespace ArduinoJson;
 using namespace std;
-using namespace openHome::registry;
 
 enum RegistryEntryType {
     UPSERT,
@@ -30,12 +29,15 @@ enum SignatureVerificationResult {
 
 template <class VALUE_T>
 class RegistryEntry {
+    void loadFromBuffer(const openHome::registry::Entry *entry);
 public:
     // Metadata
-    string parentUUID;
-    UUID uuid;
+    Crypto::UUID parentUUID;
+    Crypto::UUID uuid;
+
     SIGNATURE_T signature;
     PUB_HASH_T publicKeyUsed;
+
     RegistryEntryType type;
     bool valid;
 
@@ -44,17 +46,20 @@ public:
     VALUE_T value;
 
     // Functions
-    RegistryEntry(RegistryEntryType type, string key, VALUE_T value, Crypto::asym::KeyPair pair, string parentHash = "");
+    RegistryEntry(RegistryEntryType type, string key, VALUE_T value, Crypto::asym::KeyPair pair, Crypto::UUID parentID);
 
-    RegistryEntry(string serializedEntry);
+    RegistryEntry(vector<uint8_t> serializedEntry);
+    RegistryEntry(const openHome::registry::Entry* serializedEntry);
 
     string getSignatureText() const;
 
     SignatureVerificationResult verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey *> keys) const;
 
-    operator string() const;
+    vector<uint8_t> serialize() const;
 
-    inline bool operator==(const RegistryEntry &other) { return string(*this) == string(other); }
+    inline bool operator==(const RegistryEntry &other) { return this->serialize() == other.serialize(); }
+
+    flatbuffers::Offset<openHome::registry::Entry> to_flatbuffer_offset(flatbuffers::FlatBufferBuilder &builder) const;
 };
 
 

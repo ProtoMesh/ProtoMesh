@@ -17,16 +17,17 @@ Registry<VALUE_T>::Registry(string name, StorageProvider *stor, NetworkProvider 
           bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
           nextBroadcast(relTimeProvider->millis() + REGISTRY_BROADCAST_INTERVAL_MIN),
           name(name), instanceIdentifier(Crypto::generateUUID()) {
+    using namespace openHome::registry;
 
     this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis() - REGISTRY_SYNC_TIMEOUT;
 
-    if (this->stor->has(this->name)) {
-        DynamicJsonBuffer jsonBuffer;
-        string loadedRegistry(this->stor->get(this->name));
-        JsonObject& root = jsonBuffer.parse(loadedRegistry);
-        JsonArray& entries = root["entries"];
-        for (auto entry : entries) {
-            this->addSerializedEntry(entry, false);
+    if (this->stor->has(REGISTRY_STORAGE_PREFIX + this->name)) {
+        vector<uint8_t> serializedRegistry(this->stor->get(REGISTRY_STORAGE_PREFIX + this->name));
+        auto registry = GetRegistry(serializedRegistry.data());
+        registry->entries()->Length();
+
+        for (flatbuffers::uoffset_t i = 0; i < registry->entries()->Length(); i++) {
+            this->addSerializedEntry(registry->entries()->Get(i), false);
         }
     }
 
@@ -35,18 +36,19 @@ Registry<VALUE_T>::Registry(string name, StorageProvider *stor, NetworkProvider 
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::updateHead(bool save) {
+    using namespace openHome::registry;
+
     this->headState.clear();
     this->hashChain.clear();
 
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject& root = jsonBuffer.createObject();
-    JsonArray& serializedEntries = jsonBuffer.createArray();
+    flatbuffers::FlatBufferBuilder builder;
+    vector<flatbuffers::Offset<Entry>> entryOffsets;
 
     string lastHash = "";
 
     for (auto &entry : entries) {
         // Save entries
-        serializedEntries.add(string(entry));
+        entryOffsets.push_back(entry.to_flatbuffer_offset(builder));
         // Generate hash for the entry
         lastHash = Crypto::hash::sha512(lastHash + entry.getSignatureText());
         this->hashChain.push_back(lastHash);
@@ -63,15 +65,18 @@ void Registry<VALUE_T>::updateHead(bool save) {
     }
 
     if (save) {
-        root["entries"] = serializedEntries;
-        string serializedRegistry;
-        root.printTo(serializedRegistry);
-        this->stor->set(this->name, serializedRegistry);
+        auto entries = builder.CreateVector(entryOffsets);
+        auto registry = CreateRegistry(builder, entries);
+        builder.Finish(registry);
+
+        uint8_t *buf = builder.GetBufferPointer();
+        vector<uint8_t> serializedRegistry(buf, buf + builder.GetSize());
+        this->stor->set(REGISTRY_STORAGE_PREFIX + this->name, serializedRegistry);
     }
 }
 
 template <typename VALUE_T>
-tuple<vector<unsigned long>, unsigned long> Registry<VALUE_T>::getBlockBorders(string parentUUID) {
+tuple<vector<unsigned long>, unsigned long> Registry<VALUE_T>::getBlockBorders(Crypto::UUID parentUUID) {
     unsigned long i = this->entries.size();
 
     vector<unsigned long> blockBorders = {this->entries.size()};
@@ -91,7 +96,7 @@ bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> e, bool save) {
     unsigned long index = 0;
 
     // If the entry is supposed to have a parent then calculate its new position
-    if (e.parentUUID.size() && this->entries.size() > 0) {
+    if (e.parentUUID != Crypto::UUID::Empty() && this->entries.size() > 0) {
         auto res = this->getBlockBorders(e.parentUUID);
         vector<unsigned long> blockBorders(std::get<0>(res));
         index = std::get<1>(res);
@@ -116,11 +121,16 @@ bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> e, bool save) {
         }
     }
 
+
+    bool below_identical = false, above_identical = false, target_identical = false;
+    if (this->entries.size() > 0) {
+        below_identical = (index > 0 && this->entries[index - 1].uuid == e.uuid);
+        above_identical = (index < (this->entries.size() - 1) && this->entries[index + 1].uuid == e.uuid);
+        target_identical = (this->entries[index].uuid == e.uuid);
+    }
+
     // Check the entries neighbours to avoid dups
-    if (!(this->entries.size() > 0 && (
-            (index > 0 && this->entries[index - 1].uuid == e.uuid)
-            || (index < (this->entries.size() - 1) && this->entries[index + 1].uuid == e.uuid)
-    ))) {
+    if (!below_identical && !above_identical && !target_identical) {
         // Insert the entry at the previously determined position
         this->entries.insert(this->entries.begin() + index, e);
         this->updateHead(save);
@@ -131,8 +141,8 @@ bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> e, bool save) {
 }
 
 template <typename VALUE_T>
-string Registry<VALUE_T>::getHeadUUID() {
-    if (this->entries.size() == 0) return "";
+Crypto::UUID Registry<VALUE_T>::getHeadUUID() {
+    if (this->entries.size() == 0) return Crypto::UUID::Empty();
     return this->entries.back().uuid;
 }
 
@@ -164,7 +174,7 @@ bool Registry<VALUE_T>::has(string key) {
 }
 
 template <typename VALUE_T>
-bool Registry<VALUE_T>::addSerializedEntry(string serialized, bool save) {
+bool Registry<VALUE_T>::addSerializedEntry(const openHome::registry::Entry* serialized, bool save) {
     return this->addEntry(RegistryEntry<VALUE_T>(serialized), save);
 }
 
@@ -204,12 +214,12 @@ bool Registry<VALUE_T>::isSyncInProgress() {
 }
 
 template <typename VALUE_T>
-UUID Registry<VALUE_T>::requestHash(size_t index, string target, UUID requestID) {
+Crypto::UUID Registry<VALUE_T>::requestHash(size_t index, string target, Crypto::UUID requestID) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject &request = jsonBuffer.createObject();
     request["type"] = "REG_GET_HASH";
     request["index"] = index;
-    request["requestID"] = requestID;
+    request["requestID"] = string(requestID);
     request["targetInstance"] = target;
     request["registryName"] = this->name;
 
@@ -229,7 +239,7 @@ void Registry<VALUE_T>::broadcastEntries(size_t index) { // includes index
 
         request["type"] = "REG_ENTRY";
         request["registryName"] = this->name;
-        request["entry"] = (string) this->entries[i];
+//        request["entry"] = (string) this->entries[i]; // TODO Implement
         request["instance"] = this->instanceIdentifier;
 
         string requestStr;
@@ -247,7 +257,7 @@ void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
 
     request["type"] = "REG_REQUEST_ENTRIES";
     request["registryName"] = this->name;
-    request["targetInstance"] = this->synchronizationStatus.communicationTarget;
+    request["targetInstance"] = string(this->synchronizationStatus.communicationTarget);
     request["index"] = index;
 
     string requestStr;
@@ -261,80 +271,82 @@ void Registry<VALUE_T>::onData(string incomingData) {
     JsonObject &parsedData = jsonBuffer.parse(incomingData);
     string head = this->hashChain.size() > 0 ? this->hashChain.back() : "";
 
-    if (parsedData.success() && parsedData.containsKey("registryName") && parsedData["registryName"] == this->name && parsedData.containsKey("type")) {
-
-        string type = parsedData["type"];
-
-        if (parsedData.containsKey("targetInstance") && parsedData["targetInstance"] == this->instanceIdentifier) {
-            if (type == "REG_REQUEST_ENTRIES" && parsedData.containsKey("index")) {
-                this->broadcastEntries(parsedData["index"]);
-            }
-
-            if (type == "REG_GET_HASH") {
-                if (! (parsedData.containsKey("index") && parsedData.containsKey("requestID"))) return;
-                JsonObject &hashBroadcast = jsonBuffer.createObject();
-                hashBroadcast["type"] = "REG_HASH";
-                hashBroadcast["answerID"] = parsedData["requestID"];
-                hashBroadcast["registryName"] = this->name;
-                hashBroadcast["instance"] = this->instanceIdentifier;
-                if (this->hashChain.size() > parsedData["index"].as<size_t>())
-                    hashBroadcast["hash"] = this->hashChain[parsedData["index"].as<size_t>()];
-                else
-                    hashBroadcast["hash"] = "";
-
-                string hashBcast;
-                hashBroadcast.printTo(hashBcast);
-                this->bcast->broadcast(hashBcast);
-            }
-        }
-
-        if (type == "REG_HEAD" && head != parsedData["head"] && parsedData.containsKey("instance") && !this->isSyncInProgress()) {
-            size_t l_remote = parsedData["length"];
-            size_t l_min = min(l_remote, (size_t) this->entries.size()-1);
-
-            UUID requestID(Crypto::generateUUID());
-            this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
-            this->synchronizationStatus.requestID = requestID;
-            this->synchronizationStatus.min = 0;
-            this->synchronizationStatus.max = l_min;
-            this->synchronizationStatus.communicationTarget = parsedData["instance"].as<string>();
-            this->requestHash((size_t) ceil(l_min / 2), parsedData["instance"], requestID);
-
-        }
-
-        if (type == "REG_HASH" && parsedData.containsKey("hash") && parsedData.containsKey("answerID") &&
-            parsedData["answerID"] == this->synchronizationStatus.requestID && this->isSyncInProgress()) {
-            size_t min = this->synchronizationStatus.min;
-            size_t max = this->synchronizationStatus.max;
-            size_t index = (size_t) ceil(min + (max - min) / 2);
-
-            if (this->hashChain.size() <= index) return;
-
-            if (this->hashChain[index] == parsedData["hash"])
-                min = index+1;
-            else
-                max = index-1;
-
-            if (min > max) {
-                this->onBinarySearchResult(min);
-            } else if (min == index) {
-                this->onBinarySearchResult(index);
-            } else {
-                UUID requestID(Crypto::generateUUID());
-                this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
-                this->synchronizationStatus.requestID = requestID;
-                this->synchronizationStatus.min = min;
-                this->synchronizationStatus.max = max;
-                this->requestHash((size_t) ceil(min + (max - min) / 2), parsedData["instance"], requestID);
-            }
-        }
-
-        if (type == "REG_ENTRY" && parsedData.containsKey("entry") && parsedData.containsKey("instance") && parsedData["instance"] != this->instanceIdentifier) {
-            cout << "[" << this->instanceIdentifier << "] INSERTING ENTRY" << endl;
-            this->addSerializedEntry(parsedData["entry"].as<string>());
-//            cout << this->addSerializedEntry(parsedData["entry"].as<string>()) << " | " << this->entries.size() << endl;
-        }
-    }
+//    if (parsedData.success() && parsedData.containsKey("registryName") && parsedData["registryName"] == this->name && parsedData.containsKey("type")) {
+//
+//        string type = parsedData["type"];
+//
+//        if (parsedData.containsKey("targetInstance") && parsedData["targetInstance"] == this->instanceIdentifier) {
+//            if (type == "REG_REQUEST_ENTRIES" && parsedData.containsKey("index")) {
+//                this->broadcastEntries(parsedData["index"]);
+//            }
+//
+//            if (type == "REG_GET_HASH") {
+//                if (! (parsedData.containsKey("index") && parsedData.containsKey("requestID"))) return;
+//                JsonObject &hashBroadcast = jsonBuffer.createObject();
+//                hashBroadcast["type"] = "REG_HASH";
+//                hashBroadcast["answerID"] = parsedData["requestID"];
+//                hashBroadcast["registryName"] = this->name;
+//                hashBroadcast["instance"] = this->instanceIdentifier;
+//                if (this->hashChain.size() > parsedData["index"].as<size_t>())
+//                    hashBroadcast["hash"] = this->hashChain[parsedData["index"].as<size_t>()];
+//                else
+//                    hashBroadcast["hash"] = "";
+//
+//                string hashBcast;
+//                hashBroadcast.printTo(hashBcast);
+//                this->bcast->broadcast(hashBcast);
+//            }
+//        }
+//
+//        if (type == "REG_HEAD" && head != parsedData["head"] && parsedData.containsKey("instance") && !this->isSyncInProgress()) {
+//            size_t l_remote = parsedData["length"];
+//            size_t l_min = min(l_remote, (size_t) this->entries.size()-1);
+//
+//            Crypto::UUID requestID();
+//            // TODO Implement commented out code
+//            this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
+////            this->synchronizationStatus.requestID = requestID;
+//            this->synchronizationStatus.min = 0;
+//            this->synchronizationStatus.max = l_min;
+////            this->synchronizationStatus.communicationTarget = parsedData["instance"].as<string>();
+////            this->requestHash((size_t) ceil(l_min / 2), parsedData["instance"], requestID);
+//
+//        }
+//
+//        if (type == "REG_HASH" && parsedData.containsKey("hash") && parsedData.containsKey("answerID") &&
+//            parsedData["answerID"] == this->synchronizationStatus.requestID && this->isSyncInProgress()) {
+//            size_t min = this->synchronizationStatus.min;
+//            size_t max = this->synchronizationStatus.max;
+//            size_t index = (size_t) ceil(min + (max - min) / 2);
+//
+//            if (this->hashChain.size() <= index) return;
+//
+//            if (this->hashChain[index] == parsedData["hash"])
+//                min = index+1;
+//            else
+//                max = index-1;
+//
+//            if (min > max) {
+//                this->onBinarySearchResult(min);
+//            } else if (min == index) {
+//                this->onBinarySearchResult(index);
+//            } else {
+//                Crypto::UUID requestID();
+//                // TODO Implement commented out code
+//                this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
+////                this->synchronizationStatus.requestID = string(requestID);
+//                this->synchronizationStatus.min = min;
+//                this->synchronizationStatus.max = max;
+////                this->requestHash((size_t) ceil(min + (max - min) / 2), parsedData["instance"], requestID);
+//            }
+//        }
+//
+//        if (type == "REG_ENTRY" && parsedData.containsKey("entry") && parsedData.containsKey("instance") && parsedData["instance"] != this->instanceIdentifier) {
+//            cout << "[" << this->instanceIdentifier << "] INSERTING ENTRY" << endl;
+//            this->addSerializedEntry(parsedData["entry"].as<string>());
+////            cout << this->addSerializedEntry(parsedData["entry"].as<string>()) << " | " << this->entries.size() << endl;
+//        }
+//    }
 }
 
 template <typename VALUE_T>
@@ -347,6 +359,8 @@ string Registry<VALUE_T>::getHeadHash() const {
 template class Registry<string>;
 
 #ifdef UNIT_TESTING
+    #include "flatbuffers/idl.h"
+
     SCENARIO("Database/Registry", "[registry]") {
         GIVEN("a cleared registry and a KeyPair") {
             Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
@@ -359,8 +373,25 @@ template class Registry<string>;
             Registry<string> reg("someRegistry", &dstor, &dnet, drelTimeProv);
 
             WHEN("a serialized entry is added twice") {
-                reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"someintermediate\",\"parentUUID\":\"y\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
-                reg.addSerializedEntry("{\"metadata\":{\"uuid\":\"someintermediate\",\"parentUUID\":\"y\",\"signature\":\"ebd6a67e627b02947d131706fd6e75344af1518621852a01f548744801005e09074363a5b795b882e70e80c75df86942cbf2a644a918f07b3566d8d8044fe119\",\"publicKeyUsed\":\"e591486d713f21f4\",\"type\":\"UPSERT\"},\"content\":{\"key\":\"someDevice\",\"value\":\"someValue\"}}", false);
+
+                std::string schemafile;
+                std::string jsonfile;
+                bool ok = flatbuffers::LoadFile("../deviceLib/buffers/registry/entry.fbs", false, &schemafile) &&
+                          flatbuffers::LoadFile("../deviceLib/test/data/registry_entry.json", false, &jsonfile);
+                REQUIRE(ok);
+
+                flatbuffers::Parser parser;
+                const char *include_directories[] = { "../deviceLib/buffers/", "../deviceLib/buffers/registry", nullptr };
+                ok = parser.Parse(schemafile.c_str(), include_directories) &&
+                     parser.Parse(jsonfile.c_str(), include_directories);
+
+                CAPTURE(parser.error_);
+                REQUIRE(ok);
+
+                auto entry = openHome::registry::GetEntry(parser.builder_.GetBufferPointer());
+                reg.addSerializedEntry(entry);
+                reg.addSerializedEntry(entry);
+
                 THEN("the second one should be omitted") {
                     REQUIRE(reg.entries.size() == 1);
                 }
@@ -400,20 +431,20 @@ template class Registry<string>;
                 }
             }
 
-            WHEN("a value is set with a different public key (not in the list of trusted keys)") {
-                string key("someKey");
-                string val("someValue");
-                Crypto::asym::KeyPair otherPair(Crypto::asym::generateKeyPair());
-                reg.set(key, val, otherPair);
-
-                THEN("has should be false") {
-                    REQUIRE_FALSE(reg.has(key));
-                }
-
-                THEN("the read value should be empty") {
-                    REQUIRE( reg.get(key) == "" );
-                }
-            }
+//            WHEN("a value is set with a different public key (not in the list of trusted keys)") {
+//                string key("someKey");
+//                string val("someValue");
+//                Crypto::asym::KeyPair otherPair(Crypto::asym::generateKeyPair());
+//                reg.set(key, val, otherPair);
+//
+//                THEN("has should be false") {
+//                    REQUIRE_FALSE(reg.has(key));
+//                }
+//
+//                THEN("the read value should be empty") {
+//                    REQUIRE( reg.get(key) == "" );
+//                }
+//            }
         }
     }
 #endif

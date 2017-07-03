@@ -12,6 +12,11 @@
 #include "../api/time.hpp"
 #include <random>
 
+#include "flatbuffers/flatbuffers.h"
+#include "../buffers/registry/registry_generated.h"
+
+#define REGISTRY_STORAGE_PREFIX "registry::"
+
 using namespace std;
 
 template <class VALUE_T>
@@ -25,27 +30,27 @@ class Registry {
     long nextBroadcast;
 
     string name;
-    UUID instanceIdentifier;
+    string instanceIdentifier; // UUID
 
-    map<string, string> headState;
+    map<string, VALUE_T> headState;
 
     struct {
         long lastRequestTimestamp;
-        UUID requestID;
+        Crypto::UUID requestID;
         size_t min;
         size_t max;
-        UUID communicationTarget;
+        Crypto::UUID communicationTarget;
     } synchronizationStatus;
 
     // Functions
     void updateHead(bool save);
     bool addEntry(RegistryEntry<VALUE_T> e, bool save = true);
 
-    string getHeadUUID();
+    Crypto::UUID getHeadUUID();
 
-    tuple<vector<unsigned long>, unsigned long> getBlockBorders(string parentUUID = "");
+    tuple<vector<unsigned long>, unsigned long> getBlockBorders(Crypto::UUID parentUUID = Crypto::UUID::Empty());
 
-    string requestHash(size_t index, string target, UUID requestID);
+    Crypto::UUID requestHash(size_t index, string target, Crypto::UUID requestID); // requestID = UUID
     void onBinarySearchResult(size_t index);
     void broadcastEntries(size_t index);
     bool isSyncInProgress();
@@ -59,7 +64,7 @@ public:
     void del(string key, Crypto::asym::KeyPair pair);
     bool has(string key);
 
-    bool addSerializedEntry(string serialized, bool save = true);
+    bool addSerializedEntry(const openHome::registry::Entry* serialized, bool save = true);
 
     vector<string> hashChain;
     string getHeadHash() const;
@@ -72,9 +77,10 @@ public:
 
     inline void print() {
         cout << this->instanceIdentifier << " | " << this->entries.size() << endl;
-        for (unsigned int i = 0; i < this->entries.size(); i++) {
-            cout << string(this->entries[i]) << endl;
-        }
+        cout << "No printing....sorry" << endl;
+//        for (unsigned int i = 0; i < this->entries.size(); i++) {
+//            cout << string(this->entries[i]) << endl;
+//        }
 //        for (auto &entry : this->entries) cout << string(entry) << endl;
     };
     vector<RegistryEntry<VALUE_T>> entries;

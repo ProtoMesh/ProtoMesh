@@ -20,4 +20,5 @@ table Entry {
     signature: crypto.Signature;
 }
 
+file_identifier "REGE";
 root_type Entry;

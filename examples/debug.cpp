@@ -26,15 +26,19 @@ int main() {
 
     Device dev(&net, &stor, timePtr);
 
-//    Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
+    Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
 //    Crypto::asym::KeyPair pair2(Crypto::asym::generateKeyPair());
 //
 //    std::map<PUB_HASH_T, Crypto::asym::PublicKey *> keys;
 //    keys[pair.pub.getHash()] = &pair.pub;
 //    keys[pair2.pub.getHash()] = &pair2.pub;
 //
-//    Registry<string> reg("testReg", &stor, &net, timePtr);
+    Registry<string> reg("testReg", &stor, &net, timePtr);
+    cout << reg.has("test") << endl;
+    cout << reg.get("test") << endl;
 //    reg.clear();
+    reg.set("test", "HELLO WORLD! IT WORKED3!", pair);
+
 //
 //    Registry<string> reg2("testReg", &stor, &net, timePtr);
 //    reg2.clear();

@@ -8,138 +8,96 @@
 
 template <typename VALUE_T>
 RegistryEntry<VALUE_T>::RegistryEntry(RegistryEntryType type, string key, VALUE_T value, Crypto::asym::KeyPair pair,
-                             string parentUUID)
-        : parentUUID(parentUUID), uuid(Crypto::generateUUID()), publicKeyUsed(pair.pub.getHash()), type(type), valid(true) , key(key), value(value){
+                             Crypto::UUID parentUUID)
+        : parentUUID(parentUUID), uuid(Crypto::UUID()), publicKeyUsed(pair.pub.getHash()), type(type), valid(true) , key(key), value(value){
     this->signature = Crypto::asym::sign(this->getSignatureText(), pair.priv);
 }
 
 template <typename VALUE_T>
-RegistryEntry<VALUE_T>::RegistryEntry(string serializedEntry) : valid(true) {
+void RegistryEntry<VALUE_T>::loadFromBuffer(const openHome::registry::Entry* entry) {
+    using namespace openHome::registry;
 
-    DynamicJsonBuffer jsonBuffer(600);
-    JsonObject& root = jsonBuffer.parseObject(serializedEntry);
+    auto uuid = entry->uuid();
+    this->uuid = Crypto::UUID(uuid->a(), uuid->b(), uuid->c(), uuid->d());
 
-    if (root.success()) {
-        if (root.containsKey("metadata")) {
-            JsonObject& meta = root["metadata"];
+    auto puuid = entry->parent();
+    this->parentUUID = Crypto::UUID(puuid->a(), puuid->b(), puuid->c(), puuid->d());
 
-            bool sig = meta.containsKey("signature");
-            bool pku = meta.containsKey("publicKeyUsed");
-            bool uid = meta.containsKey("uuid");
-            bool pid = meta.containsKey("parentUUID");
-            bool typ = meta.containsKey("type");
+    switch(entry->type()) {
+        case EntryType_UPSERT:
+            this->type = RegistryEntryType::UPSERT;
+            break;
+        case EntryType_DELETE:
+            this->type = RegistryEntryType::DELETE;
+            break;
+    }
 
-            if (!(sig && pku && uid && pid && typ)) { this->valid = false; return; }
-        } else { this->valid = false; return; }
+    this->key = entry->key()->c_str();
+    this->value = entry->value()->c_str(); // TODO Replace w/ uint8_t vector
 
-        if (root.containsKey("content")) {
-            JsonObject& cont = root["content"];
+    auto entry_sig = entry->signature();
 
-            bool key = cont.containsKey("key");
-            bool val = cont.containsKey("value");
+    for (flatbuffers::uoffset_t i = 0; i < entry_sig->data()->Length(); i++)
+        this->signature[i] = entry_sig->data()->Get(i);
 
-            if (!(key && val)) { this->valid = false; return; }
-        } else { this->valid = false; return; }
-
-    } else { this->valid = false; return; }
-
-    // Original hash
-    this->parentUUID = root["metadata"]["parentUUID"].as<string>();
-
-    // UUID
-    this->uuid = root["metadata"]["uuid"].as<UUID>();
-
-    // Signature
-    string signature(root["metadata"]["signature"].as<string>());
-    vector<uint8_t> signatureBytes(Crypto::serialize::stringToUint8Array(signature));
-    if (signatureBytes.size() != SIGNATURE_SIZE) this->valid = false;
-    copy_n(begin(signatureBytes), signatureBytes.size(), begin(this->signature));
-
-    // Public key
-    string pubKeyHash = root["metadata"]["publicKeyUsed"].as<string>();
-    if (pubKeyHash.size() != PUB_HASH_SIZE) this->valid = false;
-    copy_n(begin(pubKeyHash), pubKeyHash.size(), begin(this->publicKeyUsed));
-
-    // Type
-    string type = root["metadata"]["type"].as<string>();
-    if      (type == "UPSERT") this->type = RegistryEntryType::UPSERT;
-    else if (type == "DELETE") this->type = RegistryEntryType::DELETE;
-    else                       this->valid = false;
-
-    // Contents
-    this->key = root["content"]["key"].as<string>();
-    this->value = root["content"]["value"].as<VALUE_T>();
+    for (flatbuffers::uoffset_t i = 0; i < entry_sig->used_key()->Length(); i++)
+        this->publicKeyUsed[i] = entry_sig->used_key()->Get(i);
 }
 
 template <typename VALUE_T>
-RegistryEntry<VALUE_T>::operator string() const {
-    flatbuffers::FlatBufferBuilder builder;
+RegistryEntry<VALUE_T>::RegistryEntry(const openHome::registry::Entry* entry) : valid(true) {
+    this->loadFromBuffer(entry);
+}
+
+template <typename VALUE_T>
+RegistryEntry<VALUE_T>::RegistryEntry(vector<uint8_t> serializedEntry) : valid(true) {
+    using namespace openHome::registry;
+//    if (!VerifyEntryBuffer(Verifier(&serializedEntry[0], serializedEntry.size()))) {
+//        valid = false;
+//    }
+
+    auto entry = GetEntry(serializedEntry.data());
+    this->loadFromBuffer(entry);
+}
+
+template<typename VALUE_T>
+flatbuffers::Offset<openHome::registry::Entry> RegistryEntry<VALUE_T>::to_flatbuffer_offset(
+        flatbuffers::FlatBufferBuilder &builder) const {
+    using namespace openHome::registry;
+
+    openHome::UUID id = openHome::UUID(this->uuid.a, this->uuid.b, this->uuid.c, this->uuid.d);
+    openHome::UUID pid = openHome::UUID(this->parentUUID.a, this->parentUUID.b, this->parentUUID.c, this->parentUUID.d);
 
     auto key = builder.CreateString(this->key);
-
     auto value = builder.CreateString(this->value);
 
-    openHome::UUID id = openHome::UUID(1, 2, 3, 4);
+    vector<uint8_t> signature(&this->signature[0], &this->signature[this->signature.size()]);
+    vector<uint8_t> usedKey(&this->publicKeyUsed[0], &this->publicKeyUsed[this->publicKeyUsed.size()]);
+    auto sig_vec = builder.CreateVector(signature);
+    auto pku_vec = builder.CreateVector(usedKey);
+    auto sig = openHome::crypto::CreateSignature(builder, sig_vec, pku_vec);
 
-    vector<uint8_t> signature(&this->signature[0], &this->signature[this->signature.size() - 1]);
-    auto vec = builder.CreateVector(signature);
-    auto sig = openHome::crypto::CreateSignature(builder, vec, vec);
-
-    EntryBuilder entry_builder(builder);
-
-    // TODO Use reasonable values!
-    entry_builder.add_signature(sig);
-    entry_builder.add_uuid(&id);
-    entry_builder.add_parent(&id);
-    entry_builder.add_value(value);
-    entry_builder.add_key(key);
+    auto type = EntryType_UPSERT;
     switch (this->type) {
-        case RegistryEntryType::UPSERT: entry_builder.add_type(EntryType_UPSERT); break;
-        case RegistryEntryType::DELETE: entry_builder.add_type(EntryType_DELETE); break;
+        case RegistryEntryType::UPSERT: type = EntryType_UPSERT; break;
+        case RegistryEntryType::DELETE: type = EntryType_DELETE; break;
     }
 
-    auto entry = entry_builder.Finish();
+    return CreateEntry(builder, &id, &pid, type, key, value, sig);
+}
+
+template <typename VALUE_T>
+vector<uint8_t> RegistryEntry<VALUE_T>::serialize() const {
+    using namespace openHome::registry;
+    flatbuffers::FlatBufferBuilder builder;
+
+    auto entry = this->to_flatbuffer_offset(builder);
     builder.Finish(entry);
 
     uint8_t *buf = builder.GetBufferPointer();
-    int size = builder.GetSize();
+    vector<uint8_t> entry_vec(buf, buf + builder.GetSize());
 
-    cout << size << endl;
-
-    // LEGACY CODE
-    DynamicJsonBuffer jsonBuffer(600);
-    JsonObject& root = jsonBuffer.createObject();
-
-    JsonObject& meta = jsonBuffer.createObject();
-    meta["uuid"] = this->uuid;
-    meta["parentUUID"] = this->parentUUID;
-    meta["signature"] = Crypto::serialize::uint8ArrToString((uint8_t *) &this->signature[0], SIGNATURE_SIZE);
-
-    char keyUsed[PUB_HASH_SIZE+1];
-    for (int i = 0; i < PUB_HASH_SIZE; ++i) {
-        keyUsed[i] = this->publicKeyUsed[i];
-    }
-    keyUsed[PUB_HASH_SIZE] = '\0';
-    meta["publicKeyUsed"] = keyUsed;
-
-    switch (this->type) {
-        case RegistryEntryType::UPSERT: meta["type"] = "UPSERT"; break;
-        case RegistryEntryType::DELETE: meta["type"] = "DELETE"; break;
-    }
-
-    JsonObject& content = jsonBuffer.createObject();
-    content["key"] = this->key;
-    if (this->type == RegistryEntryType::UPSERT) content["value"] = this->value;
-
-    root["metadata"] = meta;
-    root["content"] = content;
-
-    string serialized;
-    root.printTo(serialized);
-
-    cout << serialized.size() << endl << endl;
-
-    return serialized;
+    return entry_vec;
 }
 
 template <>
@@ -153,7 +111,8 @@ string RegistryEntry<string>::getSignatureText() const {
             type = "DELETE";
             break;
     }
-    return this->uuid + this->key + this->value + type; // TODO Not all VALUE_T might implement the + operator
+    return ""; // TODO Implement!
+//    return this->uuid + this->key + this->value + type; // TODO Not all VALUE_T might implement the + operator
 }
 template <typename VALUE_T>
 SignatureVerificationResult RegistryEntry<VALUE_T>::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey *> keys) const {
@@ -185,29 +144,32 @@ SCENARIO("RegistryEntries", "[registry][entry]") {
     GIVEN("A basic UPSERT registry entry") {
         string key("someKey");
         string val("someValue");
-        string parentUUID("parenthashofdoom");
+        Crypto::UUID parentUUID(0, 1, 2, 3);
         RegistryEntry<string> entry(RegistryEntryType::UPSERT, key, val, pair, parentUUID);
 
         WHEN("it is serialized") {
-            string serialized(entry);
+            vector<uint8_t> serialized(entry.serialize());
 
-            THEN("it should be valid") {
-                string pubHashStr(pubHash.begin(), pubHash.end());
-
-                string valid("{\"metadata\":{\"uuid\":\"" + entry.uuid + "\","
-                        "\"parentUUID\":\"" + parentUUID + "\","
-                                     "\"signature\":\"" +
-                             Crypto::serialize::uint8ArrToString(&entry.signature[0], SIGNATURE_SIZE) + "\","
-                                     "\"publicKeyUsed\":\"" + pubHashStr + "\",\"type\":\"UPSERT\"},\"content\":"
-                                     "{\"key\":\"" + key + "\",\"value\":\"" + val + "\"}}");
-
-                REQUIRE(serialized == valid);
-            }
+            // TODO Reimplement test
+//            THEN("it should be valid") {
+//                string pubHashStr(pubHash.begin(), pubHash.end());
+//
+//                string valid("{\"metadata\":{\"uuid\":\"" + string(entry.uuid) + "\","
+//                        "\"parentUUID\":\"" + string(parentUUID) + "\","
+//                                     "\"signature\":\"" +
+//                             Crypto::serialize::uint8ArrToString(&entry.signature[0], SIGNATURE_SIZE) + "\","
+//                                     "\"publicKeyUsed\":\"" + pubHashStr + "\",\"type\":\"UPSERT\"},\"content\":"
+//                                     "{\"key\":\"" + key + "\",\"value\":\"" + val + "\"}}");
+//
+//                REQUIRE(serialized == valid);
+//            }
 
             AND_WHEN("it is reconstructed") {
                 RegistryEntry<string> reconstructedEntry(serialized);
 
                 THEN("it should match the original entry") {
+                    CAPTURE(entry.serialize());
+                    CAPTURE(reconstructedEntry.serialize());
                     REQUIRE(entry == reconstructedEntry);
                 }
             }

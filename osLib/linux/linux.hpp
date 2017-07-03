@@ -44,8 +44,8 @@ public:
 
 class LinuxStorage : public StorageProvider {
 public:
-    void set(string key, string value);
-    string get(string key);
+    void set(string key, vector<uint8_t> value);
+    vector<uint8_t> get(string key);
     bool has(string key);
 };
 

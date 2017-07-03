@@ -21,6 +21,8 @@ add_dependencies(openHome flatbuffer_headers)
 
 add_executable(openHome_test deviceLib/test/test.cpp deviceLib/test/catch/single_include/catch.hpp ${DEVICE_LIB_SOURCE_FILES})
 target_compile_definitions(openHome_test PRIVATE UNIT_TESTING=1)
+target_link_libraries(openHome_test flatbuffers)
+add_dependencies(openHome_test flatbuffer_headers)
 
 
 add_executable(openHome_debug examples/debug.cpp osLib/linux/linux.hpp)

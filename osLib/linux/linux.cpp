@@ -78,21 +78,45 @@ std::string getStorageDirectory() {
     return home;
 }
 
-void LinuxStorage::set(string key, string value) {
-    ofstream file;
-    file.open(getStorageDirectory() + '/' + key);
+void LinuxStorage::set(string key, vector<uint8_t> value) {
+    ofstream file(getStorageDirectory() + '/' + key, ios::out | ios::binary);
     if (!file.is_open()) return;
-    file << value;
+
+    file.write((const char *) value.data(), value.size());
+
     file.close();
 }
 
-string LinuxStorage::get(string key) {
-    ifstream file;
-    file.open(getStorageDirectory() + '/' + key);
-    if (!file.is_open()) return "";
-    string line;
-    getline(file,line);
-    return line;
+vector<uint8_t> LinuxStorage::get(string key) {
+    // open the file:
+    std::ifstream file(getStorageDirectory() + '/' + key, std::ios::binary);
+
+    // Stop eating new lines in binary mode!!!
+    file.unsetf(std::ios::skipws);
+
+    // get its size:
+    std::streampos fileSize;
+
+    file.seekg(0, std::ios::end);
+    fileSize = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // reserve capacity
+    std::vector<uint8_t > vec;
+    vec.reserve((unsigned long) fileSize);
+
+    // read the data:
+    vec.insert(vec.begin(),
+               std::istream_iterator<uint8_t>(file),
+               std::istream_iterator<uint8_t>());
+
+    return vec;
+//    ifstream file;
+//    file.open(getStorageDirectory() + '/' + key);
+//    if (!file.is_open()) return {};
+//    string line;
+//    getline(file,line);
+//    return line;
 }
 
 bool LinuxStorage::has(string key) {
