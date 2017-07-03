@@ -100,20 +100,12 @@ vector<uint8_t> RegistryEntry<VALUE_T>::serialize() const {
     return entry_vec;
 }
 
-template <>
-string RegistryEntry<string>::getSignatureText() const {
-    string type;
-    switch (this->type) {
-        case UPSERT:
-            type = "UPSERT";
-            break;
-        case DELETE:
-            type = "DELETE";
-            break;
-    }
-    return ""; // TODO Implement!
-//    return this->uuid + this->key + this->value + type; // TODO Not all VALUE_T might implement the + operator
+template <typename VALUE_T>
+string RegistryEntry<VALUE_T>::getSignatureText() const {
+    vector<uint8_t> serializedEntry(this->serialize());
+    return string(serializedEntry.begin(), serializedEntry.end());
 }
+
 template <typename VALUE_T>
 SignatureVerificationResult RegistryEntry<VALUE_T>::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey *> keys) const {
     // Search for the correct key to use
@@ -126,6 +118,7 @@ SignatureVerificationResult RegistryEntry<VALUE_T>::verifySignature(map<PUB_HASH
 }
 
 template class RegistryEntry<string>;
+//template class RegistryEntry<uint8_t>;
 
 #ifdef UNIT_TESTING
 
@@ -150,20 +143,6 @@ SCENARIO("RegistryEntries", "[registry][entry]") {
         WHEN("it is serialized") {
             vector<uint8_t> serialized(entry.serialize());
 
-            // TODO Reimplement test
-//            THEN("it should be valid") {
-//                string pubHashStr(pubHash.begin(), pubHash.end());
-//
-//                string valid("{\"metadata\":{\"uuid\":\"" + string(entry.uuid) + "\","
-//                        "\"parentUUID\":\"" + string(parentUUID) + "\","
-//                                     "\"signature\":\"" +
-//                             Crypto::serialize::uint8ArrToString(&entry.signature[0], SIGNATURE_SIZE) + "\","
-//                                     "\"publicKeyUsed\":\"" + pubHashStr + "\",\"type\":\"UPSERT\"},\"content\":"
-//                                     "{\"key\":\"" + key + "\",\"value\":\"" + val + "\"}}");
-//
-//                REQUIRE(serialized == valid);
-//            }
-
             AND_WHEN("it is reconstructed") {
                 RegistryEntry<string> reconstructedEntry(serialized);
 
@@ -171,6 +150,15 @@ SCENARIO("RegistryEntries", "[registry][entry]") {
                     CAPTURE(entry.serialize());
                     CAPTURE(reconstructedEntry.serialize());
                     REQUIRE(entry == reconstructedEntry);
+                }
+
+                THEN("it's key/value should equal the original one") {
+                    REQUIRE(reconstructedEntry.key == key);
+                    REQUIRE(reconstructedEntry.value == val);
+                }
+
+                THEN("it's signature text should match the original") {
+                    REQUIRE(entry.getSignatureText() == reconstructedEntry.getSignatureText());
                 }
             }
         }
