@@ -1,0 +1,12 @@
+include "uuid.fbs";
+
+namespace openHome.registry.sync;
+
+table Hash {
+    answerID: UUID (required);
+    instance: UUID (required);
+    hash: string;
+}
+
+file_identifier "RHSH";
+root_type Hash;

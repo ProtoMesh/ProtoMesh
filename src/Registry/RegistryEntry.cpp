@@ -54,7 +54,7 @@ RegistryEntry<VALUE_T>::RegistryEntry(vector<uint8_t> serializedEntry) : valid(t
     using namespace openHome::registry;
 
     // Verify buffer integrity
-    auto verifier = flatbuffers::Verifier(&serializedEntry[0], serializedEntry.size());
+    auto verifier = flatbuffers::Verifier(serializedEntry.data(), serializedEntry.size());
     if (!VerifyEntryBuffer(verifier)) {
         cerr << "INVALID BUFFER" << endl;
         valid = false;

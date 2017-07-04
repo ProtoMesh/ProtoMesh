@@ -295,86 +295,123 @@ void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
 }
 
 template <typename VALUE_T>
-void Registry<VALUE_T>::onData(string incomingData) {
-    // TODO Reimplement
-//    DynamicJsonBuffer jsonBuffer;
-//    JsonObject &parsedData = jsonBuffer.parse(incomingData);
-//    string head = this->hashChain.size() > 0 ? this->hashChain.back() : "";
-//
-//    if (parsedData.success() && parsedData.containsKey("registryName") && parsedData["registryName"] == this->name && parsedData.containsKey("type")) {
-//
-//        string type = parsedData["type"];
-//
-//        if (parsedData.containsKey("targetInstance") && parsedData["targetInstance"] == this->instanceIdentifier) {
-//            if (type == "REG_REQUEST_ENTRIES" && parsedData.containsKey("index")) {
-//                this->broadcastEntries(parsedData["index"]);
-//            }
-//
-//            if (type == "REG_GET_HASH") {
-//                if (! (parsedData.containsKey("index") && parsedData.containsKey("requestID"))) return;
-//                JsonObject &hashBroadcast = jsonBuffer.createObject();
-//                hashBroadcast["type"] = "REG_HASH";
-//                hashBroadcast["answerID"] = parsedData["requestID"];
-//                hashBroadcast["registryName"] = this->name;
-//                hashBroadcast["instance"] = this->instanceIdentifier;
-//                if (this->hashChain.size() > parsedData["index"].as<size_t>())
-//                    hashBroadcast["hash"] = this->hashChain[parsedData["index"].as<size_t>()];
-//                else
-//                    hashBroadcast["hash"] = "";
-//
-//                string hashBcast;
-//                hashBroadcast.printTo(hashBcast);
-//                this->bcast->broadcast(hashBcast);
-//            }
-//        }
-//
-//        if (type == "REG_HEAD" && head != parsedData["head"] && parsedData.containsKey("instance") && !this->isSyncInProgress()) {
-//            size_t l_remote = parsedData["length"];
-//            size_t l_min = min(l_remote, (size_t) this->entries.size()-1);
-//
-//            Crypto::UUID requestID();
-//            this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
-//            this->synchronizationStatus.requestID = requestID;
-//            this->synchronizationStatus.min = 0;
-//            this->synchronizationStatus.max = l_min;
-//            this->synchronizationStatus.communicationTarget = parsedData["instance"].as<string>();
-//            this->requestHash((size_t) ceil(l_min / 2), parsedData["instance"], requestID);
-//
-//        }
-//
-//        if (type == "REG_HASH" && parsedData.containsKey("hash") && parsedData.containsKey("answerID") &&
-//            parsedData["answerID"] == this->synchronizationStatus.requestID && this->isSyncInProgress()) {
-//            size_t min = this->synchronizationStatus.min;
-//            size_t max = this->synchronizationStatus.max;
-//            size_t index = (size_t) ceil(min + (max - min) / 2);
-//
-//            if (this->hashChain.size() <= index) return;
-//
-//            if (this->hashChain[index] == parsedData["hash"])
-//                min = index+1;
-//            else
-//                max = index-1;
-//
-//            if (min > max) {
-//                this->onBinarySearchResult(min);
-//            } else if (min == index) {
-//                this->onBinarySearchResult(index);
-//            } else {
-//                Crypto::UUID requestID();
-//                this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
-//                this->synchronizationStatus.requestID = string(requestID);
-//                this->synchronizationStatus.min = min;
-//                this->synchronizationStatus.max = max;
-//                this->requestHash((size_t) ceil(min + (max - min) / 2), parsedData["instance"], requestID);
-//            }
-//        }
-//
-//        if (type == "REG_ENTRY" && parsedData.containsKey("entry") && parsedData.containsKey("instance") && parsedData["instance"] != this->instanceIdentifier) {
-//            cout << "[" << this->instanceIdentifier << "] INSERTING ENTRY" << endl;
-//            this->addSerializedEntry(parsedData["entry"].as<string>());
-////            cout << this->addSerializedEntry(parsedData["entry"].as<string>()) << " | " << this->entries.size() << endl;
-//        }
-//    }
+void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
+    using namespace openHome::registry::sync;
+
+    // Generic lambdas and useful variables
+    uint8_t* data = incomingData.data();
+    auto verifier = flatbuffers::Verifier(data, incomingData.size());
+    auto hasIdentifier = [&] (const char * id) -> bool { return flatbuffers::BufferHasIdentifier(data, id); };
+    auto onVerifyFail = [] () { cerr << "[REG|SYNC] Received invalid buffer" << endl; };
+
+    // Lambdas regarding sync stages
+    // // Request related
+    auto onEntriesRequest = [&] (const Request* req) {
+        if (Crypto::UUID(req->target()) == this->instanceIdentifier)
+            this->broadcastEntries(req->index());
+    };
+    auto onHashRequest = [&] (const Request* req) {
+        if (Crypto::UUID(req->target()) == this->instanceIdentifier) {
+            flatbuffers::FlatBufferBuilder builder;
+
+            // Create all hash properties
+            auto answerID = openHome::UUID(*req->requestID());
+            openHome::UUID instance(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
+            auto hashStr = builder.CreateString(this->hashChain.size() > req->index() ? this->hashChain[req->index()] : "");
+
+            // Create the hash
+            auto hash = CreateHash(builder, &answerID, &instance, hashStr);
+
+            // Convert it to a byte array
+            builder.Finish(hash, RequestIdentifier());
+            uint8_t *buf = builder.GetBufferPointer();
+            vector<uint8_t> hash_vec(buf, buf + builder.GetSize());
+
+            // Broadcast the head
+            this->bcast->broadcast(hash_vec);
+        }
+    };
+    // // Head related
+    auto onHead = [&] (const Head* req) {
+        if (!this->isSyncInProgress() && req->head()->str() != this->getHeadHash()) {
+            // We got a potential candidate for synchronization. Start the binary search!
+            size_t l_remote = req->length();
+            size_t l_min = min(l_remote, (size_t) this->entries.size()-1);
+
+            Crypto::UUID requestID;
+            this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
+            this->synchronizationStatus.requestID = requestID;
+            this->synchronizationStatus.min = 0;
+            this->synchronizationStatus.max = l_min;
+            this->synchronizationStatus.communicationTarget = Crypto::UUID(req->instance());
+            this->requestHash((size_t) ceil(l_min / 2), this->synchronizationStatus.communicationTarget, requestID);
+        }
+    };
+    // // Entry related
+    auto onEntry = [&] (const Entry* entry) {
+        if (entry->name()->str() == this->name)
+            this->addSerializedEntry(entry->entry());
+    };
+    // // Hash related
+    auto onHash = [&] (const Hash* hash) {
+        if (Crypto::UUID(hash->answerID()) == this->synchronizationStatus.requestID && this->isSyncInProgress()) {
+            size_t min = this->synchronizationStatus.min;
+            size_t max = this->synchronizationStatus.max;
+            size_t index = (size_t) ceil(min + (max - min) / 2);
+
+            if (this->hashChain.size() <= index) return;
+
+            if (this->hashChain[index] == hash->hash()->str())
+                min = index+1;
+            else
+                max = index-1;
+
+            if (min > max) {
+                this->onBinarySearchResult(min);
+            } else if (min == index) {
+                this->onBinarySearchResult(index);
+            } else {
+                Crypto::UUID requestID;
+                this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
+                this->synchronizationStatus.requestID = requestID;
+                this->synchronizationStatus.min = min;
+                this->synchronizationStatus.max = max;
+                this->requestHash((size_t) ceil(min + (max - min) / 2), hash->instance(), requestID);
+            }
+        }
+    };
+
+
+    // Actual evaluation of incoming data
+    // // Request ('RREQ')
+    if (hasIdentifier(RequestIdentifier())) {
+        if (!VerifyRequestBuffer(verifier)) { onVerifyFail(); return; }
+        auto request = GetRequest(data);
+
+        switch (request->type()) {
+            case RequestType_ENTRIES:
+                onEntriesRequest(request);
+                break;
+            case RequestType_HASH:
+                onHashRequest(request);
+                break;
+        }
+    }
+    // // Head state ('RHED')
+    else if (hasIdentifier(HeadIdentifier())) {
+        if (!VerifyHeadBuffer(verifier)) { onVerifyFail(); return; }
+        onHead(GetHead(data));
+    }
+    // // Encapsuled registry entry ('RSEN')
+    else if (hasIdentifier(EntryIdentifier())) {
+        if (!VerifyEntryBuffer(verifier)) { onVerifyFail(); return; }
+        onEntry(GetEntry(data));
+    }
+    // // Entry/chain hash ('RHSH')
+    else if (hasIdentifier(HashIdentifier())) {
+        if (!VerifyHashBuffer(verifier)) { onVerifyFail(); return; }
+        onHash(GetHash(data));
+    }
 }
 
 template <typename VALUE_T>

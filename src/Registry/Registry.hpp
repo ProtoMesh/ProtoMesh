@@ -17,6 +17,7 @@
 #include "../buffers/registry/sync/head_generated.h"
 #include "../buffers/registry/sync/request_generated.h"
 #include "../buffers/registry/sync/entry_generated.h"
+#include "../buffers/registry/sync/hash_generated.h"
 
 #define REGISTRY_STORAGE_PREFIX "registry::"
 
@@ -76,7 +77,7 @@ public:
 
     void sync();
 
-    void onData(string incomingData);
+    void onData(vector<uint8_t> incomingData);
 
     inline void print() {
         cout << string(this->instanceIdentifier) << " | " << this->entries.size() << endl;

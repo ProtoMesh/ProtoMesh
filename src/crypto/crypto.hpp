@@ -10,6 +10,8 @@
 #include "uECC.h"
 #include "../api/network.hpp"
 
+#include "../buffers/uuid_generated.h"
+
 using namespace std;
 
 // Defining ECC key sizes
@@ -40,7 +42,7 @@ extern const struct uECC_Curve_t* ECC_CURVE;
 namespace Crypto {
     class UUID {
     public:
-        ulong a, b, c, d;
+        uint32_t a, b, c, d;
 
         static UUID Empty() {
             return UUID(0, 0, 0, 0);
@@ -55,6 +57,12 @@ namespace Crypto {
             b = distribution(generator);
             c = distribution(generator);
             d = distribution(generator);
+        }
+        UUID(const openHome::UUID* id) {
+            a = (uint32_t) id->a();
+            b = (uint32_t) id->b();
+            c = (uint32_t) id->c();
+            d = (uint32_t) id->d();
         }
 
         operator string() const {

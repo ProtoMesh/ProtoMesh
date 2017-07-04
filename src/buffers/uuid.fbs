@@ -1,8 +1,8 @@
 namespace openHome;
 
 struct UUID {
-    a: ulong;
-    b: ulong;
-    c: ulong;
-    d: ulong;
+    a: uint;
+    b: uint;
+    c: uint;
+    d: uint;
 }

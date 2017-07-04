@@ -41,14 +41,15 @@ public:
 
 #ifdef UNIT_TESTING
     class DummyBroadcastSocket : public BroadcastSocket {
+        std::vector<std::vector<uint8_t>> messages;
     public:
         inline DummyBroadcastSocket(std::string multicastGroup, unsigned short port) {};
 
-        inline void broadcast(std::string message) override {};
+        inline void broadcast(std::vector<uint8_t> message) override {};
 
         inline void send(std::string ip, unsigned short port, std::string message) override {};
 
-        inline int recv(std::string *msg, unsigned int timeout_ms) override { return 0; };
+        inline int recv(std::vector<uint8_t> *msg, unsigned int timeout_ms) override { return 0; };
     };
 
     class DummyNetworkHandler : public NetworkProvider {
