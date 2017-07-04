@@ -21,28 +21,28 @@ set(OPEN_HOME_SOURCE_FILES
         ${ECC_SOURCES}
         ${DUKTAPE_SOURCES}
         src/Network/NetworkManager.cpp
-#        src/Network/NetworkManager.hpp
-#        src/Network/Network.hpp
+        src/Network/NetworkManager.hpp
+        src/Network/Network.hpp
         src/Network/Network.cpp
-#        src/const.hpp
-#        src/api/time.hpp
-#        src/api/network.hpp
+        src/const.hpp
+        src/api/time.hpp
+        src/api/network.hpp
         src/Device/Device.cpp
-#        src/Device/Device.hpp
+        src/Device/Device.hpp
         src/Registry/RegistryEntry.cpp
-#        src/Registry/RegistryEntry.hpp
-#        src/crypto/crypto.hpp
-#        src/crypto/sha512.hpp
+        src/Registry/RegistryEntry.hpp
+        src/crypto/crypto.hpp
+        src/crypto/sha512.hpp
         src/crypto/crypto.cpp
         src/crypto/crypto_asym.cpp
         src/Registry/Registry.cpp
-#        src/Registry/Registry.hpp
-#        src/api/storage.hpp
+        src/Registry/Registry.hpp
+        src/api/storage.hpp
         src/api/javascript/javascript.cpp
-#        src/api/javascript/javascript.hpp
+        src/api/javascript/javascript.hpp
         src/crypto/crypto_sym.cpp
         src/Network/Network.cpp
-#        src/Network/Network.hpp
+        src/Network/Network.hpp
 )
 add_library(openHome ${OPEN_HOME_SOURCE_FILES})
 add_dependencies(openHome flatbuffer_headers)
@@ -60,5 +60,5 @@ add_dependencies(openHome_test flatbuffer_headers)
 # Compilation of the linux specific example.
 include_directories(src)
 add_subdirectory(os-specifics/linux)
-add_executable(openHome_debug examples/debug.cpp) # os-specifics/linux/linux.hpp
+add_executable(openHome_debug examples/debug.cpp)
 target_link_libraries(openHome_debug openHome openHome_device_linux)
