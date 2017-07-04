@@ -52,10 +52,21 @@ RegistryEntry<VALUE_T>::RegistryEntry(const openHome::registry::Entry* entry) : 
 template <typename VALUE_T>
 RegistryEntry<VALUE_T>::RegistryEntry(vector<uint8_t> serializedEntry) : valid(true) {
     using namespace openHome::registry;
-    // TODO Validate buffer
-//    if (!VerifyEntryBuffer(Verifier(&serializedEntry[0], serializedEntry.size()))) {
-//        valid = false;
-//    }
+
+    // Verify buffer integrity
+    auto verifier = flatbuffers::Verifier(&serializedEntry[0], serializedEntry.size());
+    if (!VerifyEntryBuffer(verifier)) {
+        cerr << "INVALID BUFFER" << endl;
+        valid = false;
+        return;
+    }
+
+    // Check the buffer identifier
+    if (!flatbuffers::BufferHasIdentifier(serializedEntry.data(), openHome::registry::EntryIdentifier())) {
+        cerr << "Invalid buffer type!" << endl;
+        valid = false;
+        return;
+    }
 
     auto entry = GetEntry(serializedEntry.data());
     this->loadFromBuffer(entry);
@@ -93,7 +104,7 @@ vector<uint8_t> RegistryEntry<VALUE_T>::serialize() const {
     flatbuffers::FlatBufferBuilder builder;
 
     auto entry = this->to_flatbuffer_offset(builder);
-    builder.Finish(entry);
+    builder.Finish(entry, EntryIdentifier());
 
     uint8_t *buf = builder.GetBufferPointer();
     vector<uint8_t> entry_vec(buf, buf + builder.GetSize());
