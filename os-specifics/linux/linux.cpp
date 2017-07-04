@@ -1,6 +1,6 @@
 #include <fstream>
 #include "linux.hpp"
-#include "../../deviceLib/const.hpp"
+#include "const.hpp"
 
 #define RECV_POOLING_INTERVAL 150000 // 150ms
 

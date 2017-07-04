@@ -52,6 +52,7 @@ RegistryEntry<VALUE_T>::RegistryEntry(const openHome::registry::Entry* entry) : 
 template <typename VALUE_T>
 RegistryEntry<VALUE_T>::RegistryEntry(vector<uint8_t> serializedEntry) : valid(true) {
     using namespace openHome::registry;
+    // TODO Validate buffer
 //    if (!VerifyEntryBuffer(Verifier(&serializedEntry[0], serializedEntry.size()))) {
 //        valid = false;
 //    }

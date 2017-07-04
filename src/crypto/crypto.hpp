@@ -7,7 +7,7 @@
 #include <algorithm>
 
 #include "sha512.hpp"
-#include "ecc/uECC.h"
+#include "uECC.h"
 #include "../api/network.hpp"
 
 using namespace std;

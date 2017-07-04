@@ -6,14 +6,12 @@
 #include <map>
 
 #include "../crypto/crypto.hpp"
-#include "../json/ArduinoJson.hpp"
 
 #include "flatbuffers/flatbuffers.h"
 #include "../buffers/uuid_generated.h"
 #include "../buffers/crypto_generated.h"
 #include "../buffers/registry/entry_generated.h"
 
-using namespace ArduinoJson;
 using namespace std;
 
 enum RegistryEntryType {

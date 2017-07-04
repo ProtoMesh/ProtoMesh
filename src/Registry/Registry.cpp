@@ -193,19 +193,19 @@ void Registry<VALUE_T>::sync() {
         return;
     this->nextBroadcast = this->relTimeProvider->millis() + broadcastIntervalRange(rng);
 
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &root = jsonBuffer.createObject();
-
-    root["type"] = "REG_HEAD";
-    root["registryName"] = this->name;
-    root["head"] = this->hashChain.back();
-    root["length"] = this->entries.size();
-    root["instance"] = this->instanceIdentifier;
-
-    string msg;
-    root.printTo(msg);
-
-    this->bcast->broadcast(msg);
+//    DynamicJsonBuffer jsonBuffer;
+//    JsonObject &root = jsonBuffer.createObject();
+//
+//    root["type"] = "REG_HEAD";
+//    root["registryName"] = this->name;
+//    root["head"] = this->hashChain.back();
+//    root["length"] = this->entries.size();
+//    root["instance"] = this->instanceIdentifier;
+//
+//    string msg;
+//    root.printTo(msg);
+//
+//    this->bcast->broadcast(msg);
 }
 
 template <typename VALUE_T>
@@ -215,17 +215,17 @@ bool Registry<VALUE_T>::isSyncInProgress() {
 
 template <typename VALUE_T>
 Crypto::UUID Registry<VALUE_T>::requestHash(size_t index, string target, Crypto::UUID requestID) {
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &request = jsonBuffer.createObject();
-    request["type"] = "REG_GET_HASH";
-    request["index"] = index;
-    request["requestID"] = string(requestID);
-    request["targetInstance"] = target;
-    request["registryName"] = this->name;
+//    DynamicJsonBuffer jsonBuffer;
+//    JsonObject &request = jsonBuffer.createObject();
+//    request["type"] = "REG_GET_HASH";
+//    request["index"] = index;
+//    request["requestID"] = string(requestID);
+//    request["targetInstance"] = target;
+//    request["registryName"] = this->name;
 
-    string requestStr;
-    request.printTo(requestStr);
-    this->bcast->broadcast(requestStr);
+//    string requestStr;
+//    request.printTo(requestStr);
+//    this->bcast->broadcast(requestStr);
 
     return requestID;
 }
@@ -234,17 +234,17 @@ template <typename VALUE_T>
 void Registry<VALUE_T>::broadcastEntries(size_t index) { // includes index
 
     for (size_t i = index; i < this->entries.size(); i++) {
-        DynamicJsonBuffer jsonBuffer;
-        JsonObject &request = jsonBuffer.createObject();
-
-        request["type"] = "REG_ENTRY";
-        request["registryName"] = this->name;
+//        DynamicJsonBuffer jsonBuffer;
+//        JsonObject &request = jsonBuffer.createObject();
+//
+//        request["type"] = "REG_ENTRY";
+//        request["registryName"] = this->name;
 //        request["entry"] = (string) this->entries[i]; // TODO Implement
-        request["instance"] = this->instanceIdentifier;
+//        request["instance"] = this->instanceIdentifier;
 
-        string requestStr;
-        request.printTo(requestStr);
-        this->bcast->broadcast(requestStr);
+//        string requestStr;
+//        request.printTo(requestStr);
+//        this->bcast->broadcast(requestStr);
     }
 }
 
@@ -252,25 +252,25 @@ template <typename VALUE_T>
 void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
     this->broadcastEntries(index);
 
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &request = jsonBuffer.createObject();
-
-    request["type"] = "REG_REQUEST_ENTRIES";
-    request["registryName"] = this->name;
-    request["targetInstance"] = string(this->synchronizationStatus.communicationTarget);
-    request["index"] = index;
-
-    string requestStr;
-    request.printTo(requestStr);
-    this->bcast->broadcast(requestStr);
+//    DynamicJsonBuffer jsonBuffer;
+//    JsonObject &request = jsonBuffer.createObject();
+//
+//    request["type"] = "REG_REQUEST_ENTRIES";
+//    request["registryName"] = this->name;
+//    request["targetInstance"] = string(this->synchronizationStatus.communicationTarget);
+//    request["index"] = index;
+//
+//    string requestStr;
+//    request.printTo(requestStr);
+//    this->bcast->broadcast(requestStr);
 }
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::onData(string incomingData) {
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &parsedData = jsonBuffer.parse(incomingData);
-    string head = this->hashChain.size() > 0 ? this->hashChain.back() : "";
-
+//    DynamicJsonBuffer jsonBuffer;
+//    JsonObject &parsedData = jsonBuffer.parse(incomingData);
+//    string head = this->hashChain.size() > 0 ? this->hashChain.back() : "";
+//
 //    if (parsedData.success() && parsedData.containsKey("registryName") && parsedData["registryName"] == this->name && parsedData.containsKey("type")) {
 //
 //        string type = parsedData["type"];
@@ -376,12 +376,12 @@ template class Registry<string>;
 
                 std::string schemafile;
                 std::string jsonfile;
-                bool ok = flatbuffers::LoadFile("../deviceLib/buffers/registry/entry.fbs", false, &schemafile) &&
-                          flatbuffers::LoadFile("../deviceLib/test/data/registry_entry.json", false, &jsonfile);
+                bool ok = flatbuffers::LoadFile("../src/buffers/registry/entry.fbs", false, &schemafile) &&
+                          flatbuffers::LoadFile("../src/test/data/registry_entry.json", false, &jsonfile);
                 REQUIRE(ok);
 
                 flatbuffers::Parser parser;
-                const char *include_directories[] = { "../deviceLib/buffers/", "../deviceLib/buffers/registry", nullptr };
+                const char *include_directories[] = { "../src/buffers/", "../src/buffers/registry", nullptr };
                 ok = parser.Parse(schemafile.c_str(), include_directories) &&
                      parser.Parse(jsonfile.c_str(), include_directories);
 

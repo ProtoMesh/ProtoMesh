@@ -1,6 +1,6 @@
-#include "../osLib/linux/linux.hpp"
-#include "../deviceLib/Device/Device.hpp"
-#include "../deviceLib/Network/NetworkManager.hpp"
+#include "../os-specifics/linux/linux.hpp"
+#include "Device/Device.hpp"
+#include "Network/NetworkManager.hpp"
 
 volatile sig_atomic_t interrupted = 0;
 

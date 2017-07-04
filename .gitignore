@@ -41,7 +41,7 @@ gen
 ArduinoJson.hpp
 
 # duktape TODO Add as submodule
-deviceLib/api/javascript/duktape
+src/api/javascript/duktape
 
 # Build directories
 build

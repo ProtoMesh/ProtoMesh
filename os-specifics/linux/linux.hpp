@@ -9,9 +9,9 @@
 #include <string>
 #include <utility>
 #include <chrono>
-#include "../../deviceLib/api/network.hpp"
-#include "../../deviceLib/api/storage.hpp"
-#include "../../deviceLib/api/time.hpp"
+#include "api/network.hpp"
+#include "api/storage.hpp"
+#include "api/time.hpp"
 
 #define STORAGE_PREFIX "/.config/openHome"
 
