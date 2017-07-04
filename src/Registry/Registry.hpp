@@ -14,6 +14,9 @@
 
 #include "flatbuffers/flatbuffers.h"
 #include "../buffers/registry/registry_generated.h"
+#include "../buffers/registry/sync/head_generated.h"
+#include "../buffers/registry/sync/request_generated.h"
+#include "../buffers/registry/sync/entry_generated.h"
 
 #define REGISTRY_STORAGE_PREFIX "registry::"
 
@@ -30,7 +33,7 @@ class Registry {
     long nextBroadcast;
 
     string name;
-    string instanceIdentifier; // UUID
+    Crypto::UUID instanceIdentifier;
 
     map<string, VALUE_T> headState;
 
@@ -50,7 +53,7 @@ class Registry {
 
     tuple<vector<unsigned long>, unsigned long> getBlockBorders(Crypto::UUID parentUUID = Crypto::UUID::Empty());
 
-    Crypto::UUID requestHash(size_t index, string target, Crypto::UUID requestID); // requestID = UUID
+    Crypto::UUID requestHash(size_t index, Crypto::UUID target, Crypto::UUID requestID); // requestID = UUID
     void onBinarySearchResult(size_t index);
     void broadcastEntries(size_t index);
     bool isSyncInProgress();
@@ -76,7 +79,7 @@ public:
     void onData(string incomingData);
 
     inline void print() {
-        cout << this->instanceIdentifier << " | " << this->entries.size() << endl;
+        cout << string(this->instanceIdentifier) << " | " << this->entries.size() << endl;
         cout << "No printing....sorry" << endl;
 //        for (unsigned int i = 0; i < this->entries.size(); i++) {
 //            cout << string(this->entries[i]) << endl;

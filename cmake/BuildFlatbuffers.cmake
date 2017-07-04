@@ -19,7 +19,7 @@ endfunction()
 
 # Set the location of flatc and the buffers
 set(FLATBUFFERS_FLATC_EXECUTABLE lib/flatbuffers/flatc)
-set(FLATBUFFERS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deviceLib/buffers)
+set(FLATBUFFERS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/buffers)
 
 # Include flatbuffer CMakeLists.txt for compilation of flatc and include the headers directory
 add_subdirectory(lib/flatbuffers)

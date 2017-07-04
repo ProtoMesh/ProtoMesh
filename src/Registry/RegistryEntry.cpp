@@ -77,8 +77,8 @@ flatbuffers::Offset<openHome::registry::Entry> RegistryEntry<VALUE_T>::to_flatbu
         flatbuffers::FlatBufferBuilder &builder) const {
     using namespace openHome::registry;
 
-    openHome::UUID id = openHome::UUID(this->uuid.a, this->uuid.b, this->uuid.c, this->uuid.d);
-    openHome::UUID pid = openHome::UUID(this->parentUUID.a, this->parentUUID.b, this->parentUUID.c, this->parentUUID.d);
+    openHome::UUID id(this->uuid.a, this->uuid.b, this->uuid.c, this->uuid.d);
+    openHome::UUID pid(this->parentUUID.a, this->parentUUID.b, this->parentUUID.c, this->parentUUID.d);
 
     auto key = builder.CreateString(this->key);
     auto value = builder.CreateString(this->value);

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 #define SOCKET_T std::shared_ptr<Socket>
 class Socket {
@@ -17,11 +18,16 @@ class BroadcastSocket {
 public:
     virtual ~BroadcastSocket()= default;
 
-    virtual void broadcast(std::string message)= 0;
+    void broadcast(std::string message) {
+        std::vector<uint8_t> msg_vec(message.begin(), message.end());
+        this->broadcast(msg_vec);
+    }
+
+    virtual void broadcast(std::vector<uint8_t> message)= 0;
 
     virtual void send(std::string ip, unsigned short port, std::string message)= 0;
 
-    virtual int recv(std::string *msg, unsigned int timeout_ms)= 0;
+    virtual int recv(std::vector<uint8_t> *msg, unsigned int timeout_ms)= 0;
 };
 
 class NetworkProvider {

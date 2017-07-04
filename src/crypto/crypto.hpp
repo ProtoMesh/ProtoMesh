@@ -145,7 +145,7 @@ namespace Crypto {
             NETWORK_KEY_T key;
         public:
             inline EncryptedBroadcastSocket(BCAST_SOCKET_T sock, NETWORK_KEY_T key) : sock(sock), key(key) {};
-            inline void broadcast(string message) override {
+            inline void broadcast(vector<uint8_t> message) override {
                 // TODO Encrypt message
                 this->sock->broadcast(message);
             };
@@ -153,7 +153,7 @@ namespace Crypto {
                 // TODO Encrypt message
                 this->sock->send(ip, port, message);
             };
-            inline int recv(string *msg, unsigned int timeout_ms) override {
+            inline int recv(vector<uint8_t> *msg, unsigned int timeout_ms) override {
                 // TODO Decrypt message
                 return this->sock->recv(msg, timeout_ms);
             };

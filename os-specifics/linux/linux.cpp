@@ -26,9 +26,9 @@ LinuxBroadcastSocket::LinuxBroadcastSocket(std::string multicastGroup, unsigned 
     socket.set_option(ip::multicast::join_group(address));
 }
 
-int LinuxBroadcastSocket::recv(std::string *msg, unsigned int timeout_ms) {
+int LinuxBroadcastSocket::recv(std::vector<uint8_t> *buffer, unsigned int timeout_ms) {
     boost::asio::ip::udp::endpoint sender;
-    std::vector<char> buffer;
+//    std::vector<char> buffer;
     std::size_t bytes_readable = 0;
 
     unsigned int total_time = 0;
@@ -49,17 +49,17 @@ int LinuxBroadcastSocket::recv(std::string *msg, unsigned int timeout_ms) {
     }
 
     // Resize the buffer to store all available data.
-    buffer.resize(bytes_readable);
+    (*buffer).resize(bytes_readable);
 
     // Read available data.
-    socket.receive_from(boost::asio::buffer(buffer, bytes_readable), sender);
+    socket.receive_from(boost::asio::buffer((*buffer), bytes_readable), sender);
 
-    std::string message(buffer.begin(), buffer.end());
-    *msg = message;
+//    std::string message(buffer.begin(), buffer.end());
+//    *msg = message;
     return RECV_OK;
 }
 
-void LinuxBroadcastSocket::broadcast(std::string message) {
+void LinuxBroadcastSocket::broadcast(std::vector<uint8_t> message) {
     socket.send_to(boost::asio::buffer(message), destination);
 }
 

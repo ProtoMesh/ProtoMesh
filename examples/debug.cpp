@@ -38,6 +38,7 @@ int main() {
     cout << reg.get("test") << endl;
 //    reg.clear();
     reg.set("test", "HELLO WORLD! IT WORKED3!", pair);
+    reg.sync();
 
 //
 //    Registry<string> reg2("testReg", &stor, &net, timePtr);
@@ -69,7 +70,7 @@ int main() {
 
     while (interrupted == 0) {
         dev.tick(1000);
-//        reg2.sync();
+        reg.sync();
     }
 
 //    dev.print();

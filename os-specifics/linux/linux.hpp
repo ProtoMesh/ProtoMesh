@@ -24,11 +24,11 @@ class LinuxBroadcastSocket : public BroadcastSocket {
 public:
     LinuxBroadcastSocket(std::string multicastGroup, unsigned short port);
 
-    void broadcast(std::string message) override;
+    void broadcast(std::vector<uint8_t> message) override;
 
     void send(std::string ip, unsigned short port, std::string message) override;
 
-    int recv(std::string *msg, unsigned int timeout_ms) override;
+    int recv(std::vector<uint8_t> *msg, unsigned int timeout_ms) override;
 };
 
 class LinuxNetwork : public NetworkProvider {

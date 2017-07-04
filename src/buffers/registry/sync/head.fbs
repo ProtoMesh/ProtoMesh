@@ -1,0 +1,14 @@
+include "uuid.fbs";
+
+namespace openHome.registry.sync;
+
+table Head {
+    name: string (required);
+    instance: UUID (required);
+
+    head: string (required);
+    length: ulong;
+}
+
+file_identifier "RHED";
+root_type Head;

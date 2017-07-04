@@ -16,7 +16,7 @@ Registry<VALUE_T>::Registry(string name, StorageProvider *stor, NetworkProvider 
         : stor(stor), net(net), relTimeProvider(relTimeProvider),
           bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
           nextBroadcast(relTimeProvider->millis() + REGISTRY_BROADCAST_INTERVAL_MIN),
-          name(name), instanceIdentifier(Crypto::generateUUID()) {
+          name(name), instanceIdentifier() {
     using namespace openHome::registry;
 
     this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis() - REGISTRY_SYNC_TIMEOUT;
@@ -30,8 +30,6 @@ Registry<VALUE_T>::Registry(string name, StorageProvider *stor, NetworkProvider 
             this->addSerializedEntry(registry->entries()->Get(i), false);
         }
     }
-
-    cout << "initialized Registry: " << name << endl;
 }
 
 template <typename VALUE_T>
@@ -188,24 +186,30 @@ void Registry<VALUE_T>::clear() {
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::sync() {
+    // Check if a sync would be within the defined interval or too early
     if (this->relTimeProvider->millis() < this->nextBroadcast ||
         !this->hashChain.size())
         return;
     this->nextBroadcast = this->relTimeProvider->millis() + broadcastIntervalRange(rng);
 
-//    DynamicJsonBuffer jsonBuffer;
-//    JsonObject &root = jsonBuffer.createObject();
-//
-//    root["type"] = "REG_HEAD";
-//    root["registryName"] = this->name;
-//    root["head"] = this->hashChain.back();
-//    root["length"] = this->entries.size();
-//    root["instance"] = this->instanceIdentifier;
-//
-//    string msg;
-//    root.printTo(msg);
-//
-//    this->bcast->broadcast(msg);
+    using namespace openHome::registry::sync;
+    flatbuffers::FlatBufferBuilder builder;
+
+    // Create all properties
+    openHome::UUID id(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
+    auto name = builder.CreateString(this->name);
+    auto headStr = builder.CreateString(this->hashChain.back());
+
+    // Create the head buffer
+    auto head = CreateHead(builder, name, &id, headStr, this->entries.size());
+
+    // Convert it to a byte array
+    builder.Finish(head, HeadIdentifier());
+    uint8_t *buf = builder.GetBufferPointer();
+    vector<uint8_t> head_vec(buf, buf + builder.GetSize());
+
+    // Broadcast the head
+    this->bcast->broadcast(head_vec);
 }
 
 template <typename VALUE_T>
@@ -214,37 +218,50 @@ bool Registry<VALUE_T>::isSyncInProgress() {
 }
 
 template <typename VALUE_T>
-Crypto::UUID Registry<VALUE_T>::requestHash(size_t index, string target, Crypto::UUID requestID) {
-//    DynamicJsonBuffer jsonBuffer;
-//    JsonObject &request = jsonBuffer.createObject();
-//    request["type"] = "REG_GET_HASH";
-//    request["index"] = index;
-//    request["requestID"] = string(requestID);
-//    request["targetInstance"] = target;
-//    request["registryName"] = this->name;
+Crypto::UUID Registry<VALUE_T>::requestHash(size_t index, Crypto::UUID target, Crypto::UUID requestID) {
+    using namespace openHome::registry::sync;
+    flatbuffers::FlatBufferBuilder builder;
 
-//    string requestStr;
-//    request.printTo(requestStr);
-//    this->bcast->broadcast(requestStr);
+    // Create all request properties
+    openHome::UUID rid(requestID.a, requestID.b, requestID.c, requestID.d);
+    openHome::UUID tid(target.a, target.b, target.c, target.d);
+
+    // Create the request
+    auto request = CreateRequest(builder, RequestType_HASH, &tid, &rid, index);
+
+    // Convert it to a byte array
+    builder.Finish(request, RequestIdentifier());
+    uint8_t *buf = builder.GetBufferPointer();
+    vector<uint8_t> request_vec(buf, buf + builder.GetSize());
+
+    // Broadcast the head
+    this->bcast->broadcast(request_vec);
 
     return requestID;
 }
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::broadcastEntries(size_t index) { // includes index
+    using namespace openHome::registry::sync;
 
     for (size_t i = index; i < this->entries.size(); i++) {
-//        DynamicJsonBuffer jsonBuffer;
-//        JsonObject &request = jsonBuffer.createObject();
-//
-//        request["type"] = "REG_ENTRY";
-//        request["registryName"] = this->name;
-//        request["entry"] = (string) this->entries[i]; // TODO Implement
-//        request["instance"] = this->instanceIdentifier;
+        flatbuffers::FlatBufferBuilder builder;
 
-//        string requestStr;
-//        request.printTo(requestStr);
-//        this->bcast->broadcast(requestStr);
+        // Create all request properties
+        auto name = builder.CreateString(this->name);
+        openHome::UUID instance(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
+        auto reg_entry = this->entries[i].to_flatbuffer_offset(builder);
+
+        // Create the entry
+        auto entry = CreateEntry(builder, name, &instance, reg_entry);
+
+        // Convert it to a byte array
+        builder.Finish(entry, EntryIdentifier());
+        uint8_t *buf = builder.GetBufferPointer();
+        vector<uint8_t> entry_vec(buf, buf + builder.GetSize());
+
+        // Broadcast the entry
+        this->bcast->broadcast(entry_vec);
     }
 }
 
@@ -252,21 +269,34 @@ template <typename VALUE_T>
 void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
     this->broadcastEntries(index);
 
-//    DynamicJsonBuffer jsonBuffer;
-//    JsonObject &request = jsonBuffer.createObject();
-//
-//    request["type"] = "REG_REQUEST_ENTRIES";
-//    request["registryName"] = this->name;
-//    request["targetInstance"] = string(this->synchronizationStatus.communicationTarget);
-//    request["index"] = index;
-//
-//    string requestStr;
-//    request.printTo(requestStr);
-//    this->bcast->broadcast(requestStr);
+    using namespace openHome::registry::sync;
+    flatbuffers::FlatBufferBuilder builder;
+
+    // Create all request properties
+    Crypto::UUID target(this->synchronizationStatus.communicationTarget);
+    openHome::UUID tid(target.a, target.b, target.c, target.d);
+
+    // Create the request
+    RequestBuilder requestBuilder(builder);
+
+    requestBuilder.add_type(RequestType_ENTRIES);
+    requestBuilder.add_target(&tid);
+    requestBuilder.add_index(index);
+
+    auto request = requestBuilder.Finish();
+
+    // Convert it to a byte array
+    builder.Finish(request, RequestIdentifier());
+    uint8_t *buf = builder.GetBufferPointer();
+    vector<uint8_t> request_vec(buf, buf + builder.GetSize());
+
+    // Broadcast the head
+    this->bcast->broadcast(request_vec);
 }
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::onData(string incomingData) {
+    // TODO Reimplement
 //    DynamicJsonBuffer jsonBuffer;
 //    JsonObject &parsedData = jsonBuffer.parse(incomingData);
 //    string head = this->hashChain.size() > 0 ? this->hashChain.back() : "";
@@ -303,13 +333,12 @@ void Registry<VALUE_T>::onData(string incomingData) {
 //            size_t l_min = min(l_remote, (size_t) this->entries.size()-1);
 //
 //            Crypto::UUID requestID();
-//            // TODO Implement commented out code
 //            this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
-////            this->synchronizationStatus.requestID = requestID;
+//            this->synchronizationStatus.requestID = requestID;
 //            this->synchronizationStatus.min = 0;
 //            this->synchronizationStatus.max = l_min;
-////            this->synchronizationStatus.communicationTarget = parsedData["instance"].as<string>();
-////            this->requestHash((size_t) ceil(l_min / 2), parsedData["instance"], requestID);
+//            this->synchronizationStatus.communicationTarget = parsedData["instance"].as<string>();
+//            this->requestHash((size_t) ceil(l_min / 2), parsedData["instance"], requestID);
 //
 //        }
 //
@@ -332,12 +361,11 @@ void Registry<VALUE_T>::onData(string incomingData) {
 //                this->onBinarySearchResult(index);
 //            } else {
 //                Crypto::UUID requestID();
-//                // TODO Implement commented out code
 //                this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
-////                this->synchronizationStatus.requestID = string(requestID);
+//                this->synchronizationStatus.requestID = string(requestID);
 //                this->synchronizationStatus.min = min;
 //                this->synchronizationStatus.max = max;
-////                this->requestHash((size_t) ceil(min + (max - min) / 2), parsedData["instance"], requestID);
+//                this->requestHash((size_t) ceil(min + (max - min) / 2), parsedData["instance"], requestID);
 //            }
 //        }
 //
