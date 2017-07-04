@@ -43,6 +43,7 @@ public:
 };
 
 #ifdef UNIT_TESTING
+//#define DEBUG 1
     #include <catch.hpp>
     #include <flatbuffers/flatbuffers.h>
 
@@ -52,9 +53,11 @@ public:
         inline DummyBroadcastSocket(std::string multicastGroup, unsigned short port) {};
 
         inline void broadcast(std::vector<uint8_t> message) override {
+#ifdef DEBUG
             const char* identifier = flatbuffers::GetBufferIdentifier(message.data());
             std::string id(identifier, identifier + flatbuffers::FlatBufferBuilder::kFileIdentifierLength);
             std::cout << "[DUMMY] Broadcasting message (id: '" << id << "')" << std::endl;
+#endif
             messages.push_back(message);
         };
 
