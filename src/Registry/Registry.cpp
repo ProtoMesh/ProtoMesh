@@ -185,11 +185,9 @@ void Registry<VALUE_T>::clear() {
 }
 
 template <typename VALUE_T>
-void Registry<VALUE_T>::sync() {
+void Registry<VALUE_T>::sync(bool force) {
     // Check if a sync would be within the defined interval or too early
-    if (this->relTimeProvider->millis() < this->nextBroadcast ||
-        !this->hashChain.size())
-        return;
+    if (!force && (this->relTimeProvider->millis() < this->nextBroadcast || !this->hashChain.size())) return;
     this->nextBroadcast = this->relTimeProvider->millis() + broadcastIntervalRange(rng);
 
     using namespace openHome::registry::sync;
@@ -198,7 +196,7 @@ void Registry<VALUE_T>::sync() {
     // Create all properties
     openHome::UUID id(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
     auto name = builder.CreateString(this->name);
-    auto headStr = builder.CreateString(this->hashChain.back());
+    auto headStr = builder.CreateString(this->getHeadHash());
 
     // Create the head buffer
     auto head = CreateHead(builder, name, &id, headStr, this->entries.size());
@@ -323,7 +321,7 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
             auto hash = CreateHash(builder, &answerID, &instance, hashStr);
 
             // Convert it to a byte array
-            builder.Finish(hash, RequestIdentifier());
+            builder.Finish(hash, HashIdentifier());
             uint8_t *buf = builder.GetBufferPointer();
             vector<uint8_t> hash_vec(buf, buf + builder.GetSize());
 
@@ -359,7 +357,11 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
             size_t max = this->synchronizationStatus.max;
             size_t index = (size_t) ceil(min + (max - min) / 2);
 
-            if (this->hashChain.size() <= index) return;
+            // The local database does not contain any value beyond the current point (happens when this database is smaller than the other one)
+            if (this->hashChain.size() <= index) {
+                this->onBinarySearchResult(index);
+                return;
+            }
 
             if (this->hashChain[index] == hash->hash()->str())
                 min = index+1;
@@ -380,7 +382,6 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
             }
         }
     };
-
 
     // Actual evaluation of incoming data
     // // Request ('RREQ')
@@ -427,6 +428,49 @@ template class Registry<string>;
     #include "flatbuffers/idl.h"
 
     SCENARIO("Database/Registry", "[registry]") {
+        GIVEN("two cleared registries and a KeyPair") {
+            DummyNetworkHandler dnet;
+            DummyStorageHandler dstor;
+            REL_TIME_PROV_T drelTimeProv(new DummyRelativeTimeProvider);
+            BCAST_SOCKET_T bcast = dnet.createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT);
+
+            Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
+            Registry<string> reg("someRegistry", &dstor, &dnet, drelTimeProv);
+            Registry<string> reg2("someRegistry", &dstor, &dnet, drelTimeProv);
+
+            reg.setBcastSocket(bcast);
+            reg2.setBcastSocket(bcast);
+
+            WHEN("Adding an entry to the first registry and executing a force sync") {
+                reg.set("test", "blub", pair);
+                string entryID = string(reg.entries.back().uuid);
+                CAPTURE(entryID);
+                reg.sync(true);
+//              RHED = DB-A broadcasts its current state
+
+                AND_WHEN("iterating the network exactly four times") {
+                    vector<uint8_t> registryData;
+//                  FOUR ITERATIONS:
+//                      RREQ = DB-B starts a binary search since its head differs from DB-A and in turn requests a hash from DB-A
+//                      RHSH = DB-A sends the hash
+//                      RREQ = DB-B wants to know if DB-A has corresponding entries to merge as a result of the binary search
+//                      RSEN = DB-A has one and sends it
+                    for (int i = 0; i <= 4; ++i) {
+                        if (bcast->recv(&registryData, 0) == RECV_OK) {
+                            const char* identifier = flatbuffers::GetBufferIdentifier(registryData.data());
+                            std::string id(identifier, identifier + flatbuffers::FlatBufferBuilder::kFileIdentifierLength);
+                            reg.onData(registryData);
+                            reg2.onData(registryData);
+                            registryData.clear();
+                        }
+                    }
+
+                    THEN("the second registry should contain the added entry") {
+                        REQUIRE(reg2.has("test"));
+                    }
+                }
+            }
+        }
         GIVEN("a cleared registry and a KeyPair") {
             Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
 
@@ -496,6 +540,7 @@ template class Registry<string>;
                 }
             }
 
+            // TODO Reimplement these tests according to the new way of doing things!
 //            WHEN("a value is set with a different public key (not in the list of trusted keys)") {
 //                string key("someKey");
 //                string val("someValue");

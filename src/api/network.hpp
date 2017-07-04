@@ -44,6 +44,7 @@ public:
 
 #ifdef UNIT_TESTING
     #include <catch.hpp>
+    #include <flatbuffers/flatbuffers.h>
 
     class DummyBroadcastSocket : public BroadcastSocket {
         std::deque<std::vector<uint8_t>> messages;
@@ -51,6 +52,9 @@ public:
         inline DummyBroadcastSocket(std::string multicastGroup, unsigned short port) {};
 
         inline void broadcast(std::vector<uint8_t> message) override {
+            const char* identifier = flatbuffers::GetBufferIdentifier(message.data());
+            std::string id(identifier, identifier + flatbuffers::FlatBufferBuilder::kFileIdentifierLength);
+            std::cout << "[DUMMY] Broadcasting message (id: '" << id << "')" << std::endl;
             messages.push_back(message);
         };
 
@@ -58,7 +62,9 @@ public:
 
         inline int recv(std::vector<uint8_t> *msg, unsigned int timeout_ms) override {
             if (this->messages.size() == 0) return RECV_ERR;
+
             for (uint8_t byte : this->messages[0]) msg->push_back(byte);
+
             this->messages.pop_front();
             return RECV_OK;
         };

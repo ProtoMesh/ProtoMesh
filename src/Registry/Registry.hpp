@@ -75,7 +75,7 @@ public:
 
     void clear();
 
-    void sync();
+    void sync(bool force = false);
 
     void onData(vector<uint8_t> incomingData);
 
@@ -88,6 +88,12 @@ public:
 //        for (auto &entry : this->entries) cout << string(entry) << endl;
     };
     vector<RegistryEntry<VALUE_T>> entries;
+
+#ifdef UNIT_TESTING
+    inline void setBcastSocket(BCAST_SOCKET_T sock) {
+        this->bcast = sock;
+    }
+#endif
 };
 
 
