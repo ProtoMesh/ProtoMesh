@@ -4,6 +4,9 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <const.hpp>
+#include <deque>
+#include <iostream>
 
 #define SOCKET_T std::shared_ptr<Socket>
 class Socket {
@@ -40,16 +43,25 @@ public:
 };
 
 #ifdef UNIT_TESTING
+    #include <catch.hpp>
+
     class DummyBroadcastSocket : public BroadcastSocket {
-        std::vector<std::vector<uint8_t>> messages;
+        std::deque<std::vector<uint8_t>> messages;
     public:
         inline DummyBroadcastSocket(std::string multicastGroup, unsigned short port) {};
 
-        inline void broadcast(std::vector<uint8_t> message) override {};
+        inline void broadcast(std::vector<uint8_t> message) override {
+            messages.push_back(message);
+        };
 
         inline void send(std::string ip, unsigned short port, std::string message) override {};
 
-        inline int recv(std::vector<uint8_t> *msg, unsigned int timeout_ms) override { return 0; };
+        inline int recv(std::vector<uint8_t> *msg, unsigned int timeout_ms) override {
+            if (this->messages.size() == 0) return RECV_ERR;
+            for (uint8_t byte : this->messages[0]) msg->push_back(byte);
+            this->messages.pop_front();
+            return RECV_OK;
+        };
     };
 
     class DummyNetworkHandler : public NetworkProvider {

@@ -60,7 +60,7 @@ include_directories(lib/catch/single_include)
 ## Define the additional source files required for testing
 set(OPEN_HOME_TEST_FILES
         src/test/test.cpp
-        ${OPEN_HOME_SOURCE_FILES})
+        ${OPEN_HOME_SOURCE_FILES} src/api/network_test.cpp)
 ## Add the executable target and set the unit testing constant to true
 add_executable(openHome_test ${OPEN_HOME_TEST_FILES})
 target_compile_definitions(openHome_test PRIVATE UNIT_TESTING=1)
