@@ -65,7 +65,7 @@ void Registry<VALUE_T>::updateHead(bool save) {
     if (save) {
         auto entries = builder.CreateVector(entryOffsets);
         auto registry = CreateRegistry(builder, entries);
-        builder.Finish(registry);
+        builder.Finish(registry, RegistryIdentifier());
 
         uint8_t *buf = builder.GetBufferPointer();
         vector<uint8_t> serializedRegistry(buf, buf + builder.GetSize());
