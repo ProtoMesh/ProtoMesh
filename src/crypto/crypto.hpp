@@ -78,27 +78,11 @@ namespace Crypto {
 
             return ss.str();
         }
-        inline bool operator==(const UUID &other) {
-            // TODO This causes memory leak issues when a,b,c,d are not initialized properly!
-            return
-                    a == other.a &&
-                    b == other.b &&
-                    c == other.c &&
-                    d == other.d;
-        }
-        inline bool operator!=(const UUID &other) {
-            return
-                    a != other.a ||
-                    b != other.b ||
-                    c != other.c ||
-                    d != other.d;
-        }
-        inline bool operator>(const UUID &other) {
-            return a >= other.a && b >= other.b && c >= other.c && d > other.c;
-        }
-        inline bool operator<(const UUID &other) {
-            return &other >= this;
-        }
+        inline tuple<uint32_t, uint32_t, uint32_t, uint32_t> tie() const { return std::tie(a, b, c, d); }
+        inline bool operator==(const UUID &other) { return tie() == other.tie(); }
+        inline bool operator!=(const UUID &other) { return tie() != other.tie(); }
+        inline bool operator>(const UUID &other) { return tie() > other.tie(); }
+        inline bool operator<(const UUID &other) { return tie() < other.tie(); }
     };
 
     string generateUUID();
