@@ -79,7 +79,12 @@ namespace Crypto {
             return ss.str();
         }
         inline bool operator==(const UUID &other) {
-            return a == other.a && b == other.b && c == other.c && d == other.d;
+            // TODO This causes memory leak issues when a,b,c,d are not initialized properly!
+            return
+                    a == other.a &&
+                    b == other.b &&
+                    c == other.c &&
+                    d == other.d;
         }
         inline bool operator!=(const UUID &other) {
             return !(&other == this);

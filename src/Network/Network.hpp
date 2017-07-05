@@ -7,6 +7,8 @@
 #include "../api/time.hpp"
 #include "../Registry/Registry.hpp"
 
+#define STORED_REGISTRY_T std::shared_ptr<Registry<vector<uint8_t>>>
+
 class Network {
     NetworkProvider* net;
     StorageProvider* stor;
@@ -14,11 +16,15 @@ class Network {
 
     Crypto::asym::PublicKey masterKey;
 
-    map<string, Registry<vector<uint8_t>>> registries;
+public:
+    map<string, STORED_REGISTRY_T> registries;
+    BCAST_SOCKET_T registryBcast;
 
     void loadRegistry(string name);
-public:
+
     Network(NetworkProvider *net, StorageProvider *stor, REL_TIME_PROV_T relTimeProvider, Crypto::asym::PublicKey masterKey);
+
+    void tick(unsigned int timeoutMS);
 };
 
 

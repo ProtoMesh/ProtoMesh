@@ -187,7 +187,7 @@ void Registry<VALUE_T>::clear() {
 template <typename VALUE_T>
 void Registry<VALUE_T>::sync(bool force) {
     // Check if a sync would be within the defined interval or too early
-    if (!force && (this->relTimeProvider->millis() < this->nextBroadcast || !this->hashChain.size())) return;
+    if (this->relTimeProvider->millis() < this->nextBroadcast || !this->hashChain.size()) return;
     this->nextBroadcast = this->relTimeProvider->millis() + broadcastIntervalRange(rng);
 
     using namespace openHome::registry::sync;
@@ -295,6 +295,8 @@ void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
 template <typename VALUE_T>
 void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
     using namespace openHome::registry::sync;
+
+    cout << "RECEIVED DATA (" << string(this->instanceIdentifier) << ")" << endl;
 
     // Generic lambdas and useful variables
     uint8_t* data = incomingData.data();
