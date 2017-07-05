@@ -136,7 +136,7 @@ bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> e, bool save) {
 
         cout << "Added entry. Size: " << this->entries.size() << endl;
         for (auto entr : this->entries) {
-            cout << string(entr.uuid) << endl;
+            cout << "entry: " << string(entr.uuid) << "; parent: " << string(entr.parentUUID) << endl;
         }
 
 

@@ -34,10 +34,10 @@ int main() {
 
 //    Device dev(&net, &stor, timePtr);
 
-    while (interrupted < 3) {
+    while (interrupted < 11) {
         network.tick(1000);
 //        network2.tick(1000);
-        if (interrupted == 1) {
+        if (interrupted % 2 != 0) {
             cout << endl << "Added entry." << endl;
             auto sp = network.registries.find("groups")->second;
             sp->set("test", {1, 2, 3, 4}, Crypto::asym::generateKeyPair());
