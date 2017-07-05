@@ -4,7 +4,7 @@ void Device::tick(unsigned int timeoutMS) {
     // Receive data && let the registries broadcast their stuff
     vector<uint8_t> registryData;
     if (this->registryBcast->recv(&registryData, timeoutMS / 2) == RECV_OK) {
-        for (Registry<string> &reg : this->registries) {
+        for (auto &reg : this->registries) {
             reg.onData(registryData);
 //            reg.sync();
         }

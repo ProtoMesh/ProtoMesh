@@ -145,14 +145,14 @@ Crypto::UUID Registry<VALUE_T>::getHeadUUID() {
 }
 
 template <typename VALUE_T>
-string Registry<VALUE_T>::get(string key) {
+VALUE_T Registry<VALUE_T>::get(string key) {
     auto i = this->headState.find(key);
     if (i != this->headState.end()) return i->second;
-    return "";
+    return {};
 }
 
 template <typename VALUE_T>
-void Registry<VALUE_T>::set(string key, string value, Crypto::asym::KeyPair pair) {
+void Registry<VALUE_T>::set(string key, VALUE_T value, Crypto::asym::KeyPair pair) {
     this->addEntry(
             RegistryEntry<VALUE_T>(RegistryEntryType::UPSERT, key, value, pair, this->getHeadUUID())
     );
@@ -161,7 +161,7 @@ void Registry<VALUE_T>::set(string key, string value, Crypto::asym::KeyPair pair
 template <typename VALUE_T>
 void Registry<VALUE_T>::del(string key, Crypto::asym::KeyPair pair) {
     this->addEntry(
-            RegistryEntry<VALUE_T>(RegistryEntryType::DELETE, key, "", pair, this->getHeadUUID())
+            RegistryEntry<VALUE_T>(RegistryEntryType::DELETE, key, {}, pair, this->getHeadUUID())
     );
 }
 
@@ -422,7 +422,7 @@ string Registry<VALUE_T>::getHeadHash() const {
     return "";
 }
 
-template class Registry<string>;
+template class Registry<vector<uint8_t>>;
 
 #ifdef UNIT_TESTING
     #include "flatbuffers/idl.h"
@@ -435,14 +435,14 @@ template class Registry<string>;
             BCAST_SOCKET_T bcast = dnet.createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT);
 
             Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
-            Registry<string> reg("someRegistry", &dstor, &dnet, drelTimeProv);
-            Registry<string> reg2("someRegistry", &dstor, &dnet, drelTimeProv);
+            Registry<vector<uint8_t >> reg("someRegistry", &dstor, &dnet, drelTimeProv);
+            Registry<vector<uint8_t >> reg2("someRegistry", &dstor, &dnet, drelTimeProv);
 
             reg.setBcastSocket(bcast);
             reg2.setBcastSocket(bcast);
 
             WHEN("Adding an entry to the first registry and executing a force sync") {
-                reg.set("test", "blub", pair);
+                reg.set("test", {1, 2, 3, 4}, pair);
                 string entryID = string(reg.entries.back().uuid);
                 CAPTURE(entryID);
                 reg.sync(true);
@@ -479,7 +479,7 @@ template class Registry<string>;
             DummyStorageHandler dstor;
             REL_TIME_PROV_T drelTimeProv(new DummyRelativeTimeProvider);
 
-            Registry<string> reg("someRegistry", &dstor, &dnet, drelTimeProv);
+            Registry<vector<uint8_t>> reg("someRegistry", &dstor, &dnet, drelTimeProv);
 
             WHEN("a serialized entry is added twice") {
 
@@ -508,7 +508,8 @@ template class Registry<string>;
 
             WHEN("a value is set") {
                 string key("someKey");
-                string val("someValue");
+                vector<uint8_t> val = {1, 2, 3, 4, 5};
+                vector<uint8_t> empty = {};
                 reg.set(key, val, pair);
                 string prevHeadHash(reg.getHeadHash());
 
@@ -523,7 +524,7 @@ template class Registry<string>;
                     reg.clear();
 
                     THEN("the read value should be empty") {
-                        REQUIRE( reg.get(key) == "" );
+                        REQUIRE( reg.get(key) == empty );
                     }
                 }
 
@@ -531,7 +532,7 @@ template class Registry<string>;
                     reg.del(key, pair);
 
                     THEN("the read value should be empty") {
-                        REQUIRE( reg.get(key) == "" );
+                        REQUIRE( reg.get(key) == empty );
                     }
 
                     THEN("the head hash should differ") {

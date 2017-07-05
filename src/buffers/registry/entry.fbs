@@ -15,7 +15,7 @@ table Entry {
     type: EntryType;
 
     key: string (required);
-    value: string; // TODO Change type to ubyte
+    value: [ubyte];
 
     signature: crypto.Signature;
 }

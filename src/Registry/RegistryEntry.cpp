@@ -33,7 +33,7 @@ void RegistryEntry<VALUE_T>::loadFromBuffer(const openHome::registry::Entry* ent
     }
 
     this->key = entry->key()->c_str();
-    this->value = entry->value()->c_str(); // TODO Replace w/ uint8_t vector
+    for (auto it=entry->value()->begin(); it!=entry->value()->end(); ++it) this->value.push_back(*it);
 
     auto entry_sig = entry->signature();
 
@@ -81,10 +81,11 @@ flatbuffers::Offset<openHome::registry::Entry> RegistryEntry<VALUE_T>::to_flatbu
     openHome::UUID pid(this->parentUUID.a, this->parentUUID.b, this->parentUUID.c, this->parentUUID.d);
 
     auto key = builder.CreateString(this->key);
-    auto value = builder.CreateString(this->value);
+    vector<uint8_t> val(this->value.data(), &this->value[this->value.size()]);
+    auto value = builder.CreateVector(val);
 
-    vector<uint8_t> signature(&this->signature[0], &this->signature[this->signature.size()]);
-    vector<uint8_t> usedKey(&this->publicKeyUsed[0], &this->publicKeyUsed[this->publicKeyUsed.size()]);
+    vector<uint8_t> signature(this->signature.data(), &this->signature[this->signature.size()]);
+    vector<uint8_t> usedKey(this->publicKeyUsed.data(), &this->publicKeyUsed[this->publicKeyUsed.size()]);
     auto sig_vec = builder.CreateVector(signature);
     auto pku_vec = builder.CreateVector(usedKey);
     auto sig = openHome::crypto::CreateSignature(builder, sig_vec, pku_vec);
@@ -129,8 +130,7 @@ SignatureVerificationResult RegistryEntry<VALUE_T>::verifySignature(map<PUB_HASH
     return res ? SignatureVerificationResult::OK : SignatureVerificationResult::SignatureInvalid;
 }
 
-template class RegistryEntry<string>;
-//template class RegistryEntry<uint8_t>;
+template class RegistryEntry<vector<uint8_t>>;
 
 #ifdef UNIT_TESTING
 

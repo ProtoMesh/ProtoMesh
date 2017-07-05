@@ -33,12 +33,12 @@ int main() {
 //    keys[pair.pub.getHash()] = &pair.pub;
 //    keys[pair2.pub.getHash()] = &pair2.pub;
 //
-    Registry<string> reg("testReg", &stor, &net, timePtr);
-    cout << reg.has("test") << endl;
-    cout << reg.get("test") << endl;
+//    Registry<string> reg("testReg", &stor, &net, timePtr);
+//    cout << reg.has("test") << endl;
+//    cout << reg.get("test") << endl;
 //    reg.clear();
-    reg.set("test", "HELLO WORLD! IT WORKED3!", pair);
-    reg.sync();
+//    reg.set("test", "HELLO WORLD! IT WORKED3!", pair);
+//    reg.sync();
 
 //
 //    Registry<string> reg2("testReg", &stor, &net, timePtr);

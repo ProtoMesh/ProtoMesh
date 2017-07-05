@@ -10,6 +10,6 @@ void Network::loadRegistry(string name) {
 //    std::map<PUB_HASH_T, Crypto::asym::PublicKey *> trustedKeys;
 //    trustedKeys[this->masterKey.getHash()] = &this->masterKey;
 
-    Registry<string> reg(name, this->stor, this->net, this->time);
+    Registry<vector<uint8_t>> reg(name, this->stor, this->net, this->time);
     this->registries.emplace(name, reg);
 }

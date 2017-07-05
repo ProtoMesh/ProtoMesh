@@ -60,17 +60,19 @@ class Registry {
     bool isSyncInProgress();
 
 public:
+    vector<RegistryEntry<VALUE_T>> entries;
+    vector<string> hashChain;
+
     Registry(string name, StorageProvider *stor, NetworkProvider *net,
              REL_TIME_PROV_T relTimeProvider);
 
-    string get(string key);
-    void set(string key, string value, Crypto::asym::KeyPair pair);
+    VALUE_T get(string key);
+    void set(string key, VALUE_T value, Crypto::asym::KeyPair pair);
     void del(string key, Crypto::asym::KeyPair pair);
     bool has(string key);
 
     bool addSerializedEntry(const openHome::registry::Entry* serialized, bool save = true);
 
-    vector<string> hashChain;
     string getHeadHash() const;
 
     void clear();
@@ -78,16 +80,6 @@ public:
     void sync(bool force = false);
 
     void onData(vector<uint8_t> incomingData);
-
-    inline void print() {
-        cout << string(this->instanceIdentifier) << " | " << this->entries.size() << endl;
-        cout << "No printing....sorry" << endl;
-//        for (unsigned int i = 0; i < this->entries.size(); i++) {
-//            cout << string(this->entries[i]) << endl;
-//        }
-//        for (auto &entry : this->entries) cout << string(entry) << endl;
-    };
-    vector<RegistryEntry<VALUE_T>> entries;
 
 #ifdef UNIT_TESTING
     inline void setBcastSocket(BCAST_SOCKET_T sock) {
