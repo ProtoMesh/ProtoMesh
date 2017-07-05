@@ -47,7 +47,7 @@ namespace Crypto {
         static UUID Empty() {
             return UUID(0, 0, 0, 0);
         }
-        UUID(ulong a, ulong b, ulong c, ulong d) : a(a), b(b), c(c), d(d) {};
+        UUID(uint32_t a, ulong b, ulong c, ulong d) : a(a), b(b), c(c), d(d) {};
         UUID() {
             random_device rd;
             default_random_engine generator(rd());
@@ -87,7 +87,11 @@ namespace Crypto {
                     d == other.d;
         }
         inline bool operator!=(const UUID &other) {
-            return !(&other == this);
+            return
+                    a != other.a ||
+                    b != other.b ||
+                    c != other.c ||
+                    d != other.d;
         }
         inline bool operator>(const UUID &other) {
             return a >= other.a && b >= other.b && c >= other.c && d > other.c;
