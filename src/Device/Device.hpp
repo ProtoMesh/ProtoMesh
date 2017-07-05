@@ -24,11 +24,6 @@ public:
                                             registryBcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
                                             relTimeProvider(relTimeProvider) {};
     void tick(unsigned int timeoutMS);
-    inline void print() {
-        this->registries[0].print();
-        std::cout << std::endl;
-        this->registries[1].print();
-    }
 };
 
 

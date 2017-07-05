@@ -70,7 +70,7 @@ int main() {
 
     while (interrupted == 0) {
         dev.tick(1000);
-        reg.sync();
+//        reg.sync();
     }
 
 //    dev.print();
