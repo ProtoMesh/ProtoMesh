@@ -132,6 +132,14 @@ bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> e, bool save) {
         // Insert the entry at the previously determined position
         this->entries.insert(this->entries.begin() + index, e);
         this->updateHead(save);
+
+
+        cout << "Added entry. Size: " << this->entries.size() << endl;
+        for (auto entr : this->entries) {
+            cout << string(entr.uuid) << endl;
+        }
+
+
         return true;
     }
 

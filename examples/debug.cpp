@@ -30,7 +30,7 @@ int main() {
 
     NetworkManager networkManager(&net, &stor, timePtr);
     Network network = createOrJoinNetwork(networkManager);
-    Network network2 = createOrJoinNetwork(networkManager);
+//    Network network2 = createOrJoinNetwork(networkManager);
 
 //    Device dev(&net, &stor, timePtr);
 

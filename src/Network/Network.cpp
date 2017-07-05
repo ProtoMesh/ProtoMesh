@@ -16,6 +16,9 @@ void Network::loadRegistry(string name) {
 
 //    Registry<vector<uint8_t>> reg(name, this->stor, this->net, this->time); // TODO Check whether or not this is deallocated...
     auto sp = std::make_shared<Registry<vector<uint8_t>>>(name, this->stor, this->net, this->time);
+
+    sp->clear(); cout << "CLEAR" << endl; // TODO Remove this
+
     this->registries.emplace(name, sp);
 }
 
