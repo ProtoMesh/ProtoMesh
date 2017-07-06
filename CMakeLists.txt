@@ -21,10 +21,16 @@ set(ECC_SOURCES
         lib/micro-ecc/uECC_vli.h
         lib/micro-ecc/types.h)
 
+# Add uint128_t sources
+include_directories(lib/uint128_t)
+set(UINT128_SOURCES
+        lib/uint128_t/uint128_t.cpp)
+
 # Define the openHome source files and its dependency on ECC and Duktape
 set(OPEN_HOME_SOURCE_FILES
         ${ECC_SOURCES}
         ${DUKTAPE_SOURCES}
+        ${UINT128_SOURCES}
         src/Network/NetworkManager.cpp
         src/Network/NetworkManager.hpp
         src/Network/Network.hpp

@@ -47,7 +47,7 @@ namespace Crypto {
         static UUID Empty() {
             return UUID(0, 0, 0, 0);
         }
-        UUID(uint32_t a, ulong b, ulong c, ulong d) : a(a), b(b), c(c), d(d) {};
+        UUID(uint32_t a, uint32_t b, uint32_t c, uint32_t d) : a(a), b(b), c(c), d(d) {};
         UUID() {
             random_device rd;
             default_random_engine generator(rd());
@@ -79,10 +79,15 @@ namespace Crypto {
             return ss.str();
         }
         inline tuple<uint32_t, uint32_t, uint32_t, uint32_t> tie() const { return std::tie(a, b, c, d); }
-        inline bool operator==(const UUID &other) { return tie() == other.tie(); }
-        inline bool operator!=(const UUID &other) { return tie() != other.tie(); }
-        inline bool operator>(const UUID &other) { return tie() > other.tie(); }
-        inline bool operator<(const UUID &other) { return tie() < other.tie(); }
+        inline bool operator==(const UUID& lhs, const UUID& rhs) {
+            return
+                    lhs.a == rhs.a &&
+                    lhs.b == rhs.b &&
+                    lhs.c == rhs.c &&
+                    lhs.d == rhs.d; }
+        inline bool operator!=(const UUID &other) { return this->tie() != other.tie(); }
+        inline bool operator>(const UUID &other) { return this->tie() > other.tie(); }
+        inline bool operator<(const UUID &other) { return this->tie() < other.tie(); }
     };
 
     string generateUUID();

@@ -9,7 +9,7 @@
 template <typename VALUE_T>
 RegistryEntry<VALUE_T>::RegistryEntry(RegistryEntryType type, string key, VALUE_T value, Crypto::asym::KeyPair pair,
                              Crypto::UUID parentUUID)
-        : parentUUID(parentUUID), uuid(Crypto::UUID()), publicKeyUsed(pair.pub.getHash()), type(type), valid(true) , key(key), value(value){
+        : parentUUID(parentUUID), uuid(), publicKeyUsed(pair.pub.getHash()), type(type), valid(true) , key(key), value(value){
     this->signature = Crypto::asym::sign(this->getSignatureText(), pair.priv);
 }
 

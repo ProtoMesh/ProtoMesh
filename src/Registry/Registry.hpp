@@ -56,6 +56,7 @@ class Registry {
 
     Crypto::UUID requestHash(size_t index, Crypto::UUID target, Crypto::UUID requestID); // requestID = UUID
     void onBinarySearchResult(size_t index);
+    vector<vector<uint8_t>> serializeEntries(size_t index);
     void broadcastEntries(size_t index);
     bool isSyncInProgress();
 

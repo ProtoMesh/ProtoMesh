@@ -91,15 +91,54 @@ tuple<vector<unsigned long>, unsigned long> Registry<VALUE_T>::getBlockBorders(C
 template <typename VALUE_T>
 bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> e, bool save) {
     if (!e.valid) return false;
+
+    cout << "-------------------------------------------------------------------------------" << endl;
+    cout << "Adding entry: " << string(e.uuid) << "; parent: " << string(e.parentUUID) << endl;
+    for (auto entr : this->entries) {
+        cout << "entry: " << string(entr.uuid) << "; parent: " << string(entr.parentUUID) << endl;
+    }
+
+    auto lastBorder = this->entries.end();
+
+    // Go through from the back
+    for (auto it = this->entries.end(); it > this->entries.begin(); it--) {
+        // We reached our direct parent. Insert after it
+        if ((*it).uuid == e.parentUUID) {
+            // TODO Insert after the parent
+            this->entries.insert(it + 1, e);
+        }
+
+        // We've hit a different entry that has the same parent
+        if ((*it).parentUUID == e.parentUUID) {
+            // In case we are smaller save its position for later
+            if (e.uuid < (*it).uuid) lastBorder = it;
+            // In case we are bigger take the position of the last border we encountered and insert ourselves there
+            else if (e.uuid > (*it).uuid) {
+                this->entries.insert(lastBorder, e);
+                return true;
+            }
+            // This entry is equal to the entry we encountered! Abort and don't insert.
+            else return false;
+        }
+    }
+
+    // We haven't found any parent or ancestor so just add it to the back
+    this->entries.push_back(e);
+
+    return true;
+
     unsigned long index = 0;
 
     // If the entry is supposed to have a parent then calculate its new position
-    if (e.parentUUID != Crypto::UUID::Empty() && this->entries.size() > 0) {
+    if (this->entries.size() > 0) { //e.parentUUID != Crypto::UUID::Empty() &&
         auto res = this->getBlockBorders(e.parentUUID);
         vector<unsigned long> blockBorders(std::get<0>(res));
         index = std::get<1>(res);
 
         unsigned long lastBorder = blockBorders.back();
+
+        for (auto bordder : blockBorders) cout << bordder << " | ";
+        cout << endl;
         if (lastBorder != index) {
             // Check if the insertion would create an additional border and compensate
             if (this->entries[index].parentUUID == e.parentUUID) blockBorders.push_back(index);
@@ -247,8 +286,10 @@ Crypto::UUID Registry<VALUE_T>::requestHash(size_t index, Crypto::UUID target, C
 }
 
 template <typename VALUE_T>
-void Registry<VALUE_T>::broadcastEntries(size_t index) { // includes index
+vector<vector<uint8_t>> Registry<VALUE_T>::serializeEntries(size_t index) {  // includes index
     using namespace openHome::registry::sync;
+
+    vector<vector<uint8_t>> entries;
 
     for (size_t i = index; i < this->entries.size(); i++) {
         flatbuffers::FlatBufferBuilder builder;
@@ -266,14 +307,28 @@ void Registry<VALUE_T>::broadcastEntries(size_t index) { // includes index
         uint8_t *buf = builder.GetBufferPointer();
         vector<uint8_t> entry_vec(buf, buf + builder.GetSize());
 
-        // Broadcast the entry
-        this->bcast->broadcast(entry_vec);
+        // Push the entry
+        entries.push_back(entry_vec);
     }
+
+    return entries;
+}
+
+template <typename VALUE_T>
+void Registry<VALUE_T>::broadcastEntries(size_t index) { // includes index
+    using namespace openHome::registry::sync;
+
+    vector<vector<uint8_t>> entries(this->serializeEntries(index));
+
+    // Broadcast the entries
+    for (vector<uint8_t> entry : entries) this->bcast->broadcast(entry);
 }
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
     this->broadcastEntries(index);
+    // Pre-serialize the entries
+    vector<vector<uint8_t>> entries(this->serializeEntries(index));
 
     using namespace openHome::registry::sync;
     flatbuffers::FlatBufferBuilder builder;
@@ -296,15 +351,16 @@ void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
     uint8_t *buf = builder.GetBufferPointer();
     vector<uint8_t> request_vec(buf, buf + builder.GetSize());
 
-    // Broadcast the head
+    // Broadcast the request
     this->bcast->broadcast(request_vec);
+
+    // Broadcast our entries
+//    for (vector<uint8_t> entry : entries) this->bcast->broadcast(entry);
 }
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
     using namespace openHome::registry::sync;
-
-    cout << "RECEIVED DATA (" << string(this->instanceIdentifier) << ")" << endl;
 
     // Generic lambdas and useful variables
     uint8_t* data = incomingData.data();

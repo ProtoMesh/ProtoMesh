@@ -43,5 +43,6 @@ int main() {
             sp->set("test", {1, 2, 3, 4}, Crypto::asym::generateKeyPair());
             interrupted++;
         }
+//        else { interrupted++; }
     }
 }
