@@ -115,8 +115,20 @@ vector<uint8_t> RegistryEntry<VALUE_T>::serialize() const {
 
 template <typename VALUE_T>
 string RegistryEntry<VALUE_T>::getSignatureText() const {
-    vector<uint8_t> serializedEntry(this->serialize());
-    return string(serializedEntry.begin(), serializedEntry.end());
+    string signatureText;
+
+    vector<uint8_t> val(this->value.data(), &this->value[this->value.size()]);
+
+    signatureText += string(this->uuid);
+    signatureText += string(this->parentUUID);
+    signatureText += this->key;
+    signatureText += Crypto::serialize::uint8ArrToString(val.data(), val.size());
+    switch (this->type) {
+        case UPSERT: signatureText += "UPSERT"; break;
+        case DELETE: signatureText += "DELETE"; break;
+    }
+
+    return signatureText;
 }
 
 template <typename VALUE_T>

@@ -86,7 +86,7 @@ namespace Crypto {
     }
 
     namespace serialize {
-        string uint8ArrToString(uint8_t *arr, unsigned int len) {
+        string uint8ArrToString(uint8_t *arr, unsigned long len) {
             stringstream ss;
             ss << hex << nouppercase << setfill('0');
             for (unsigned int i = 0; i < len; ++i)

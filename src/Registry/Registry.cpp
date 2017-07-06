@@ -74,47 +74,40 @@ void Registry<VALUE_T>::updateHead(bool save) {
 }
 
 template <typename VALUE_T>
-tuple<vector<unsigned long>, unsigned long> Registry<VALUE_T>::getBlockBorders(Crypto::UUID parentUUID) {
-    unsigned long i = this->entries.size();
+bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> newEntry, bool save) {
+    if (!newEntry.valid) return false;
 
-    vector<unsigned long> blockBorders = {this->entries.size()};
+    // TODO This still sucks. Look at this: http://i.imgur.com/KMB5Agm.png
 
-    // 1. Search for block borders (=> locations where the parentUUID's don't match up)
-    // 2. Search for the parent entry and quit at its location
-    // TODO entries[i-1] might be causing memory leaks since the loop goes on until i=0 so i-1=-1 which is invalid
-    while (--i && this->entries[i].uuid != parentUUID)
-        if (this->entries[i - 1].uuid != this->entries[i].parentUUID) blockBorders.push_back(i);
+    auto lastBorder = this->entries.size();
+    auto insertAt = [&] (size_t index) {
+        this->entries.insert(this->entries.begin() + index, newEntry);
+        this->updateHead(save);
 
-    return make_tuple(blockBorders, i + 1);
-}
-
-template <typename VALUE_T>
-bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> e, bool save) {
-    if (!e.valid) return false;
-
-    cout << "-------------------------------------------------------------------------------" << endl;
-    cout << "Adding entry: " << string(e.uuid) << "; parent: " << string(e.parentUUID) << endl;
-    for (auto entr : this->entries) {
-        cout << "entry: " << string(entr.uuid) << "; parent: " << string(entr.parentUUID) << endl;
-    }
-
-    auto lastBorder = this->entries.end();
+        cout << "-------------------------------------------------------------------------------" << endl;
+        cout << "Added entry: " << string(newEntry.uuid) << "; parent: " << string(newEntry.parentUUID) << endl;
+        cout << "result:" << endl;
+        for (auto entr : this->entries) cout << "entry: " << string(entr.uuid) << "; parent: " << string(entr.parentUUID) << endl;
+        cout << endl;
+    };
 
     // Go through from the back
-    for (auto it = this->entries.end(); it > this->entries.begin(); it--) {
+    for (unsigned long i = this->entries.size(); i-- > 0;) {
+        auto entry = this->entries[i];
+
         // We reached our direct parent. Insert after it
-        if ((*it).uuid == e.parentUUID) {
-            // TODO Insert after the parent
-            this->entries.insert(it + 1, e);
+        if (entry.uuid == newEntry.parentUUID) {
+            insertAt(i + 1);
+            return true;
         }
 
         // We've hit a different entry that has the same parent
-        if ((*it).parentUUID == e.parentUUID) {
+        if (entry.parentUUID == newEntry.parentUUID) {
             // In case we are smaller save its position for later
-            if (e.uuid < (*it).uuid) lastBorder = it;
+            if (newEntry.uuid < entry.uuid) lastBorder = i;
             // In case we are bigger take the position of the last border we encountered and insert ourselves there
-            else if (e.uuid > (*it).uuid) {
-                this->entries.insert(lastBorder, e);
+            else if (newEntry.uuid > entry.uuid) {
+                insertAt(lastBorder);
                 return true;
             }
             // This entry is equal to the entry we encountered! Abort and don't insert.
@@ -122,67 +115,11 @@ bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> e, bool save) {
         }
     }
 
-    // We haven't found any parent or ancestor so just add it to the back
-    this->entries.push_back(e);
+    // We haven't found any parent or ancestor so just add it to the back (or front if its parent is empty)
+    if (newEntry.parentUUID == Crypto::UUID::Empty()) insertAt(0);
+    else insertAt(this->entries.size());
 
     return true;
-
-    unsigned long index = 0;
-
-    // If the entry is supposed to have a parent then calculate its new position
-    if (this->entries.size() > 0) { //e.parentUUID != Crypto::UUID::Empty() &&
-        auto res = this->getBlockBorders(e.parentUUID);
-        vector<unsigned long> blockBorders(std::get<0>(res));
-        index = std::get<1>(res);
-
-        unsigned long lastBorder = blockBorders.back();
-
-        for (auto bordder : blockBorders) cout << bordder << " | ";
-        cout << endl;
-        if (lastBorder != index) {
-            // Check if the insertion would create an additional border and compensate
-            if (this->entries[index].parentUUID == e.parentUUID) blockBorders.push_back(index);
-
-            index = this->entries.size();
-            for (auto border = blockBorders.rbegin(); border != blockBorders.rend(); ++border) {
-
-                // If the entry is already present then don't create a duplicate
-                if (this->entries.size() > *border && this->entries[*border].uuid == e.uuid) return false;
-
-                // This is the actual "merge". The sorting is done by comparing the UUID's
-                if (*border != this->entries.size() && e.uuid < this->entries[*border].uuid) {
-                    index = *border;
-                    break;
-                }
-            }
-        }
-    }
-
-
-    bool below_identical = false, above_identical = false, target_identical = false;
-    if (this->entries.size() > 0) {
-        below_identical = (index > 0 && this->entries[index - 1].uuid == e.uuid);
-        above_identical = (index < (this->entries.size() - 1) && this->entries[index + 1].uuid == e.uuid);
-        target_identical = (this->entries[index].uuid == e.uuid);
-    }
-
-    // Check the entries neighbours to avoid dups
-    if (!below_identical && !above_identical && !target_identical) {
-        // Insert the entry at the previously determined position
-        this->entries.insert(this->entries.begin() + index, e);
-        this->updateHead(save);
-
-
-        cout << "Added entry. Size: " << this->entries.size() << endl;
-        for (auto entr : this->entries) {
-            cout << "entry: " << string(entr.uuid) << "; parent: " << string(entr.parentUUID) << endl;
-        }
-
-
-        return true;
-    }
-
-    return false;
 }
 
 template <typename VALUE_T>
@@ -200,9 +137,9 @@ VALUE_T Registry<VALUE_T>::get(string key) {
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::set(string key, VALUE_T value, Crypto::asym::KeyPair pair) {
-    this->addEntry(
-            RegistryEntry<VALUE_T>(RegistryEntryType::UPSERT, key, value, pair, this->getHeadUUID())
-    );
+
+    auto entry = RegistryEntry<VALUE_T>(RegistryEntryType::UPSERT, key, value, pair, this->getHeadUUID());
+    this->addEntry(entry);
 }
 
 template <typename VALUE_T>
@@ -234,7 +171,7 @@ void Registry<VALUE_T>::clear() {
 template <typename VALUE_T>
 void Registry<VALUE_T>::sync(bool force) {
     // Check if a sync would be within the defined interval or too early
-    if (this->relTimeProvider->millis() < this->nextBroadcast || !this->hashChain.size()) return;
+    if (!force && (this->relTimeProvider->millis() < this->nextBroadcast || !this->hashChain.size())) return;
     this->nextBroadcast = this->relTimeProvider->millis() + broadcastIntervalRange(rng);
 
     using namespace openHome::registry::sync;
@@ -354,8 +291,10 @@ void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
     // Broadcast the request
     this->bcast->broadcast(request_vec);
 
-    // Broadcast our entries
-//    for (vector<uint8_t> entry : entries) this->bcast->broadcast(entry);
+    // Broadcast our entries after the request
+    // (that way the target receives the request first, then sends its new entries out and then merges ours in)
+    // (reduces amount of duplicates on the wire :D)
+    for (vector<uint8_t> entry : entries) this->bcast->broadcast(entry);
 }
 
 template <typename VALUE_T>

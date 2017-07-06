@@ -42,7 +42,7 @@ extern const struct uECC_Curve_t* ECC_CURVE;
 namespace Crypto {
     class UUID {
     public:
-        uint32_t a, b, c, d;
+        uint32_t a=0, b=0, c=0, d=0;
 
         static UUID Empty() {
             return UUID(0, 0, 0, 0);
@@ -79,12 +79,7 @@ namespace Crypto {
             return ss.str();
         }
         inline tuple<uint32_t, uint32_t, uint32_t, uint32_t> tie() const { return std::tie(a, b, c, d); }
-        inline bool operator==(const UUID& lhs, const UUID& rhs) {
-            return
-                    lhs.a == rhs.a &&
-                    lhs.b == rhs.b &&
-                    lhs.c == rhs.c &&
-                    lhs.d == rhs.d; }
+        inline bool operator==(const UUID &other) { return this->tie() == other.tie(); }
         inline bool operator!=(const UUID &other) { return this->tie() != other.tie(); }
         inline bool operator>(const UUID &other) { return this->tie() > other.tie(); }
         inline bool operator<(const UUID &other) { return this->tie() < other.tie(); }
@@ -98,7 +93,7 @@ namespace Crypto {
     }
 
     namespace serialize {
-        string uint8ArrToString(uint8_t* arr, unsigned int len);
+        string uint8ArrToString(uint8_t* arr, unsigned long len);
         vector<uint8_t> stringToUint8Array(string hex);
     }
 

@@ -48,11 +48,9 @@ class Registry {
 
     // Functions
     void updateHead(bool save);
-    bool addEntry(RegistryEntry<VALUE_T> e, bool save = true);
+    bool addEntry(RegistryEntry<VALUE_T> newEntry, bool save = true);
 
     Crypto::UUID getHeadUUID();
-
-    tuple<vector<unsigned long>, unsigned long> getBlockBorders(Crypto::UUID parentUUID = Crypto::UUID::Empty());
 
     Crypto::UUID requestHash(size_t index, Crypto::UUID target, Crypto::UUID requestID); // requestID = UUID
     void onBinarySearchResult(size_t index);
