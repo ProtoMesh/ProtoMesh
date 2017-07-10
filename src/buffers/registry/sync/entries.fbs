@@ -1,0 +1,13 @@
+include "../entry.fbs";
+
+namespace openHome.registry.sync;
+
+table Entries {
+    name: string (required);
+    instance: UUID (required);
+
+    entries: [openHome.registry.Entry];
+}
+
+file_identifier "RSEN";
+root_type Entries;

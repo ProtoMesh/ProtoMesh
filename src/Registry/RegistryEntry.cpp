@@ -73,7 +73,7 @@ RegistryEntry<VALUE_T>::RegistryEntry(vector<uint8_t> serializedEntry) : valid(t
 }
 
 template<typename VALUE_T>
-flatbuffers::Offset<openHome::registry::Entry> RegistryEntry<VALUE_T>::to_flatbuffer_offset(
+flatbuffers::Offset<openHome::registry::Entry> RegistryEntry<VALUE_T>::toFlatbufferOffset(
         flatbuffers::FlatBufferBuilder &builder) const {
     using namespace openHome::registry;
 
@@ -104,7 +104,7 @@ vector<uint8_t> RegistryEntry<VALUE_T>::serialize() const {
     using namespace openHome::registry;
     flatbuffers::FlatBufferBuilder builder;
 
-    auto entry = this->to_flatbuffer_offset(builder);
+    auto entry = this->toFlatbufferOffset(builder);
     builder.Finish(entry, EntryIdentifier());
 
     uint8_t *buf = builder.GetBufferPointer();

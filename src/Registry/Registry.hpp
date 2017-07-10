@@ -4,19 +4,20 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <random>
+#include <list>
 #include "RegistryEntry.hpp"
 #include "../const.hpp"
 #include "../crypto/crypto.hpp"
 #include "../api/storage.hpp"
 #include "../api/network.hpp"
 #include "../api/time.hpp"
-#include <random>
 
 #include "flatbuffers/flatbuffers.h"
 #include "../buffers/registry/registry_generated.h"
 #include "../buffers/registry/sync/head_generated.h"
 #include "../buffers/registry/sync/request_generated.h"
-#include "../buffers/registry/sync/entry_generated.h"
+#include "../buffers/registry/sync/entries_generated.h"
 #include "../buffers/registry/sync/hash_generated.h"
 
 #define REGISTRY_STORAGE_PREFIX "registry::"
@@ -49,12 +50,12 @@ class Registry {
     // Functions
     void updateHead(bool save);
     bool addEntry(RegistryEntry<VALUE_T> newEntry, bool save = true);
+    void addEntries(list<RegistryEntry<VALUE_T>> newEntries, size_t startingIndex, bool save = true);
 
     Crypto::UUID getHeadUUID();
 
     Crypto::UUID requestHash(size_t index, Crypto::UUID target, Crypto::UUID requestID); // requestID = UUID
     void onBinarySearchResult(size_t index);
-    vector<vector<uint8_t>> serializeEntries(size_t index);
     void broadcastEntries(size_t index);
     bool isSyncInProgress();
 
@@ -80,7 +81,29 @@ public:
 
     void onData(vector<uint8_t> incomingData);
 
+    inline bool operator==(const Registry &other) {
+        return this->getHeadHash() == other.getHeadHash();
+    }
+
+    inline string getEntries() {
+        stringstream ss;
+        ss << "-------------------------------------------------------------------------------" << endl;
+        ss << "Registry: " << this->name << endl;
+        ss << "Instance: " << this->instanceIdentifier << endl;
+        ss << endl;
+        for (auto entr : this->entries) ss << "entry: " << entr.uuid << "; parent: " << entr.parentUUID << endl;
+        ss << endl;
+
+        return ss.str();
+    }
+
 #ifdef UNIT_TESTING
+    bool debug = false;
+
+    inline void enableDebugging() {
+        this->debug = true;
+    }
+
     inline void setBcastSocket(BCAST_SOCKET_T sock) {
         this->bcast = sock;
     }

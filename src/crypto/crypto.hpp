@@ -26,14 +26,12 @@ using namespace std;
 #define PUB_HASH_T array<char, PUB_HASH_SIZE> // First PUB_HASH_SIZE characters of the HASH of the hex representation of the public key
 
 // Defining cryptography types
-#define PUBLIC_KEY_T array<uint8_t, PUB_KEY_SIZE>
 #define COMPRESSED_PUBLIC_KEY_T array<uint8_t, COMPRESSED_PUB_KEY_SIZE>
 #define PRIVATE_KEY_T array<uint8_t, PRIV_KEY_SIZE>
 #define NETWORK_KEY_T COMPRESSED_PUBLIC_KEY_T
 #define NETWORK_KEY_SIZE COMPRESSED_PUB_KEY_SIZE
 #define SIGNATURE_T array<uint8_t, PUB_KEY_SIZE>
 #define HASH vector<uint8_t>
-//#define UUID string
 
 // Defining the elliptic curve to use
 extern const struct uECC_Curve_t* ECC_CURVE;
@@ -83,7 +81,10 @@ namespace Crypto {
         inline bool operator!=(const UUID &other) { return this->tie() != other.tie(); }
         inline bool operator>(const UUID &other) { return this->tie() > other.tie(); }
         inline bool operator<(const UUID &other) { return this->tie() < other.tie(); }
+        inline const bool operator<(const UUID &other) const { return this->tie() < other.tie(); }
     };
+
+    inline std::ostream& operator<< (std::ostream &out, const UUID &uid) { out << string(uid); return out; }
 
     string generateUUID();
 

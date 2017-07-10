@@ -57,7 +57,7 @@ public:
 
     inline bool operator==(const RegistryEntry &other) { return this->serialize() == other.serialize(); }
 
-    flatbuffers::Offset<openHome::registry::Entry> to_flatbuffer_offset(flatbuffers::FlatBufferBuilder &builder) const;
+    flatbuffers::Offset<openHome::registry::Entry> toFlatbufferOffset(flatbuffers::FlatBufferBuilder &builder) const;
 };
 
 

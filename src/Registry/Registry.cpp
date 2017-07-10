@@ -46,7 +46,7 @@ void Registry<VALUE_T>::updateHead(bool save) {
 
     for (auto &entry : entries) {
         // Save entries
-        entryOffsets.push_back(entry.to_flatbuffer_offset(builder));
+        entryOffsets.push_back(entry.toFlatbufferOffset(builder));
         // Generate hash for the entry
         lastHash = Crypto::hash::sha512(lastHash + entry.getSignatureText());
         this->hashChain.push_back(lastHash);
@@ -77,21 +77,17 @@ template <typename VALUE_T>
 bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> newEntry, bool save) {
     if (!newEntry.valid) return false;
 
-    // TODO This still sucks. Look at this: http://i.imgur.com/KMB5Agm.png
-
     auto lastBorder = this->entries.size();
     auto insertAt = [&] (size_t index) {
         this->entries.insert(this->entries.begin() + index, newEntry);
         this->updateHead(save);
 
-        cout << "-------------------------------------------------------------------------------" << endl;
-        cout << "Added entry: " << string(newEntry.uuid) << "; parent: " << string(newEntry.parentUUID) << endl;
-        cout << "result:" << endl;
-        for (auto entr : this->entries) cout << "entry: " << string(entr.uuid) << "; parent: " << string(entr.parentUUID) << endl;
-        cout << endl;
+#ifdef UNIT_TESTING
+        if (debug) cout << "Inserted entry at " << index << ": " << newEntry.uuid << endl << this->getEntries() << endl;
+#endif
     };
 
-    // Go through from the back
+    /// Go through from the back
     for (unsigned long i = this->entries.size(); i-- > 0;) {
         auto entry = this->entries[i];
 
@@ -101,25 +97,99 @@ bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> newEntry, bool save) {
             return true;
         }
 
-        // We've hit a different entry that has the same parent
+        /// We've hit a different entry that has the same parent
         if (entry.parentUUID == newEntry.parentUUID) {
-            // In case we are smaller save its position for later
+            /// In case we are smaller save its position for later
             if (newEntry.uuid < entry.uuid) lastBorder = i;
-            // In case we are bigger take the position of the last border we encountered and insert ourselves there
+            /// In case we are bigger take the position of the last border we encountered and insert ourselves there
             else if (newEntry.uuid > entry.uuid) {
                 insertAt(lastBorder);
                 return true;
             }
-            // This entry is equal to the entry we encountered! Abort and don't insert.
+            /// This entry is equal (a duplicate) to the entry we encountered! Abort and don't insert.
             else return false;
         }
     }
 
-    // We haven't found any parent or ancestor so just add it to the back (or front if its parent is empty)
+//    // TODO Search for entries that we are a child of and insert after them w/ reverse logic
+//    cout << "searching for parents" << endl;
+//    for (unsigned long i = 0; i < this->entries.size(); i++) {
+//        auto entry = this->entries[i];
+//
+//        // Encountered entry wants to have us as a child
+//        if (entry.parentUUID == newEntry.uuid) {
+//            cout << "found an ancestor" << endl;
+//            insertAt(i);
+//            return true;
+//        }
+//    }
+
+    /// We haven't found any parent or ancestor so just add it to the back (or front if its parent is empty)
+    /// IMPORTANT: It is possible that we are smaller than the only ancestor found. Because of that we insert at lastBorder
+    ///              which contains its position or, if that is not applicable, defaults to the end of the list.
     if (newEntry.parentUUID == Crypto::UUID::Empty()) insertAt(0);
-    else insertAt(this->entries.size());
+    else insertAt(lastBorder);
 
     return true;
+}
+
+template <typename VALUE_T>
+void Registry<VALUE_T>::addEntries(list<RegistryEntry<VALUE_T>> newEntries, size_t startingIndex, bool save) {
+#ifdef UNIT_TESTING
+    if (debug) cout << "Got entries list with size: " << newEntries.size() << endl;
+#endif
+
+
+    // TODO This still fails if there are multiple entries with their parent == Crypto::UUID::Empty() at arbitrary locations
+
+
+    size_t prevSize = newEntries.size();
+    while (newEntries.size() > 0) {
+        vector<RegistryEntry<VALUE_T>> pendingAdditions;
+
+        /// Search for entries in newEntries that have parents in this->entries
+        for (size_t ei = startingIndex; ei < this->entries.size(); ei++) {
+            auto entry = this->entries[ei];
+
+            auto it = newEntries.begin();
+            while (it != newEntries.end()) {
+                if ((*it).parentUUID == entry.uuid || (*it).parentUUID == Crypto::UUID::Empty()) {
+                    /// Insert the entry into the list of pending additions
+                    pendingAdditions.push_back((*it));
+                    it = newEntries.erase(it);
+                } else if ((*it).uuid == entry.uuid) {
+                    /// It is a duplicate so just erase it
+                    it = newEntries.erase(it);
+                } else it++;
+            }
+        }
+
+        /// Add the matched entries to the registry
+        for (auto addition : pendingAdditions) this->addEntry(addition, save);
+
+
+        /// If the size didn't change there's a hanging branch left over.
+        if (prevSize == newEntries.size()) {
+            // TODO This is relatively inefficient ~ O(n^2)
+            /// Search for entries with a missing parent and insert them
+            auto it = newEntries.begin();
+            while (it != newEntries.end()) {
+                bool hasParent = false;
+                for (auto entry : newEntries) if (entry.uuid == (*it).parentUUID) { hasParent = true; break; }
+                for (auto entry : pendingAdditions) if (entry.uuid == (*it).parentUUID) { hasParent = true; break; }
+                if (!hasParent) {
+                    pendingAdditions.push_back((*it));
+                    it = newEntries.erase(it);
+                } else it++;
+            }
+
+            for (auto addition : pendingAdditions) {
+                this->addEntry(addition, save);
+            }
+        }
+
+        prevSize = newEntries.size();
+    }
 }
 
 template <typename VALUE_T>
@@ -170,27 +240,27 @@ void Registry<VALUE_T>::clear() {
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::sync(bool force) {
-    // Check if a sync would be within the defined interval or too early
+    /// Check if a sync would be within the defined interval or too early
     if (!force && (this->relTimeProvider->millis() < this->nextBroadcast || !this->hashChain.size())) return;
     this->nextBroadcast = this->relTimeProvider->millis() + broadcastIntervalRange(rng);
 
     using namespace openHome::registry::sync;
     flatbuffers::FlatBufferBuilder builder;
 
-    // Create all properties
+    /// Create all properties
     openHome::UUID id(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
     auto name = builder.CreateString(this->name);
     auto headStr = builder.CreateString(this->getHeadHash());
 
-    // Create the head buffer
+    /// Create the head buffer
     auto head = CreateHead(builder, name, &id, headStr, this->entries.size());
 
-    // Convert it to a byte array
+    /// Convert it to a byte array
     builder.Finish(head, HeadIdentifier());
     uint8_t *buf = builder.GetBufferPointer();
     vector<uint8_t> head_vec(buf, buf + builder.GetSize());
 
-    // Broadcast the head
+    /// Broadcast the head
     this->bcast->broadcast(head_vec);
 }
 
@@ -204,77 +274,65 @@ Crypto::UUID Registry<VALUE_T>::requestHash(size_t index, Crypto::UUID target, C
     using namespace openHome::registry::sync;
     flatbuffers::FlatBufferBuilder builder;
 
-    // Create all request properties
+    /// Create all request properties
     openHome::UUID rid(requestID.a, requestID.b, requestID.c, requestID.d);
     openHome::UUID tid(target.a, target.b, target.c, target.d);
 
-    // Create the request
+    /// Create the request
     auto request = CreateRequest(builder, RequestType_HASH, &tid, &rid, index);
 
-    // Convert it to a byte array
+    /// Convert it to a byte array
     builder.Finish(request, RequestIdentifier());
     uint8_t *buf = builder.GetBufferPointer();
     vector<uint8_t> request_vec(buf, buf + builder.GetSize());
 
-    // Broadcast the head
+    /// Broadcast the request
     this->bcast->broadcast(request_vec);
 
     return requestID;
 }
 
 template <typename VALUE_T>
-vector<vector<uint8_t>> Registry<VALUE_T>::serializeEntries(size_t index) {  // includes index
-    using namespace openHome::registry::sync;
-
-    vector<vector<uint8_t>> entries;
-
-    for (size_t i = index; i < this->entries.size(); i++) {
-        flatbuffers::FlatBufferBuilder builder;
-
-        // Create all request properties
-        auto name = builder.CreateString(this->name);
-        openHome::UUID instance(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
-        auto reg_entry = this->entries[i].to_flatbuffer_offset(builder);
-
-        // Create the entry
-        auto entry = CreateEntry(builder, name, &instance, reg_entry);
-
-        // Convert it to a byte array
-        builder.Finish(entry, EntryIdentifier());
-        uint8_t *buf = builder.GetBufferPointer();
-        vector<uint8_t> entry_vec(buf, buf + builder.GetSize());
-
-        // Push the entry
-        entries.push_back(entry_vec);
-    }
-
-    return entries;
-}
-
-template <typename VALUE_T>
 void Registry<VALUE_T>::broadcastEntries(size_t index) { // includes index
     using namespace openHome::registry::sync;
 
-    vector<vector<uint8_t>> entries(this->serializeEntries(index));
+    if (this->entries.size() == 0) return;
 
-    // Broadcast the entries
-    for (vector<uint8_t> entry : entries) this->bcast->broadcast(entry);
+    flatbuffers::FlatBufferBuilder builder;
+
+    /// Create the vector of actual registry entries
+    vector<flatbuffers::Offset<openHome::registry::Entry>> entryOffsets;
+    for (size_t i = index; i < this->entries.size(); i++)
+        entryOffsets.push_back(this->entries[i].toFlatbufferOffset(builder));
+    auto entries = builder.CreateVector(entryOffsets);
+
+    /// Create all the necessary metadata
+    auto name = builder.CreateString(this->name);
+    openHome::UUID instance(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
+
+    /// Create the entries
+    auto serializedEntries = CreateEntries(builder, name, &instance, entries);
+
+    /// Convert it to a byte array
+    builder.Finish(serializedEntries, EntriesIdentifier());
+    uint8_t *buf = builder.GetBufferPointer();
+    vector<uint8_t> entries_vec(buf, buf + builder.GetSize());
+
+    /// Broadcast the head
+    this->bcast->broadcast(entries_vec);
 }
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
-    this->broadcastEntries(index);
-    // Pre-serialize the entries
-    vector<vector<uint8_t>> entries(this->serializeEntries(index));
 
     using namespace openHome::registry::sync;
     flatbuffers::FlatBufferBuilder builder;
 
-    // Create all request properties
+    /// Create all request properties
     Crypto::UUID target(this->synchronizationStatus.communicationTarget);
     openHome::UUID tid(target.a, target.b, target.c, target.d);
 
-    // Create the request
+    /// Create the request
     RequestBuilder requestBuilder(builder);
 
     requestBuilder.add_type(RequestType_ENTRIES);
@@ -283,18 +341,18 @@ void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
 
     auto request = requestBuilder.Finish();
 
-    // Convert it to a byte array
+    /// Convert it to a byte array
     builder.Finish(request, RequestIdentifier());
     uint8_t *buf = builder.GetBufferPointer();
     vector<uint8_t> request_vec(buf, buf + builder.GetSize());
 
-    // Broadcast the request
+    /// Broadcast the request
     this->bcast->broadcast(request_vec);
 
-    // Broadcast our entries after the request
-    // (that way the target receives the request first, then sends its new entries out and then merges ours in)
-    // (reduces amount of duplicates on the wire :D)
-    for (vector<uint8_t> entry : entries) this->bcast->broadcast(entry);
+    /// Broadcast our entries after the request
+    ///     that way the target receives the request first, then sends its new entries out and then merges ours in
+    ///     which reduces amount of duplicates on the wire.
+    this->broadcastEntries(index);
 }
 
 template <typename VALUE_T>
@@ -350,10 +408,19 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
             this->requestHash((size_t) ceil(l_min / 2), this->synchronizationStatus.communicationTarget, requestID);
         }
     };
-    // // Entry related
-    auto onEntry = [&] (const Entry* entry) {
-        if (entry->name()->str() == this->name)
-            this->addSerializedEntry(entry->entry());
+    // // Entries related
+    auto onEntries = [&] (const Entries* entries) {
+        if (entries->name()->str() == this->name && Crypto::UUID(entries->instance()) == this->synchronizationStatus.communicationTarget) {
+            auto entryOffsets = entries->entries();
+            list<RegistryEntry<VALUE_T>> deserializedEntries;
+            for (auto offset : *entryOffsets) {
+                deserializedEntries.push_back(RegistryEntry<VALUE_T>(offset));
+            }
+            this->addEntries(deserializedEntries, 0); // TODO Replace 0 with the result of the binary search.
+
+            /// Invalidate the current synchronization since it ended with the reception of the entries
+            this->synchronizationStatus.lastRequestTimestamp = 0;
+        }
     };
     // // Hash related
     auto onHash = [&] (const Hash* hash) {
@@ -394,6 +461,8 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
         if (!VerifyRequestBuffer(verifier)) { onVerifyFail(); return; }
         auto request = GetRequest(data);
 
+        // TODO Debounce this. If we processed a similar request a few seconds ago don't answer it again
+
         switch (request->type()) {
             case RequestType_ENTRIES:
                 onEntriesRequest(request);
@@ -409,9 +478,9 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
         onHead(GetHead(data));
     }
     // // Encapsuled registry entry ('RSEN')
-    else if (hasIdentifier(EntryIdentifier())) {
-        if (!VerifyEntryBuffer(verifier)) { onVerifyFail(); return; }
-        onEntry(GetEntry(data));
+    else if (hasIdentifier(EntriesIdentifier())) {
+        if (!VerifyEntriesBuffer(verifier)) { onVerifyFail(); return; }
+        onEntries(GetEntries(data));
     }
     // // Entry/chain hash ('RHSH')
     else if (hasIdentifier(HashIdentifier())) {
@@ -440,11 +509,14 @@ template class Registry<vector<uint8_t>>;
             BCAST_SOCKET_T bcast = dnet.createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT);
 
             Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
-            Registry<vector<uint8_t >> reg("someRegistry", &dstor, &dnet, drelTimeProv);
-            Registry<vector<uint8_t >> reg2("someRegistry", &dstor, &dnet, drelTimeProv);
+            Registry<vector<uint8_t>> reg("someRegistry", &dstor, &dnet, drelTimeProv);
+            Registry<vector<uint8_t>> reg2("someRegistry", &dstor, &dnet, drelTimeProv);
+            Registry<vector<uint8_t>> reg3("someRegistry", &dstor, &dnet, drelTimeProv);
 
             reg.setBcastSocket(bcast);
             reg2.setBcastSocket(bcast);
+            reg3.setBcastSocket(bcast);
+//            reg3.enableDebugging();
 
             WHEN("Adding an entry to the first registry and executing a force sync") {
                 reg.set("test", {1, 2, 3, 4}, pair);
@@ -462,8 +534,6 @@ template class Registry<vector<uint8_t>>;
 //                      RSEN = DB-A has one and sends it
                     for (int i = 0; i <= 4; ++i) {
                         if (bcast->recv(&registryData, 0) == RECV_OK) {
-                            const char* identifier = flatbuffers::GetBufferIdentifier(registryData.data());
-                            std::string id(identifier, identifier + flatbuffers::FlatBufferBuilder::kFileIdentifierLength);
                             reg.onData(registryData);
                             reg2.onData(registryData);
                             registryData.clear();
@@ -472,6 +542,46 @@ template class Registry<vector<uint8_t>>;
 
                     THEN("the second registry should contain the added entry") {
                         REQUIRE(reg2.has("test"));
+                    }
+
+                    THEN("the two registries should be identical") {
+                        REQUIRE(reg == reg2);
+                    }
+
+                    AND_WHEN("another registry is added, the first two each add an entry and the last one then requests a sync") {
+                        reg.set("test2", {1, 2, 3, 4, 5}, pair);
+                        reg2.set("test3", {1, 2, 3, 4, 5, 6}, pair);
+                        reg2.set("test4", {1}, pair);
+
+                        reg.sync(true);
+                        reg2.sync(true);
+                        reg3.sync(true);
+
+                        AND_WHEN("the network is iterated a few times") {
+                            registryData.clear();
+                            for (int i = 0; i <= 100; ++i) {
+                                if (bcast->recv(&registryData, 0) == RECV_OK) {
+                                    reg.onData(registryData);
+                                    reg2.onData(registryData);
+                                    reg3.onData(registryData);
+                                    registryData.clear();
+                                }
+                                if (i % 20 == 0) {
+                                    reg.sync(true);
+                                    reg2.sync(true);
+                                    reg3.sync(true);
+                                }
+                            }
+
+                            THEN("the three registries should be equal") {
+                                CAPTURE(reg.getEntries());
+                                CAPTURE(reg2.getEntries());
+                                CAPTURE(reg3.getEntries());
+
+                                REQUIRE(reg == reg2);
+                                REQUIRE(reg2 == reg3);
+                            }
+                        }
                     }
                 }
             }
