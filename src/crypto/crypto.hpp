@@ -81,7 +81,7 @@ namespace Crypto {
         inline bool operator!=(const UUID &other) { return this->tie() != other.tie(); }
         inline bool operator>(const UUID &other) { return this->tie() > other.tie(); }
         inline bool operator<(const UUID &other) { return this->tie() < other.tie(); }
-        inline const bool operator<(const UUID &other) const { return this->tie() < other.tie(); }
+        inline bool operator<(const UUID &other) const { return this->tie() < other.tie(); }
     };
 
     inline std::ostream& operator<< (std::ostream &out, const UUID &uid) { out << string(uid); return out; }
@@ -150,6 +150,7 @@ namespace Crypto {
             inline void broadcast(vector<uint8_t> message) override {
                 // TODO Encrypt message
                 this->sock->broadcast(message);
+                cout << key.size() << endl;
             };
             inline void send(string ip, unsigned short port, string message) override {
                 // TODO Encrypt message

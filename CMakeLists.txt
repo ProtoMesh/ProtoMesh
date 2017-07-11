@@ -3,7 +3,7 @@ project(lumos)
 
 # C++ compiler settings
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -Wno-unused-parameter")
 
 # Add flatbuffers as compile target
 set(FLATBUFFERS_DIR src/buffers)
