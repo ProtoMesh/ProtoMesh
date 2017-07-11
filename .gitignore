@@ -40,9 +40,6 @@ gen
 # Concatenated header files
 ArduinoJson.hpp
 
-# duktape TODO Add as submodule
-src/api/javascript/duktape
-
 # Build directories
 build
 cmake-build-debug
