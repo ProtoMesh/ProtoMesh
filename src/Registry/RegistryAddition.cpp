@@ -325,12 +325,12 @@ bool Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* seriali
 
                 std::string schemafile;
                 std::string jsonfile;
-                bool ok = flatbuffers::LoadFile("../src/buffers/registry/entry.fbs", false, &schemafile) &&
-                          flatbuffers::LoadFile("../src/test/data/registry_entry.json", false, &jsonfile);
+                bool ok = flatbuffers::LoadFile("src/buffers/registry/entry.fbs", false, &schemafile) &&
+                          flatbuffers::LoadFile("src/test/data/registry_entry.json", false, &jsonfile);
                 REQUIRE(ok);
 
                 flatbuffers::Parser parser;
-                const char *include_directories[] = { "../src/buffers/", "../src/buffers/registry", nullptr };
+                const char *include_directories[] = { "src/buffers/", "src/buffers/registry", nullptr };
                 ok = parser.Parse(schemafile.c_str(), include_directories) &&
                      parser.Parse(jsonfile.c_str(), include_directories);
 
