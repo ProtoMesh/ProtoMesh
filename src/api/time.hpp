@@ -2,8 +2,8 @@
 // Created by themegatb on 5/28/17.
 //
 
-#ifndef OPEN_HOME_TIME_HPP
-#define OPEN_HOME_TIME_HPP
+#ifndef LUMOS_TIME_HPP
+#define LUMOS_TIME_HPP
 
 #define REL_TIME_PROV_T std::shared_ptr<RelativeTimeProvider>
 
@@ -20,4 +20,4 @@ public:
 };
 #endif
 
-#endif //OPEN_HOME_TIME_HPP
+#endif //LUMOS_TIME_HPP

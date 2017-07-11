@@ -1,6 +1,6 @@
 include "entry.fbs";
 
-namespace openHome.registry;
+namespace lumos.registry;
 
 table Registry {
     entries: [Entry];

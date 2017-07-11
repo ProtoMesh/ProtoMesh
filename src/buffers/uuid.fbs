@@ -1,4 +1,4 @@
-namespace openHome;
+namespace lumos;
 
 struct UUID {
     a: uint;

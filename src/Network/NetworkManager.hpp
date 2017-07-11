@@ -1,5 +1,5 @@
-#ifndef OPEN_HOME_NETWORK_H
-#define OPEN_HOME_NETWORK_H
+#ifndef LUMOS_NETWORK_H
+#define LUMOS_NETWORK_H
 
 #include "../api/time.hpp"
 #include "../api/network.hpp"
@@ -27,4 +27,4 @@ public:
 };
 
 
-#endif //OPEN_HOME_NETWORK_H
+#endif //LUMOS_NETWORK_H

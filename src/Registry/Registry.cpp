@@ -12,7 +12,7 @@ Registry<VALUE_T>::Registry(string name, StorageProvider *stor, NetworkProvider 
           bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
           name(name), instanceIdentifier(),
           nextBroadcast(relTimeProvider->millis() + REGISTRY_BROADCAST_INTERVAL_MIN) {
-    using namespace openHome::registry;
+    using namespace lumos::registry;
 
     this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis() - REGISTRY_SYNC_TIMEOUT;
 

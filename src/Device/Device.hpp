@@ -1,5 +1,5 @@
-#ifndef OPEN_HOME_DEVICE_HPP
-#define OPEN_HOME_DEVICE_HPP
+#ifndef LUMOS_DEVICE_HPP
+#define LUMOS_DEVICE_HPP
 
 #include "../api/network.hpp"
 #include "../api/storage.hpp"
@@ -27,4 +27,4 @@ public:
 };
 
 
-#endif //OPEN_HOME_DEVICE_HPP
+#endif //LUMOS_DEVICE_HPP

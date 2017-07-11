@@ -1,5 +1,5 @@
-#ifndef OPEN_HOME_REGISTRY_ENTRY_HPP
-#define OPEN_HOME_REGISTRY_ENTRY_HPP
+#ifndef LUMOS_REGISTRY_ENTRY_HPP
+#define LUMOS_REGISTRY_ENTRY_HPP
 
 #include <string>
 #include <vector>
@@ -27,7 +27,7 @@ enum SignatureVerificationResult {
 
 template <class VALUE_T>
 class RegistryEntry {
-    void loadFromBuffer(const openHome::registry::Entry *entry);
+    void loadFromBuffer(const lumos::registry::Entry *entry);
 public:
     // Metadata
     Crypto::UUID parentUUID;
@@ -47,7 +47,7 @@ public:
     RegistryEntry(RegistryEntryType type, string key, VALUE_T value, Crypto::asym::KeyPair pair, Crypto::UUID parentID);
 
     RegistryEntry(vector<uint8_t> serializedEntry);
-    RegistryEntry(const openHome::registry::Entry* serializedEntry);
+    RegistryEntry(const lumos::registry::Entry* serializedEntry);
 
     string getSignatureText() const;
 
@@ -57,8 +57,8 @@ public:
 
     inline bool operator==(const RegistryEntry &other) { return this->serialize() == other.serialize(); }
 
-    flatbuffers::Offset<openHome::registry::Entry> toFlatbufferOffset(flatbuffers::FlatBufferBuilder &builder) const;
+    flatbuffers::Offset<lumos::registry::Entry> toFlatbufferOffset(flatbuffers::FlatBufferBuilder &builder) const;
 };
 
 
-#endif //OPEN_HOME_REGISTRY_ENTRY_HPP
+#endif //LUMOS_REGISTRY_ENTRY_HPP

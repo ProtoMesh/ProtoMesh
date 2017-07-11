@@ -1,5 +1,5 @@
-#ifndef OPENHOME_NETWORK_HPP
-#define OPENHOME_NETWORK_HPP
+#ifndef LUMOS_NETWORK_HPP
+#define LUMOS_NETWORK_HPP
 
 
 #include "../api/network.hpp"
@@ -28,4 +28,4 @@ public:
 };
 
 
-#endif //OPENHOME_NETWORK_HPP
+#endif //LUMOS_NETWORK_HPP

@@ -1,5 +1,5 @@
-#ifndef OPEN_HOME_LINUX_HPP
-#define OPEN_HOME_LINUX_HPP
+#ifndef LUMOS_LINUX_HPP
+#define LUMOS_LINUX_HPP
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -13,7 +13,7 @@
 #include "api/storage.hpp"
 #include "api/time.hpp"
 
-#define STORAGE_PREFIX "/.config/openHome"
+#define STORAGE_PREFIX "/.config/lumos"
 
 using boost::asio::ip::udp;
 
@@ -62,4 +62,4 @@ public:
     }
 };
 
-#endif //OPEN_HOME_LINUX_HPP
+#endif //LUMOS_LINUX_HPP

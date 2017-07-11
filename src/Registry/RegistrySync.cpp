@@ -20,12 +20,12 @@ bool Registry<VALUE_T>::isSyncInProgress() {
 /// ---------------------------------------------- Synchronization steps ----------------------------------------------
 template <typename VALUE_T>
 Crypto::UUID Registry<VALUE_T>::requestHash(size_t index, Crypto::UUID target, Crypto::UUID requestID) {
-    using namespace openHome::registry::sync;
+    using namespace lumos::registry::sync;
     flatbuffers::FlatBufferBuilder builder;
 
     /// Create all request properties
-    openHome::UUID rid(requestID.a, requestID.b, requestID.c, requestID.d);
-    openHome::UUID tid(target.a, target.b, target.c, target.d);
+    lumos::UUID rid(requestID.a, requestID.b, requestID.c, requestID.d);
+    lumos::UUID tid(target.a, target.b, target.c, target.d);
 
     /// Create the request
     auto request = CreateRequest(builder, RequestType_HASH, &tid, &rid, index);
@@ -44,12 +44,12 @@ Crypto::UUID Registry<VALUE_T>::requestHash(size_t index, Crypto::UUID target, C
 template <typename VALUE_T>
 void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
 
-    using namespace openHome::registry::sync;
+    using namespace lumos::registry::sync;
     flatbuffers::FlatBufferBuilder builder;
 
     /// Create all request properties
     Crypto::UUID target(this->synchronizationStatus.communicationTarget);
-    openHome::UUID tid(target.a, target.b, target.c, target.d);
+    lumos::UUID tid(target.a, target.b, target.c, target.d);
 
     /// Create the request
     RequestBuilder requestBuilder(builder);
@@ -76,21 +76,21 @@ void Registry<VALUE_T>::onBinarySearchResult(size_t index) {
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::broadcastEntries(size_t index) { // includes index
-    using namespace openHome::registry::sync;
+    using namespace lumos::registry::sync;
 
     if (this->entries.size() == 0) return;
 
     flatbuffers::FlatBufferBuilder builder;
 
     /// Create the vector of actual registry entries
-    vector<flatbuffers::Offset<openHome::registry::Entry>> entryOffsets;
+    vector<flatbuffers::Offset<lumos::registry::Entry>> entryOffsets;
     for (size_t i = index; i < this->entries.size(); i++)
         entryOffsets.push_back(this->entries[i].toFlatbufferOffset(builder));
     auto entries = builder.CreateVector(entryOffsets);
 
     /// Create all the necessary metadata
     auto name = builder.CreateString(this->name);
-    openHome::UUID instance(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
+    lumos::UUID instance(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
 
     /// Create the entries
     auto serializedEntries = CreateEntries(builder, name, &instance, entries);
@@ -114,11 +114,11 @@ void Registry<VALUE_T>::sync(bool force) {
     if (!force && (this->relTimeProvider->millis() < this->nextBroadcast || !this->hashChain.size())) return;
     this->nextBroadcast = this->relTimeProvider->millis() + broadcastIntervalRange(rng);
 
-    using namespace openHome::registry::sync;
+    using namespace lumos::registry::sync;
     flatbuffers::FlatBufferBuilder builder;
 
     /// Create all properties
-    openHome::UUID id(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
+    lumos::UUID id(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
     auto name = builder.CreateString(this->name);
     auto headStr = builder.CreateString(this->getHeadHash());
 
@@ -136,7 +136,7 @@ void Registry<VALUE_T>::sync(bool force) {
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
-    using namespace openHome::registry::sync;
+    using namespace lumos::registry::sync;
 
     /// Generic lambdas and useful variables
     uint8_t* data = incomingData.data();
@@ -155,8 +155,8 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
             flatbuffers::FlatBufferBuilder builder;
 
             /// Create all hash properties
-            auto answerID = openHome::UUID(*req->requestID());
-            openHome::UUID instance(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
+            auto answerID = lumos::UUID(*req->requestID());
+            lumos::UUID instance(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
             auto hashStr = builder.CreateString(this->hashChain.size() > req->index() ? this->hashChain[req->index()] : "");
 
             /// Create the hash

@@ -1,5 +1,5 @@
-#ifndef OPEN_HOME_REGISTRY_HPP
-#define OPEN_HOME_REGISTRY_HPP
+#ifndef LUMOS_REGISTRY_HPP
+#define LUMOS_REGISTRY_HPP
 
 #include <string>
 #include <vector>
@@ -46,7 +46,7 @@ public: // Make everything public when unit testing to make the developers life 
     void updateHead(bool save);
     bool addEntry(RegistryEntry<VALUE_T> newEntry, bool save = true);
     void addEntries(list<RegistryEntry<VALUE_T>> newEntries, size_t startingIndex, bool save = true);
-    bool addSerializedEntry(const openHome::registry::Entry* serialized, bool save = true);
+    bool addSerializedEntry(const lumos::registry::Entry* serialized, bool save = true);
     Crypto::UUID getHeadUUID(); // Helper for addition (getting the corresponding parent)
 
     /// Synchronization
@@ -115,4 +115,4 @@ public:
 };
 
 
-#endif //OPEN_HOME_REGISTRY_HPP
+#endif //LUMOS_REGISTRY_HPP

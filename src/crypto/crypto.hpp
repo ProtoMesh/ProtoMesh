@@ -1,5 +1,5 @@
-#ifndef OPEN_HOME_CRYPTO_HPP
-#define OPEN_HOME_CRYPTO_HPP
+#ifndef LUMOS_CRYPTO_HPP
+#define LUMOS_CRYPTO_HPP
 
 #include <random>
 #include <array>
@@ -56,7 +56,7 @@ namespace Crypto {
             c = distribution(generator);
             d = distribution(generator);
         }
-        UUID(const openHome::UUID* id) {
+        UUID(const lumos::UUID* id) {
             a = (uint32_t) id->a();
             b = (uint32_t) id->b();
             c = (uint32_t) id->c();
@@ -177,4 +177,4 @@ namespace Crypto {
 }
 
 
-#endif //OPEN_HOME_CRYPTO_HPP
+#endif //LUMOS_CRYPTO_HPP

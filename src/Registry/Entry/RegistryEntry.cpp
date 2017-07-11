@@ -14,8 +14,8 @@ RegistryEntry<VALUE_T>::RegistryEntry(RegistryEntryType type, string key, VALUE_
 }
 
 template <typename VALUE_T>
-void RegistryEntry<VALUE_T>::loadFromBuffer(const openHome::registry::Entry* entry) {
-    using namespace openHome::registry;
+void RegistryEntry<VALUE_T>::loadFromBuffer(const lumos::registry::Entry* entry) {
+    using namespace lumos::registry;
 
     auto uuid = entry->uuid();
     this->uuid = Crypto::UUID(uuid->a(), uuid->b(), uuid->c(), uuid->d());
@@ -45,13 +45,13 @@ void RegistryEntry<VALUE_T>::loadFromBuffer(const openHome::registry::Entry* ent
 }
 
 template <typename VALUE_T>
-RegistryEntry<VALUE_T>::RegistryEntry(const openHome::registry::Entry* entry) : valid(true) {
+RegistryEntry<VALUE_T>::RegistryEntry(const lumos::registry::Entry* entry) : valid(true) {
     this->loadFromBuffer(entry);
 }
 
 template <typename VALUE_T>
 RegistryEntry<VALUE_T>::RegistryEntry(vector<uint8_t> serializedEntry) : valid(true) {
-    using namespace openHome::registry;
+    using namespace lumos::registry;
 
     // Verify buffer integrity
     auto verifier = flatbuffers::Verifier(serializedEntry.data(), serializedEntry.size());
@@ -62,7 +62,7 @@ RegistryEntry<VALUE_T>::RegistryEntry(vector<uint8_t> serializedEntry) : valid(t
     }
 
     // Check the buffer identifier
-    if (!flatbuffers::BufferHasIdentifier(serializedEntry.data(), openHome::registry::EntryIdentifier())) {
+    if (!flatbuffers::BufferHasIdentifier(serializedEntry.data(), lumos::registry::EntryIdentifier())) {
         cerr << "Invalid buffer type!" << endl;
         valid = false;
         return;
@@ -73,12 +73,12 @@ RegistryEntry<VALUE_T>::RegistryEntry(vector<uint8_t> serializedEntry) : valid(t
 }
 
 template<typename VALUE_T>
-flatbuffers::Offset<openHome::registry::Entry> RegistryEntry<VALUE_T>::toFlatbufferOffset(
+flatbuffers::Offset<lumos::registry::Entry> RegistryEntry<VALUE_T>::toFlatbufferOffset(
         flatbuffers::FlatBufferBuilder &builder) const {
-    using namespace openHome::registry;
+    using namespace lumos::registry;
 
-    openHome::UUID id(this->uuid.a, this->uuid.b, this->uuid.c, this->uuid.d);
-    openHome::UUID pid(this->parentUUID.a, this->parentUUID.b, this->parentUUID.c, this->parentUUID.d);
+    lumos::UUID id(this->uuid.a, this->uuid.b, this->uuid.c, this->uuid.d);
+    lumos::UUID pid(this->parentUUID.a, this->parentUUID.b, this->parentUUID.c, this->parentUUID.d);
 
     auto key = builder.CreateString(this->key);
     vector<uint8_t> val(this->value.data(), &this->value[this->value.size()]);
@@ -88,7 +88,7 @@ flatbuffers::Offset<openHome::registry::Entry> RegistryEntry<VALUE_T>::toFlatbuf
     vector<uint8_t> usedKey(this->publicKeyUsed.data(), &this->publicKeyUsed[this->publicKeyUsed.size()]);
     auto sig_vec = builder.CreateVector(signature);
     auto pku_vec = builder.CreateVector(usedKey);
-    auto sig = openHome::crypto::CreateSignature(builder, sig_vec, pku_vec);
+    auto sig = lumos::crypto::CreateSignature(builder, sig_vec, pku_vec);
 
     auto type = EntryType_UPSERT;
     switch (this->type) {
@@ -101,7 +101,7 @@ flatbuffers::Offset<openHome::registry::Entry> RegistryEntry<VALUE_T>::toFlatbuf
 
 template <typename VALUE_T>
 vector<uint8_t> RegistryEntry<VALUE_T>::serialize() const {
-    using namespace openHome::registry;
+    using namespace lumos::registry;
     flatbuffers::FlatBufferBuilder builder;
 
     auto entry = this->toFlatbufferOffset(builder);

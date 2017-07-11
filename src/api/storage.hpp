@@ -1,5 +1,5 @@
-#ifndef OPEN_HOME_STORAGE_HPP
-#define OPEN_HOME_STORAGE_HPP
+#ifndef LUMOS_STORAGE_HPP
+#define LUMOS_STORAGE_HPP
 
 #include <string>
 #include <vector>
@@ -32,4 +32,4 @@ public:
     };
 #endif
 
-#endif //OPEN_HOME_STORAGE_HPP
+#endif //LUMOS_STORAGE_HPP

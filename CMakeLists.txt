@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.7)
-project(openHome)
+project(lumos)
 
 # C++ compiler settings
 set(CMAKE_CXX_STANDARD 11)
@@ -21,8 +21,8 @@ set(ECC_SOURCES
         lib/micro-ecc/uECC_vli.h
         lib/micro-ecc/types.h)
 
-# Define the openHome source files and its dependency on ECC and Duktape
-set(OPEN_HOME_SOURCE_FILES
+# Define the lumos source files and its dependency on ECC and Duktape
+set(LUMOS_SOURCE_FILES
         ${ECC_SOURCES}
         ${DUKTAPE_SOURCES}
         src/Network/NetworkManager.cpp
@@ -47,30 +47,30 @@ set(OPEN_HOME_SOURCE_FILES
         src/crypto/crypto_sym.cpp
         src/Network/Network.cpp
         src/Network/Network.hpp src/Registry/RegistryAddition.cpp)
-# Add the openHome library target and its dependency on the flatbuffers
-add_library(openHome ${OPEN_HOME_SOURCE_FILES})
-add_dependencies(openHome flatbuffer_headers)
+# Add the lumos library target and its dependency on the flatbuffers
+add_library(lumos ${LUMOS_SOURCE_FILES})
+add_dependencies(lumos flatbuffer_headers)
 
 
 # Unit testing target
 ## Include the catch testing library
 include_directories(lib/catch/single_include)
 ## Define the additional source files required for testing
-set(OPEN_HOME_TEST_FILES
+set(LUMOS_TEST_FILES
         src/test/test.cpp
-        ${OPEN_HOME_SOURCE_FILES} src/api/network_test.cpp)
+        ${LUMOS_SOURCE_FILES} src/api/network_test.cpp)
 ## Add the executable target and set the unit testing constant to true
-add_executable(openHome_test ${OPEN_HOME_TEST_FILES})
-target_compile_definitions(openHome_test PRIVATE UNIT_TESTING=1)
+add_executable(lumos_test ${LUMOS_TEST_FILES})
+target_compile_definitions(lumos_test PRIVATE UNIT_TESTING=1)
 ## Link it against flatbuffers (for compile time serialization of json examples) and add the buffers for compilation
-target_link_libraries(openHome_test flatbuffers)
-add_dependencies(openHome_test flatbuffer_headers)
+target_link_libraries(lumos_test flatbuffers)
+add_dependencies(lumos_test flatbuffer_headers)
 
 
 # Compilation of the linux specific example.
-## Include openHome source files and the linux specific folder
+## Include lumos source files and the linux specific folder
 include_directories(src)
 add_subdirectory(os-specifics/linux)
-## Add the executable target and link it to openHome and the linux library
-add_executable(openHome_debug examples/debug.cpp)
-target_link_libraries(openHome_debug openHome openHome_device_linux)
+## Add the executable target and link it to lumos and the linux library
+add_executable(lumos_debug examples/debug.cpp)
+target_link_libraries(lumos_debug lumos lumos_device_linux)

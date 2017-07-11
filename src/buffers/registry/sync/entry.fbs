@@ -1,12 +1,12 @@
 include "../entry.fbs";
 
-namespace openHome.registry.sync;
+namespace lumos.registry.sync;
 
 table Entry {
     name: string (required);
     instance: UUID (required);
 
-    entry: openHome.registry.Entry;
+    entry: lumos.registry.Entry;
 }
 
 file_identifier "RSEN";

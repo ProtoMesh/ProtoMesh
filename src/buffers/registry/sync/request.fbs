@@ -1,6 +1,6 @@
 include "uuid.fbs";
 
-namespace openHome.registry.sync;
+namespace lumos.registry.sync;
 
 enum RequestType: byte {
     HASH,

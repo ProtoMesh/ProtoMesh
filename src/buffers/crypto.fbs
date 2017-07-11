@@ -1,4 +1,4 @@
-namespace openHome.crypto;
+namespace lumos.crypto;
 
 table Signature {
     data: [ubyte] (required);

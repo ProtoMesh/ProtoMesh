@@ -124,7 +124,7 @@ vector<bool> Registry<VALUE_T>::validateEntries(string validator) {
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::updateHead(bool save) {
-    using namespace openHome::registry;
+    using namespace lumos::registry;
 
     this->headState.clear();
     this->hashChain.clear();
@@ -301,7 +301,7 @@ void Registry<VALUE_T>::addEntries(list<RegistryEntry<VALUE_T>> newEntries, size
 }
 
 template <typename VALUE_T>
-bool Registry<VALUE_T>::addSerializedEntry(const openHome::registry::Entry* serialized, bool save) {
+bool Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* serialized, bool save) {
     return this->addEntry(RegistryEntry<VALUE_T>(serialized), save);
 }
 
@@ -337,7 +337,7 @@ bool Registry<VALUE_T>::addSerializedEntry(const openHome::registry::Entry* seri
                 CAPTURE(parser.error_);
                 REQUIRE(ok);
 
-                auto entry = openHome::registry::GetEntry(parser.builder_.GetBufferPointer());
+                auto entry = lumos::registry::GetEntry(parser.builder_.GetBufferPointer());
                 reg.addSerializedEntry(entry);
                 reg.addSerializedEntry(entry);
 
