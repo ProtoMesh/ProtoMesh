@@ -10,8 +10,8 @@ set(FLATBUFFERS_DIR src/buffers)
 include(cmake/BuildFlatbuffers.cmake)
 
 # Add duktape sources
-set(DUKTAPE_SOURCES src/api/javascript/duktape/src/duk_config.h src/api/javascript/duktape/src/duktape.c src/api/javascript/duktape/src/duktape.h)
-include_directories(src/api/javascript/duktape/src)
+set(DUKTAPE_SOURCES lib/duktape/src/duk_config.h lib/duktape/src/duktape.c lib/duktape/src/duktape.h)
+include_directories(lib/duktape/src)
 
 # Add micro-ecc and its sources
 include_directories(lib/micro-ecc)
@@ -34,21 +34,19 @@ set(OPEN_HOME_SOURCE_FILES
         src/api/network.hpp
         src/Device/Device.cpp
         src/Device/Device.hpp
-        src/Registry/RegistryEntry.cpp
-        src/Registry/RegistryEntry.hpp
+        src/Registry/Entry/RegistryEntry.cpp
+        src/Registry/Entry/RegistryEntry.hpp
         src/crypto/crypto.hpp
         src/crypto/sha512.hpp
         src/crypto/crypto.cpp
         src/crypto/crypto_asym.cpp
         src/Registry/Registry.cpp
+        src/Registry/RegistrySync.cpp
         src/Registry/Registry.hpp
         src/api/storage.hpp
-        src/api/javascript/javascript.cpp
-        src/api/javascript/javascript.hpp
         src/crypto/crypto_sym.cpp
         src/Network/Network.cpp
-        src/Network/Network.hpp
-)
+        src/Network/Network.hpp src/Registry/RegistryAddition.cpp)
 # Add the openHome library target and its dependency on the flatbuffers
 add_library(openHome ${OPEN_HOME_SOURCE_FILES})
 add_dependencies(openHome flatbuffer_headers)

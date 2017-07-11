@@ -5,12 +5,12 @@
 #include <vector>
 #include <map>
 
-#include "../crypto/crypto.hpp"
+#include "crypto/crypto.hpp"
 
 #include "flatbuffers/flatbuffers.h"
-#include "../buffers/uuid_generated.h"
-#include "../buffers/crypto_generated.h"
-#include "../buffers/registry/entry_generated.h"
+#include "buffers/uuid_generated.h"
+#include "buffers/crypto_generated.h"
+#include "buffers/registry/entry_generated.h"
 
 using namespace std;
 

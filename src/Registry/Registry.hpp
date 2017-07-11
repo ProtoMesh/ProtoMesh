@@ -6,7 +6,8 @@
 #include <map>
 #include <random>
 #include <list>
-#include "RegistryEntry.hpp"
+#include "duktape.h"
+#include "Registry/Entry/RegistryEntry.hpp"
 #include "../const.hpp"
 #include "../crypto/crypto.hpp"
 #include "../api/storage.hpp"
@@ -26,19 +27,33 @@ using namespace std;
 
 template <class VALUE_T>
 class Registry {
-    // Variables
+#ifdef UNIT_TESTING
+public: // Make everything public when unit testing to make the developers life easier and improve readability
+#endif
+    /// API providers
     StorageProvider* stor;
     NetworkProvider *net;
     REL_TIME_PROV_T relTimeProvider;
-
     BCAST_SOCKET_T bcast;
-    long nextBroadcast;
 
+    /// Instance identification
     string name;
     Crypto::UUID instanceIdentifier;
-
     map<string, VALUE_T> headState;
 
+    /// Addition of entries
+    vector<bool> validateEntries(string validator);
+    void updateHead(bool save);
+    bool addEntry(RegistryEntry<VALUE_T> newEntry, bool save = true);
+    void addEntries(list<RegistryEntry<VALUE_T>> newEntries, size_t startingIndex, bool save = true);
+    bool addSerializedEntry(const openHome::registry::Entry* serialized, bool save = true);
+    Crypto::UUID getHeadUUID(); // Helper for addition (getting the corresponding parent)
+
+    /// Synchronization
+    bool isSyncInProgress();
+    Crypto::UUID requestHash(size_t index, Crypto::UUID target, Crypto::UUID requestID);
+    void onBinarySearchResult(size_t index);
+    void broadcastEntries(size_t index);
     struct {
         long lastRequestTimestamp;
         Crypto::UUID requestID;
@@ -46,45 +61,33 @@ class Registry {
         size_t max;
         Crypto::UUID communicationTarget;
     } synchronizationStatus;
-
-    // Functions
-    void updateHead(bool save);
-    bool addEntry(RegistryEntry<VALUE_T> newEntry, bool save = true);
-    void addEntries(list<RegistryEntry<VALUE_T>> newEntries, size_t startingIndex, bool save = true);
-
-    Crypto::UUID getHeadUUID();
-
-    Crypto::UUID requestHash(size_t index, Crypto::UUID target, Crypto::UUID requestID); // requestID = UUID
-    void onBinarySearchResult(size_t index);
-    void broadcastEntries(size_t index);
-    bool isSyncInProgress();
+    long nextBroadcast;
 
 public:
     vector<RegistryEntry<VALUE_T>> entries;
     vector<string> hashChain;
 
-    Registry(string name, StorageProvider *stor, NetworkProvider *net,
-             REL_TIME_PROV_T relTimeProvider);
+    /// Constructor
+    Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider);
 
+    /// High level data manipulation
     VALUE_T get(string key);
     void set(string key, VALUE_T value, Crypto::asym::KeyPair pair);
     void del(string key, Crypto::asym::KeyPair pair);
     bool has(string key);
-
-    bool addSerializedEntry(const openHome::registry::Entry* serialized, bool save = true);
-
-    string getHeadHash() const;
-
     void clear();
 
+    /// Synchronization
     void sync(bool force = false);
-
     void onData(vector<uint8_t> incomingData);
 
+    /// Comparison
+    string getHeadHash() const;
     inline bool operator==(const Registry &other) {
         return this->getHeadHash() == other.getHeadHash();
     }
 
+    /// Printing
     inline string getEntries() {
         stringstream ss;
         ss << "-------------------------------------------------------------------------------" << endl;
@@ -97,6 +100,7 @@ public:
         return ss.str();
     }
 
+    /// Unit testing
 #ifdef UNIT_TESTING
     bool debug = false;
 
