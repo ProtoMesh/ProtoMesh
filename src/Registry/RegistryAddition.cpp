@@ -129,14 +129,7 @@ void Registry<VALUE_T>::updateHead(bool save) {
     this->headState.clear();
     this->hashChain.clear();
 
-    string validator = R"(
-        function validator(entries, entryID) {
-            // print('VALIDATOR CALLED w/', entryID, JSON.stringify(entries));
-            // TODO Implement logic
-            return true;
-        }
-    )";
-    vector<bool> validationResults = validateEntries(validator);
+    vector<bool> validationResults = validateEntries(this->validator);
 
     flatbuffers::FlatBufferBuilder builder;
     vector<flatbuffers::Offset<Entry>> entryOffsets;
