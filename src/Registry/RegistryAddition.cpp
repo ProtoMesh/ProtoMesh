@@ -30,13 +30,7 @@ vector<bool> Registry<VALUE_T>::validateEntries(string validator) {
 
     const char* iterator = R"(
         function validate(entries) {
-            var validationResults = [];
-
-            for (var entry in entries) {
-                validationResults.push(validator(entries, entry));
-            }
-
-            return validationResults;
+            return entries.map(function (currentEntry, i, entries) { return validator(entries, i); });
         }
     )";
 
@@ -83,6 +77,10 @@ vector<bool> Registry<VALUE_T>::validateEntries(string validator) {
     /// Register the validator
     duk_eval_string(ctx, validator.c_str());
     duk_push_string(ctx, "validator");
+
+    // TODO Abuse this to push data into the context (e.g. the master key)
+//    duk_eval_string(ctx, "var test = 'HELLO CRUDE WORLD!';");
+//    duk_push_string(ctx, "test");
 
     /// Register the validation iterator and set it as the global object
     duk_eval_string(ctx, iterator);
@@ -334,9 +332,7 @@ bool Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* seriali
                 reg.addSerializedEntry(entry);
                 reg.addSerializedEntry(entry);
 
-                THEN("the second one should be omitted") {
-                    REQUIRE(reg.entries.size() == 1);
-                }
+                THEN("the second one should be omitted") { REQUIRE(reg.entries.size() == 1); }
             }
 
             WHEN("a value is set") {
@@ -346,31 +342,28 @@ bool Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* seriali
                 reg.set(key, val, pair);
                 string prevHeadHash(reg.getHeadHash());
 
-                THEN("has should be true") {
-                    REQUIRE(reg.has(key));
-                }
+                THEN("has should be true") { REQUIRE(reg.has(key)); }
                 THEN("the read value should be equal") {
                     REQUIRE( reg.get(key) == val );
+
+                    AND_WHEN("the same key is modified by a different user") {
+                        reg.set(key, {5, 4, 3, 2, 1}, Crypto::asym::generateKeyPair());
+
+                        THEN("the value should not have changed") { REQUIRE(reg.get(key) == val); }
+                    }
                 }
 
                 AND_WHEN("the registry is cleared") {
                     reg.clear();
 
-                    THEN("the read value should be empty") {
-                        REQUIRE( reg.get(key) == empty );
-                    }
+                    THEN("the read value should be empty") { REQUIRE( reg.get(key) == empty ); }
                 }
 
                 AND_WHEN("the value is deleted") {
                     reg.del(key, pair);
 
-                    THEN("the read value should be empty") {
-                        REQUIRE( reg.get(key) == empty );
-                    }
-
-                    THEN("the head hash should differ") {
-                        REQUIRE_FALSE( reg.getHeadHash() == prevHeadHash );
-                    }
+                    THEN("the read value should be empty") { REQUIRE( reg.get(key) == empty ); }
+                    THEN("the head hash should differ") { REQUIRE_FALSE( reg.getHeadHash() == prevHeadHash ); }
                 }
             }
 
