@@ -129,26 +129,7 @@ void Registry<VALUE_T>::updateHead(bool save) {
     this->headState.clear();
     this->hashChain.clear();
 
-    string validator = R"(
-        function validator(entries, entryID) {
-            var entry = entries[entryID];
-            // Find the insertion of this key
-            for (var e in entries) {
-                e = entries[e];
-                if (e.key == entry.key && e.type === 'UPSERT') {
-                    if (e.publicKeyUsed == entry.publicKeyUsed) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-            }
-
-            // Since the key was never inserted before it is valid
-            return true;
-        }
-    )";
-    vector<bool> validationResults = validateEntries(validator);
+    vector<bool> validationResults = validateEntries(this->validator);
 
     flatbuffers::FlatBufferBuilder builder;
     vector<flatbuffers::Offset<Entry>> entryOffsets;

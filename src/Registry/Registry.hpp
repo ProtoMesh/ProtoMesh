@@ -8,6 +8,7 @@
 #include <list>
 #include "duktape.h"
 #include "Registry/Entry/RegistryEntry.hpp"
+#include "Registry/Validators.hpp"
 #include "../const.hpp"
 #include "../crypto/crypto.hpp"
 #include "../api/storage.hpp"
@@ -42,6 +43,7 @@ public: // Make everything public when unit testing to make the developers life 
     map<string, VALUE_T> headState;
 
     /// Addition of entries
+    string validator;
     vector<bool> validateEntries(string validator);
     void updateHead(bool save);
     bool addEntry(RegistryEntry<VALUE_T> newEntry, bool save = true);
@@ -68,7 +70,7 @@ public:
     vector<string> hashChain;
 
     /// Constructor
-    Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider);
+    Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider, string validator = DEFAULT_VALIDATOR);
 
     /// High level data manipulation
     VALUE_T get(string key);

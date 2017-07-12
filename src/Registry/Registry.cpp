@@ -7,10 +7,10 @@
 template class Registry<vector<uint8_t>>;
 
 template <typename VALUE_T>
-Registry<VALUE_T>::Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider)
+Registry<VALUE_T>::Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider, string validator)
         : stor(stor), net(net), relTimeProvider(relTimeProvider),
           bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
-          name(name), instanceIdentifier(),
+          name(name), instanceIdentifier(), validator(validator),
           nextBroadcast(relTimeProvider->millis() + REGISTRY_BROADCAST_INTERVAL_MIN) {
     using namespace lumos::registry;
 

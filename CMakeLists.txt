@@ -46,7 +46,7 @@ set(LUMOS_SOURCE_FILES
         src/api/storage.hpp
         src/crypto/crypto_sym.cpp
         src/Network/Network.cpp
-        src/Network/Network.hpp src/Registry/RegistryAddition.cpp)
+        src/Network/Network.hpp src/Registry/RegistryAddition.cpp src/Registry/Validators.hpp)
 # Add the lumos library target and its dependency on the flatbuffers
 add_library(lumos ${LUMOS_SOURCE_FILES})
 add_dependencies(lumos flatbuffer_headers)
