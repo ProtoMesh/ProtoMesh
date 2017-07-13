@@ -21,13 +21,14 @@ static const string EVERYBODY_HIS_OWN = R"(
     }
 )";
 
-/// Specific validator for users registry working by the following principle
-///     By default only the master key may add entries (users).
-///     Once a user is added he has permission to add other entries (users).
-///     The rule that only the user who added an entry (or the master) may modify/remove entries still applies.
+/// Specific validator for nodes registry working by the following principle
+///     By default only the master key may add entries (nodes).
+///     Once a node is added he has permission to add other entries (nodes).
+///     The rule that only the node who added an entry (or the master) may modify/remove entries still applies.
 static const string MASTER_AND_SLAVES = R"(
     function validator(entries, entryID) {
-        // TODO Implement
+        var entry = entries[entryID];
+        
     }
 )";
 

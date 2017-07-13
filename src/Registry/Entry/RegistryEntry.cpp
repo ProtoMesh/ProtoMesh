@@ -132,13 +132,13 @@ string RegistryEntry<VALUE_T>::getSignatureText() const {
 }
 
 template <typename VALUE_T>
-SignatureVerificationResult RegistryEntry<VALUE_T>::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey *> keys) const {
+SignatureVerificationResult RegistryEntry<VALUE_T>::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey>* keys) const {
     // Search for the correct key to use
-    auto it = keys.find(this->publicKeyUsed);
-    if (it == keys.end()) return SignatureVerificationResult::PubKeyNotFound;
+    auto it = keys->find(this->publicKeyUsed);
+    if (it == keys->end()) return SignatureVerificationResult::PubKeyNotFound;
 
     // Verify the signature
-    bool res = Crypto::asym::verify(this->getSignatureText(), this->signature, it->second);
+    bool res = Crypto::asym::verify(this->getSignatureText(), this->signature, &it->second);
     return res ? SignatureVerificationResult::OK : SignatureVerificationResult::SignatureInvalid;
 }
 

@@ -144,7 +144,7 @@ void Registry<VALUE_T>::updateHead(bool save) {
         this->hashChain.push_back(lastHash);
         // Check if the entry is valid
         if (!(entryIndex < validationResults.size() && validationResults[entryIndex])) continue;
-//        if (entry.verifySignature(this->trustedKeys) != RegistryEntry::Verify::OK) continue; /// TODO Verify signature
+        if (entry.verifySignature(&(this->api.key->keys)) != SignatureVerificationResult::OK) continue; /// TODO Verify signature
         // Update head state
         switch (entry.type) {
             case RegistryEntryType::UPSERT:

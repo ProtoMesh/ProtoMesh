@@ -51,7 +51,7 @@ public:
 
     string getSignatureText() const;
 
-    SignatureVerificationResult verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey *> keys) const;
+    SignatureVerificationResult verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey>* keys) const;
 
     vector<uint8_t> serialize() const;
 
