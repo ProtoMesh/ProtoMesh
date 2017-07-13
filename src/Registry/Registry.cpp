@@ -51,12 +51,15 @@ VALUE_T Registry<VALUE_T>::get(string key) {
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::set(string key, VALUE_T value, Crypto::asym::KeyPair pair) {
-    auto entry = RegistryEntry<VALUE_T>(RegistryEntryType::UPSERT, key, value, pair, this->getHeadUUID());
-    this->addEntry(entry);
+    if (this->has(key) && this->get(key) == value) return;
+    this->addEntry(
+            RegistryEntry<VALUE_T>(RegistryEntryType::UPSERT, key, value, pair, this->getHeadUUID())
+    );
 }
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::del(string key, Crypto::asym::KeyPair pair) {
+    if (!this->has(key)) return;
     this->addEntry(
             RegistryEntry<VALUE_T>(RegistryEntryType::DELETE, key, {}, pair, this->getHeadUUID())
     );

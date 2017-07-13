@@ -357,6 +357,7 @@ bool Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* seriali
                 vector<uint8_t> val = {1, 2, 3, 4, 5};
                 vector<uint8_t> empty = {};
                 reg.set(key, val, pair);
+                size_t registrySize = reg.entries.size();
                 string prevHeadHash(reg.getHeadHash());
 
                 THEN("has should be true") { REQUIRE(reg.has(key)); }
@@ -370,6 +371,11 @@ bool Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* seriali
                     }
                 }
 
+                AND_WHEN("the value is set again to the same value") {
+                    reg.set(key, val, pair);
+                    THEN("no duplicate entry should be added") { REQUIRE(reg.entries.size() == registrySize); }
+                }
+
                 AND_WHEN("the registry is cleared") {
                     reg.clear();
 
@@ -381,6 +387,14 @@ bool Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* seriali
 
                     THEN("the read value should be empty") { REQUIRE( reg.get(key) == empty ); }
                     THEN("the head hash should differ") { REQUIRE_FALSE( reg.getHeadHash() == prevHeadHash ); }
+
+                    AND_WHEN("the value is deleted a second time") {
+                        size_t registrySizeAfterFirstDelete = reg.entries.size();
+                        reg.del(key, pair);
+                        THEN("no duplicate entry should be added") {
+                            REQUIRE(reg.entries.size() == registrySizeAfterFirstDelete);
+                        }
+                    }
                 }
             }
 
