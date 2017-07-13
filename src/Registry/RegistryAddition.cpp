@@ -122,8 +122,10 @@ vector<bool> Registry<VALUE_T>::validateEntries(string validator) {
 
 
 template <typename VALUE_T>
-void Registry<VALUE_T>::updateHead(bool save) {
+bool Registry<VALUE_T>::updateHead(bool save, size_t resultIndex) {
     using namespace lumos::registry;
+
+    bool result = true;
 
     this->headState.clear();
     this->hashChain.clear();
@@ -137,18 +139,23 @@ void Registry<VALUE_T>::updateHead(bool save) {
 
     size_t entryIndex = 0;
     for (auto &entry : entries) {
-        // Save entries
+        /// Save entries
         entryOffsets.push_back(entry.toFlatbufferOffset(builder));
-        // Generate hash for the entry
+        /// Generate hash for the entry
         lastHash = Crypto::hash::sha512(lastHash + entry.getSignatureText());
         this->hashChain.push_back(lastHash);
-        // Check if the entry is valid
-        if (!(entryIndex < validationResults.size() && validationResults[entryIndex])) continue;
-        if (entry.verifySignature(&(this->api.key->keys)) != SignatureVerificationResult::OK) continue; /// TODO Verify signature
-        // Update head state
+        /// Check if the entry is valid
+        bool permitted = entryIndex < validationResults.size() && validationResults[entryIndex];
+        bool signatureValid = entry.verifySignature(&(this->api.key->keys)) == SignatureVerificationResult::OK;
+        if (!permitted || !signatureValid) {
+            if (entryIndex == resultIndex) result = false;
+            entryIndex++;
+            continue;
+        }
+        /// Update head state
         switch (entry.type) {
             case RegistryEntryType::UPSERT:
-                this->headState[entry.key] = entry.value;
+                this->headState.emplace(entry.key, entry.value);
                 break;
             case RegistryEntryType::DELETE:
                 this->headState.erase(entry.key);
@@ -167,6 +174,8 @@ void Registry<VALUE_T>::updateHead(bool save) {
         vector<uint8_t> serializedRegistry(buf, buf + builder.GetSize());
         this->api.stor->set(REGISTRY_STORAGE_PREFIX + this->name, serializedRegistry);
     }
+
+    return result;
 }
 
 
@@ -180,7 +189,10 @@ bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> newEntry, bool save) {
     auto lastBorder = this->entries.size();
     auto insertAt = [&] (size_t index) {
         this->entries.insert(this->entries.begin() + index, newEntry);
-        this->updateHead(save);
+        bool entryIsValid = this->updateHead(save, index);
+
+        /// Check whether or not the entry is valid and if so send it to the listeners
+        if (entryIsValid && this->listeners.size() > 0) for (LISTENER_T listener : this->listeners) listener(newEntry);
 
 #ifdef UNIT_TESTING
         if (debug) cout << "Inserted entry at " << index << ": " << newEntry.uuid << endl << this->getEntries() << endl;

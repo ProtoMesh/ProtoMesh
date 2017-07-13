@@ -1,6 +1,7 @@
 #include "Registry.hpp"
 
 // TODO Accomodate for: addition -> deletion -> addition -> entry
+// TODO Add master key as override
 static const string EVERYBODY_HIS_OWN = R"(
     function validator(entries, entryID) {
         var entry = entries[entryID];
@@ -18,17 +19,6 @@ static const string EVERYBODY_HIS_OWN = R"(
 
         // Since the key was never inserted before it is valid
         return true;
-    }
-)";
-
-/// Specific validator for nodes registry working by the following principle
-///     By default only the master key may add entries (nodes).
-///     Once a node is added he has permission to add other entries (nodes).
-///     The rule that only the node who added an entry (or the master) may modify/remove entries still applies.
-static const string MASTER_AND_SLAVES = R"(
-    function validator(entries, entryID) {
-        var entry = entries[entryID];
-        
     }
 )";
 

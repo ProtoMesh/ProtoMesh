@@ -14,6 +14,7 @@ public:
         this->pushKey(masterKey);
     };
 
+    void removeKey(PUB_HASH_T hash) { this->keys.erase(hash); }
     void pushKey(Crypto::asym::PublicKey key) { this->keys.emplace(key.getHash(), key); }
     void insertKey(PUB_HASH_T hash, Crypto::asym::PublicKey key) { this->keys.emplace(hash, key); }
 };

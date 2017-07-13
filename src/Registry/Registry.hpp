@@ -16,7 +16,6 @@
 #include "../api/network.hpp"
 #include "../api/time.hpp"
 
-#include "flatbuffers/flatbuffers.h"
 #include "../buffers/registry/registry_generated.h"
 #include "../buffers/registry/sync/head_generated.h"
 #include "../buffers/registry/sync/request_generated.h"
@@ -24,6 +23,7 @@
 #include "../buffers/registry/sync/hash_generated.h"
 
 #define REGISTRY_STORAGE_PREFIX "registry::"
+#define LISTENER_T std::function<void(RegistryEntry<vector<uint8_t>>)>
 
 using namespace std;
 
@@ -34,9 +34,6 @@ public: // Make everything public when unit testing to make the developers life 
 #endif
     /// API providers
     APIProvider api;
-    // StorageProvider* stor;
-    // NetworkProvider *net;
-    // REL_TIME_PROV_T relTimeProvider;
     BCAST_SOCKET_T bcast;
 
     /// Instance identification
@@ -47,7 +44,7 @@ public: // Make everything public when unit testing to make the developers life 
     /// Addition of entries
     string validator;
     vector<bool> validateEntries(string validator);
-    void updateHead(bool save);
+    bool updateHead(bool save, size_t resultIndex = 0);
     bool addEntry(RegistryEntry<VALUE_T> newEntry, bool save = true);
     void addEntries(list<RegistryEntry<VALUE_T>> newEntries, size_t startingIndex, bool save = true);
     bool addSerializedEntry(const lumos::registry::Entry* serialized, bool save = true);
@@ -67,12 +64,13 @@ public: // Make everything public when unit testing to make the developers life 
     } synchronizationStatus;
     long nextBroadcast;
 
+    /// Listeners
+    vector<LISTENER_T> listeners;
 public:
     vector<RegistryEntry<VALUE_T>> entries;
     vector<string> hashChain;
 
     /// Constructor
-    // Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider, string validator = DEFAULT_VALIDATOR);
     Registry(APIProvider api, string name, string validator = DEFAULT_VALIDATOR);
 
     /// High level data manipulation
@@ -81,6 +79,9 @@ public:
     void del(string key, Crypto::asym::KeyPair pair);
     bool has(string key);
     void clear();
+
+    /// Listeners
+    void onChange(LISTENER_T listener);
 
     /// Synchronization
     void sync(bool force = false);

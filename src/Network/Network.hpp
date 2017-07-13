@@ -4,6 +4,8 @@
 
 #include "../Registry/Registry.hpp"
 
+#include "buffers/network/node_generated.h"
+
 #define STORED_REGISTRY_T std::shared_ptr<Registry<vector<uint8_t>>>
 
 class Network {
@@ -15,7 +17,7 @@ public:
     map<string, STORED_REGISTRY_T> registries;
     BCAST_SOCKET_T registryBcast;
 
-    void loadRegistry(string name);
+    shared_ptr<Registry<vector<uint8_t>>> loadRegistry(string name);
 
     Network(APIProvider api, Crypto::asym::PublicKey masterKey);
 

@@ -1,6 +1,10 @@
 namespace lumos.crypto;
 
+table PublicKey {
+    compressed: [ubyte] (required);
+}
+
 table Signature {
     data: [ubyte] (required);
-    used_key: [ubyte] (required); // TODO Replace this with a fixed length array of bytes
+    used_key: [ubyte] (required); // TODO Replace with PublicKey.hash
 }

@@ -51,7 +51,6 @@ VALUE_T Registry<VALUE_T>::get(string key) {
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::set(string key, VALUE_T value, Crypto::asym::KeyPair pair) {
-
     auto entry = RegistryEntry<VALUE_T>(RegistryEntryType::UPSERT, key, value, pair, this->getHeadUUID());
     this->addEntry(entry);
 }
@@ -75,4 +74,10 @@ void Registry<VALUE_T>::clear() {
     this->entries.clear();
     this->hashChain.clear();
     this->headState.clear();
+}
+
+
+template <typename VALUE_T>
+void Registry<VALUE_T>::onChange(std::function<void(RegistryEntry<vector<uint8_t>>)> listener) {
+    this->listeners.push_back(listener);
 }

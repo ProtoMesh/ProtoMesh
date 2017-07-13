@@ -1,0 +1,12 @@
+include "uuid.fbs";
+include "crypto.fbs";
+
+namespace lumos.network;
+
+table Node {
+    uuid: UUID (required);
+    publicKey: crypto.PublicKey (required);
+}
+
+file_identifier "NODE";
+root_type Node;
