@@ -12,8 +12,8 @@
 class NetworkManager {
     APIProvider api;
 public:
-    NetworkManager(NetworkProvider *net, StorageProvider *stor, REL_TIME_PROV_T relTimeProvider) : api{nullptr, stor, net, relTimeProvider} {
-    };
+    NetworkManager(shared_ptr<NetworkProvider> net, shared_ptr<StorageProvider> stor, shared_ptr<RelativeTimeProvider> relTimeProvider)
+            : api{NULL, stor, net, relTimeProvider} {};
 
     Crypto::asym::KeyPair createNetwork() {
         // TODO Initialize the data in the registries for that network

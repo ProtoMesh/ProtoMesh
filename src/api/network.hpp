@@ -35,6 +35,7 @@ public:
 
 class NetworkProvider {
 public:
+    ~NetworkProvider() {}
     // UDP related things
     virtual BCAST_SOCKET_T createBroadcastSocket(std::string multicastGroup, unsigned short port) = 0;
 

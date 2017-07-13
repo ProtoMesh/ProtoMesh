@@ -7,10 +7,10 @@
 #include "time.hpp"
 
 struct APIProvider {
-    KeyProvider *key;
-    StorageProvider *stor;
-    NetworkProvider *net;
-    REL_TIME_PROV_T time;
+    shared_ptr<KeyProvider> key;
+    shared_ptr<StorageProvider> stor;
+    shared_ptr<NetworkProvider> net;
+    shared_ptr<RelativeTimeProvider> time;
 };
 
 #endif //LUMOS_API_PROVIDER_HPP

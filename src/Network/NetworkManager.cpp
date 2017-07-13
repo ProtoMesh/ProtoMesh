@@ -12,8 +12,8 @@ Network NetworkManager::joinNetwork(string id, NETWORK_KEY_T key)  {
     Crypto::asym::PublicKey masterKey(key);
 
     APIProvider api = this->api;
-    KeyProvider keyProvider;
-    api.key = &keyProvider;
+    auto keyProvider = std::make_shared<KeyProvider>(masterKey);
+    api.key = keyProvider; // TODO Escapes local scope
 
     return Network(api, masterKey);
 }

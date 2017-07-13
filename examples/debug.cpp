@@ -23,12 +23,7 @@ Network createOrJoinNetwork(NetworkManager networkManager) {
 int main() {
     signal(SIGINT, onInterrupt);
 
-    LinuxNetwork net;
-    LinuxStorage stor;
-    LinuxRelativeTimeProvider time;
-    auto timePtr = time.toPointer(); // TODO This causes problems on deallocation!
-
-    NetworkManager networkManager(&net, &stor, timePtr);
+    NetworkManager networkManager(make_shared<LinuxNetwork>(), make_shared<LinuxStorage>(), make_shared<LinuxRelativeTimeProvider>());
     Network network = createOrJoinNetwork(networkManager);
 
     Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());

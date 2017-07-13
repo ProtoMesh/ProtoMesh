@@ -273,14 +273,17 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
 
     SCENARIO("Database/Registry/Sync", "[registry][sync]") {
             GIVEN("two cleared registries and a KeyPair") {
-            DummyNetworkHandler dnet;
-            DummyStorageHandler dstor;
-            REL_TIME_PROV_T drelTimeProv(new DummyRelativeTimeProvider);
-            BCAST_SOCKET_T bcast = dnet.createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT);
-            KeyProvider key;
-            APIProvider api = {&key, &dstor, &dnet, drelTimeProv};
-
+//            DummyNetworkHandler dnet;
+//            DummyStorageHandler dstor;
+//            REL_TIME_PROV_T drelTimeProv(new DummyRelativeTimeProvider);
             Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
+            auto key = make_shared<KeyProvider>(pair.pub);
+            auto stor = make_shared<DummyStorageHandler>();
+            auto net = make_shared<DummyNetworkHandler>();
+            auto time = make_shared<DummyRelativeTimeProvider>();
+            BCAST_SOCKET_T bcast = net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT);
+            APIProvider api = {key, stor, net, time};
+
             Registry<vector<uint8_t>> reg(api, "someRegistry");
             Registry<vector<uint8_t>> reg2(api, "someRegistry");
             Registry<vector<uint8_t>> reg3(api, "someRegistry");
