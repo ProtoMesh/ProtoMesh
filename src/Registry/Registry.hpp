@@ -27,6 +27,14 @@
 
 using namespace std;
 
+enum RegistryModificationResult {
+    Completed,
+    AlreadyPresent,
+    PermissionDenied,
+    SignatureVerificationFailed,
+    ParsingError
+};
+
 template <class VALUE_T>
 class Registry {
 #ifdef UNIT_TESTING
@@ -44,10 +52,10 @@ public: // Make everything public when unit testing to make the developers life 
     /// Addition of entries
     string validator;
     vector<bool> validateEntries(string validator);
-    bool updateHead(bool save, size_t resultIndex = 0);
-    bool addEntry(RegistryEntry<VALUE_T> newEntry, bool save = true);
+    RegistryModificationResult updateHead(bool save, size_t resultIndex = 0);
+    RegistryModificationResult addEntry(RegistryEntry<VALUE_T> newEntry, bool save = true);
     void addEntries(list<RegistryEntry<VALUE_T>> newEntries, size_t startingIndex, bool save = true);
-    bool addSerializedEntry(const lumos::registry::Entry* serialized, bool save = true);
+    RegistryModificationResult addSerializedEntry(const lumos::registry::Entry* serialized, bool save = true);
     Crypto::UUID getHeadUUID(); // Helper for addition (getting the corresponding parent)
 
     /// Synchronization
@@ -75,8 +83,8 @@ public:
 
     /// High level data manipulation
     VALUE_T get(string key);
-    void set(string key, VALUE_T value, Crypto::asym::KeyPair pair);
-    void del(string key, Crypto::asym::KeyPair pair);
+    RegistryModificationResult set(string key, VALUE_T value, Crypto::asym::KeyPair pair);
+    RegistryModificationResult del(string key, Crypto::asym::KeyPair pair);
     bool has(string key);
     void clear();
 

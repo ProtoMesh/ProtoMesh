@@ -122,10 +122,10 @@ vector<bool> Registry<VALUE_T>::validateEntries(string validator) {
 
 
 template <typename VALUE_T>
-bool Registry<VALUE_T>::updateHead(bool save, size_t resultIndex) {
+RegistryModificationResult Registry<VALUE_T>::updateHead(bool save, size_t resultIndex) {
     using namespace lumos::registry;
 
-    bool result = true;
+    RegistryModificationResult result = RegistryModificationResult::Completed;
 
     this->headState.clear();
     this->hashChain.clear();
@@ -148,7 +148,10 @@ bool Registry<VALUE_T>::updateHead(bool save, size_t resultIndex) {
         bool permitted = entryIndex < validationResults.size() && validationResults[entryIndex];
         bool signatureValid = entry.verifySignature(&(this->api.key->keys)) == SignatureVerificationResult::OK;
         if (!permitted || !signatureValid) {
-            if (entryIndex == resultIndex) result = false;
+            if (entryIndex == resultIndex) {
+                if (!permitted) result = RegistryModificationResult::PermissionDenied;
+                if (!signatureValid) result = RegistryModificationResult::SignatureVerificationFailed;
+            }
             entryIndex++;
             continue;
         }
@@ -183,20 +186,22 @@ bool Registry<VALUE_T>::updateHead(bool save, size_t resultIndex) {
 /// ---------------------------------------- Entry deserialization & Addition -----------------------------------------
 
 template <typename VALUE_T>
-bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> newEntry, bool save) {
-    if (!newEntry.valid) return false;
+RegistryModificationResult Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> newEntry, bool save) {
+    if (!newEntry.valid) return RegistryModificationResult::ParsingError;
 
     auto lastBorder = this->entries.size();
     auto insertAt = [&] (size_t index) {
         this->entries.insert(this->entries.begin() + index, newEntry);
-        bool entryIsValid = this->updateHead(save, index);
+        RegistryModificationResult res = this->updateHead(save, index);
 
         /// Check whether or not the entry is valid and if so send it to the listeners
-        if (entryIsValid && this->listeners.size() > 0) for (LISTENER_T listener : this->listeners) listener(newEntry);
+        if (res == RegistryModificationResult::Completed && this->listeners.size() > 0)
+            for (LISTENER_T listener : this->listeners) listener(newEntry);
 
 #ifdef UNIT_TESTING
         if (debug) cout << "Inserted entry at " << index << ": " << newEntry.uuid << endl << this->getEntries() << endl;
 #endif
+        return res;
     };
 
     /// Go through from the back
@@ -205,8 +210,7 @@ bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> newEntry, bool save) {
 
         // We reached our direct parent. Insert after it
         if (entry.uuid == newEntry.parentUUID) {
-            insertAt(i + 1);
-            return true;
+            return insertAt(i + 1);
         }
 
         /// We've hit a different entry that has the same parent
@@ -215,11 +219,10 @@ bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> newEntry, bool save) {
             if (newEntry.uuid < entry.uuid) lastBorder = i;
                 /// In case we are bigger take the position of the last border we encountered and insert ourselves there
             else if (newEntry.uuid > entry.uuid) {
-                insertAt(lastBorder);
-                return true;
+                return insertAt(lastBorder);
             }
-                /// This entry is equal (a duplicate) to the entry we encountered! Abort and don't insert.
-            else return false;
+            /// This entry is equal (a duplicate) to the entry we encountered! Abort and don't insert.
+            else return RegistryModificationResult::AlreadyPresent;
         }
     }
 
@@ -242,7 +245,7 @@ bool Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> newEntry, bool save) {
     if (newEntry.parentUUID == Crypto::UUID::Empty()) insertAt(0);
     else insertAt(lastBorder);
 
-    return true;
+    return RegistryModificationResult::Completed;
 }
 
 template <typename VALUE_T>
@@ -305,7 +308,7 @@ void Registry<VALUE_T>::addEntries(list<RegistryEntry<VALUE_T>> newEntries, size
 }
 
 template <typename VALUE_T>
-bool Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* serialized, bool save) {
+RegistryModificationResult Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* serialized, bool save) {
     return this->addEntry(RegistryEntry<VALUE_T>(serialized), save);
 }
 
