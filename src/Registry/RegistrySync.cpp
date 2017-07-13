@@ -14,7 +14,7 @@ uniform_int_distribution<int> broadcastIntervalRange(REGISTRY_BROADCAST_INTERVAL
 /// Helpers
 template <typename VALUE_T>
 bool Registry<VALUE_T>::isSyncInProgress() {
-    return this->relTimeProvider->millis() - this->synchronizationStatus.lastRequestTimestamp < REGISTRY_SYNC_TIMEOUT;
+    return this->api.time->millis() - this->synchronizationStatus.lastRequestTimestamp < REGISTRY_SYNC_TIMEOUT;
 }
 
 /// ---------------------------------------------- Synchronization steps ----------------------------------------------
@@ -111,8 +111,8 @@ void Registry<VALUE_T>::broadcastEntries(size_t index) { // includes index
 template <typename VALUE_T>
 void Registry<VALUE_T>::sync(bool force) {
     /// Check if a sync would be within the defined interval or too early
-    if (!force && (this->relTimeProvider->millis() < this->nextBroadcast || !this->hashChain.size())) return;
-    this->nextBroadcast = this->relTimeProvider->millis() + broadcastIntervalRange(rng);
+    if (!force && (this->api.time->millis() < this->nextBroadcast || !this->hashChain.size())) return;
+    this->nextBroadcast = this->api.time->millis() + broadcastIntervalRange(rng);
 
     using namespace lumos::registry::sync;
     flatbuffers::FlatBufferBuilder builder;
@@ -179,7 +179,7 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
             size_t l_min = min(l_remote, (size_t) this->entries.size()-1);
 
             Crypto::UUID requestID;
-            this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
+            this->synchronizationStatus.lastRequestTimestamp = this->api.time->millis();
             this->synchronizationStatus.requestID = requestID;
             this->synchronizationStatus.min = 0;
             this->synchronizationStatus.max = l_min;
@@ -225,7 +225,7 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
                 this->onBinarySearchResult(index);
             } else {
                 Crypto::UUID requestID;
-                this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis();
+                this->synchronizationStatus.lastRequestTimestamp = this->api.time->millis();
                 this->synchronizationStatus.requestID = requestID;
                 this->synchronizationStatus.min = min;
                 this->synchronizationStatus.max = max;
@@ -269,6 +269,7 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
 }
 
 #ifdef UNIT_TESTING
+    #include "../api/keys.hpp"
 
     SCENARIO("Database/Registry/Sync", "[registry][sync]") {
             GIVEN("two cleared registries and a KeyPair") {
@@ -276,11 +277,13 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
             DummyStorageHandler dstor;
             REL_TIME_PROV_T drelTimeProv(new DummyRelativeTimeProvider);
             BCAST_SOCKET_T bcast = dnet.createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT);
+            KeyProvider key;
+            APIProvider api = {&key, &dstor, &dnet, drelTimeProv};
 
             Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
-            Registry<vector<uint8_t>> reg("someRegistry", &dstor, &dnet, drelTimeProv);
-            Registry<vector<uint8_t>> reg2("someRegistry", &dstor, &dnet, drelTimeProv);
-            Registry<vector<uint8_t>> reg3("someRegistry", &dstor, &dnet, drelTimeProv);
+            Registry<vector<uint8_t>> reg(api, "someRegistry");
+            Registry<vector<uint8_t>> reg2(api, "someRegistry");
+            Registry<vector<uint8_t>> reg3(api, "someRegistry");
 
             reg.setBcastSocket(bcast);
             reg2.setBcastSocket(bcast);

@@ -164,7 +164,7 @@ void Registry<VALUE_T>::updateHead(bool save) {
 
         uint8_t *buf = builder.GetBufferPointer();
         vector<uint8_t> serializedRegistry(buf, buf + builder.GetSize());
-        this->stor->set(REGISTRY_STORAGE_PREFIX + this->name, serializedRegistry);
+        this->api.stor->set(REGISTRY_STORAGE_PREFIX + this->name, serializedRegistry);
     }
 }
 
@@ -300,6 +300,7 @@ bool Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* seriali
 
 #ifdef UNIT_TESTING
     #include "flatbuffers/idl.h"
+    #include "../api/keys.hpp"
 
     SCENARIO("Database/Registry", "[registry]") {
         GIVEN("a cleared registry and a KeyPair") {
@@ -309,8 +310,10 @@ bool Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* seriali
             DummyNetworkHandler dnet;
             DummyStorageHandler dstor;
             REL_TIME_PROV_T drelTimeProv(new DummyRelativeTimeProvider);
+            KeyProvider key;
 
-            Registry<vector<uint8_t>> reg("someRegistry", &dstor, &dnet, drelTimeProv);
+            APIProvider api = {&key, &dstor, &dnet, drelTimeProv};
+            Registry<vector<uint8_t>> reg(api, "someRegistry");
 
             WHEN("a serialized entry is added twice") {
 

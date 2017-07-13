@@ -2,8 +2,8 @@
 
 Network NetworkManager::joinNetwork(string id, NETWORK_KEY_T key)  {
     string serializedKey(Crypto::serialize::uint8ArrToString(key.data(), NETWORK_KEY_SIZE));
-    this->stor->set("networkKey::" + id, serializedKey);
-    this->stor->set("lastJoinedNetwork", id);
+    this->api.stor->set("networkKey::" + id, serializedKey);
+    this->api.stor->set("lastJoinedNetwork", id);
 
     // TODO Mask this->net with the encryption
 
@@ -11,16 +11,20 @@ Network NetworkManager::joinNetwork(string id, NETWORK_KEY_T key)  {
 
     Crypto::asym::PublicKey masterKey(key);
 
-    return Network(this->net, this->stor, this->time, masterKey);
+    APIProvider api = this->api;
+    KeyProvider keyProvider;
+    api.key = &keyProvider;
+
+    return Network(api, masterKey);
 }
 
 bool NetworkManager::lastJoinedAvailable()  {
-    return this->stor->has("lastJoinedNetwork");
+    return this->api.stor->has("lastJoinedNetwork");
 }
 
 Network NetworkManager::joinLastNetwork()  {
-    string lastNetworkID(this->stor->get_str("lastJoinedNetwork"));
-    string serializedKey(this->stor->get_str("networkKey::" + lastNetworkID));
+    string lastNetworkID(this->api.stor->get_str("lastJoinedNetwork"));
+    string serializedKey(this->api.stor->get_str("networkKey::" + lastNetworkID));
 
     vector<uint8_t> deserializedKey(Crypto::serialize::stringToUint8Array(serializedKey));
     array<uint8_t, 33> lastNetworkKey;

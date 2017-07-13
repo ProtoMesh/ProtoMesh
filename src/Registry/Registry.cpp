@@ -7,17 +7,17 @@
 template class Registry<vector<uint8_t>>;
 
 template <typename VALUE_T>
-Registry<VALUE_T>::Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider, string validator)
-        : stor(stor), net(net), relTimeProvider(relTimeProvider),
-          bcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
+Registry<VALUE_T>::Registry(APIProvider api, string name, string validator)
+    : api(api),
+          bcast(api.net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)),
           name(name), instanceIdentifier(), validator(validator),
-          nextBroadcast(relTimeProvider->millis() + REGISTRY_BROADCAST_INTERVAL_MIN) {
+          nextBroadcast(api.time->millis() + REGISTRY_BROADCAST_INTERVAL_MIN) {
     using namespace lumos::registry;
 
-    this->synchronizationStatus.lastRequestTimestamp = this->relTimeProvider->millis() - REGISTRY_SYNC_TIMEOUT;
+    this->synchronizationStatus.lastRequestTimestamp = this->api.time->millis() - REGISTRY_SYNC_TIMEOUT;
 
-    if (this->stor->has(REGISTRY_STORAGE_PREFIX + this->name)) {
-        vector<uint8_t> serializedRegistry(this->stor->get(REGISTRY_STORAGE_PREFIX + this->name));
+    if (this->api.stor->has(REGISTRY_STORAGE_PREFIX + this->name)) {
+        vector<uint8_t> serializedRegistry(this->api.stor->get(REGISTRY_STORAGE_PREFIX + this->name));
         auto registry = GetRegistry(serializedRegistry.data());
         registry->entries()->Length();
 
@@ -71,7 +71,7 @@ bool Registry<VALUE_T>::has(string key) {
 
 template <typename VALUE_T>
 void Registry<VALUE_T>::clear() {
-    this->stor->set(this->name, "");
+    this->api.stor->set(this->name, "");
     this->entries.clear();
     this->hashChain.clear();
     this->headState.clear();

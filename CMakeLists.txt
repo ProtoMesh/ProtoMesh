@@ -30,23 +30,27 @@ set(LUMOS_SOURCE_FILES
         src/Network/Network.hpp
         src/Network/Network.cpp
         src/const.hpp
+        src/api/api.hpp
         src/api/time.hpp
         src/api/network.hpp
+        src/api/storage.hpp
+        src/api/keys.hpp
         src/Device/Device.cpp
         src/Device/Device.hpp
-        src/Registry/Entry/RegistryEntry.cpp
-        src/Registry/Entry/RegistryEntry.hpp
-        src/crypto/crypto.hpp
         src/crypto/sha512.hpp
         src/crypto/crypto.cpp
         src/crypto/crypto_asym.cpp
+        src/Registry/Registry.hpp
         src/Registry/Registry.cpp
         src/Registry/RegistrySync.cpp
-        src/Registry/Registry.hpp
-        src/api/storage.hpp
+        src/Registry/RegistryAddition.cpp
+        src/Registry/Entry/RegistryEntry.cpp
+        src/Registry/Entry/RegistryEntry.hpp
+        src/crypto/crypto.hpp
         src/crypto/crypto_sym.cpp
         src/Network/Network.cpp
-        src/Network/Network.hpp src/Registry/RegistryAddition.cpp src/Registry/Validators.hpp)
+        src/Network/Network.hpp
+        src/Registry/Validators.hpp)
 # Add the lumos library target and its dependency on the flatbuffers
 add_library(lumos ${LUMOS_SOURCE_FILES})
 add_dependencies(lumos flatbuffer_headers)

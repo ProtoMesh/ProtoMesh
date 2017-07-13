@@ -1,8 +1,8 @@
 #include "Network.hpp"
 
-Network::Network(NetworkProvider *net, StorageProvider *stor, REL_TIME_PROV_T relTimeProvider, Crypto::asym::PublicKey masterKey)
-        : net(net), stor(stor), time(relTimeProvider),
-          masterKey(masterKey), registryBcast(net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)) {
+Network::Network(APIProvider api, Crypto::asym::PublicKey masterKey)
+    : api(api),
+          masterKey(masterKey), registryBcast(api.net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)) {
 
 
     // TODO load groups
@@ -14,8 +14,7 @@ void Network::loadRegistry(string name) {
 //    std::map<PUB_HASH_T, Crypto::asym::PublicKey *> trustedKeys;
 //    trustedKeys[this->masterKey.getHash()] = &this->masterKey;
 
-//    Registry<vector<uint8_t>> reg(name, this->stor, this->net, this->time); // TODO Check whether or not this is deallocated...
-    auto sp = std::make_shared<Registry<vector<uint8_t>>>(name, this->stor, this->net, this->time);
+    auto sp = std::make_shared<Registry<vector<uint8_t>>>(api, name);
 
     sp->clear(); cout << "CLEAR" << endl; // TODO Remove this
 

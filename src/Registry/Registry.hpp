@@ -11,6 +11,7 @@
 #include "Registry/Validators.hpp"
 #include "../const.hpp"
 #include "../crypto/crypto.hpp"
+#include "../api/api.hpp"
 #include "../api/storage.hpp"
 #include "../api/network.hpp"
 #include "../api/time.hpp"
@@ -32,9 +33,10 @@ class Registry {
 public: // Make everything public when unit testing to make the developers life easier and improve readability
 #endif
     /// API providers
-    StorageProvider* stor;
-    NetworkProvider *net;
-    REL_TIME_PROV_T relTimeProvider;
+    APIProvider api;
+    // StorageProvider* stor;
+    // NetworkProvider *net;
+    // REL_TIME_PROV_T relTimeProvider;
     BCAST_SOCKET_T bcast;
 
     /// Instance identification
@@ -70,7 +72,8 @@ public:
     vector<string> hashChain;
 
     /// Constructor
-    Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider, string validator = DEFAULT_VALIDATOR);
+    // Registry(string name, StorageProvider *stor, NetworkProvider *net, REL_TIME_PROV_T relTimeProvider, string validator = DEFAULT_VALIDATOR);
+    Registry(APIProvider api, string name, string validator = DEFAULT_VALIDATOR);
 
     /// High level data manipulation
     VALUE_T get(string key);
