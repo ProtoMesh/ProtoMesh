@@ -28,94 +28,94 @@ vector<bool> Registry<VALUE_T>::validateEntries(string validator) {
     // TODO Verify the signature
     // entry.verifySignature(trustedKeys)
 
-//    const char* iterator = R"(
-//        function validate(entries) {
-//            return entries.map(function (currentEntry, i, entries) { return validator(entries, i); });
-//        }
-//    )";
-//
-//    duk_context* ctx(duk_create_heap(NULL, NULL, NULL, NULL, jsErrorHandler));
-//
-//    duk_push_c_function(ctx, nativePrint, DUK_VARARGS);
-//    duk_put_global_string(ctx, "print");
-//
-//    auto pushEntryObject = [&] (RegistryEntry<VALUE_T> entry) {
-//        duk_idx_t obj_idx;
-//
-//        auto pushObjectProperty = [&] (string key, string value) {
-//            duk_push_string(ctx, value.c_str());
-//            duk_put_prop_string(ctx, obj_idx, key.c_str());
-//        };
-//
-//        string type;
-//        switch (entry.type) {
-//            case UPSERT: type = "UPSERT"; break;
-//            case DELETE: type = "DELETE"; break;
-//        }
-//
-//        obj_idx = duk_push_object(ctx);
-//        pushObjectProperty("uuid", string(entry.uuid));
-//        pushObjectProperty("parentUUID", string(entry.parentUUID));
-//        pushObjectProperty("publicKeyUsed", string(entry.publicKeyUsed.begin(), entry.publicKeyUsed.end()));
-//        pushObjectProperty("type", type);
-//        pushObjectProperty("key", entry.key);
-//    };
-//
-//    auto pushEntries = [&] () {
-//        duk_idx_t arr_idx;
-//
-//        arr_idx = duk_push_array(ctx);
-//        duk_uarridx_t index = 0;
-//        for (auto entry : this->entries) {
-//            pushEntryObject(entry);
-//            duk_put_prop_index(ctx, arr_idx, index++);
-//        }
-//
-//        return arr_idx;
-//    };
-//
-//    /// Register the validator
-//    duk_eval_string(ctx, validator.c_str());
-//    duk_push_string(ctx, "validator");
-//
-//    // TODO Abuse this to push data into the context (e.g. the master key)
-////    duk_eval_string(ctx, "var test = 'HELLO CRUDE WORLD!';");
-////    duk_push_string(ctx, "test");
-//
-//    /// Register the validation iterator and set it as the global object
-//    duk_eval_string(ctx, iterator);
-//    duk_get_global_string(ctx, "validate");
-//
-//    /// Push the entries as an argument to the iterator
-//    pushEntries();
-//
-//    /// Call the iterator
-//    if (duk_pcall(ctx, 1 /*numargs*/ ) != 0) {
-//        printf("Error: %s\n", duk_safe_to_string(ctx, -1));
-//    } else {
-//        if (duk_is_array(ctx, -1)) {
-//            vector<bool> validationResults;
-//
-//            for (duk_uarridx_t i = 0; i < duk_get_length(ctx, -1); i++) {
-//                duk_get_prop_index(ctx, -1, i);
-//
-//                // TODO this is very hacky....do this without to_string but instead fetch the boolean directly
-//                string boolean(duk_safe_to_string(ctx, -1));
-//                if (boolean == "false") validationResults.push_back(false);
-//                else if (boolean == "true") validationResults.push_back(true);
-//                else {
-//                    cerr << "Validator returned non-boolean value." << endl;
-//                    return validationResults;
-//                }
-//
-//                duk_pop(ctx);
-//            }
-//            return validationResults;
-//        }
-//    }
-//
-//    duk_pop(ctx);
-//    duk_destroy_heap(ctx);
+    const char* iterator = R"(
+        function validate(entries) {
+            return entries.map(function (currentEntry, i, entries) { return validator(entries, i); });
+        }
+    )";
+
+    duk_context* ctx(duk_create_heap(NULL, NULL, NULL, NULL, jsErrorHandler));
+
+    duk_push_c_function(ctx, nativePrint, DUK_VARARGS);
+    duk_put_global_string(ctx, "print");
+
+    auto pushEntryObject = [&] (RegistryEntry<VALUE_T> entry) {
+        duk_idx_t obj_idx;
+
+        auto pushObjectProperty = [&] (string key, string value) {
+            duk_push_string(ctx, value.c_str());
+            duk_put_prop_string(ctx, obj_idx, key.c_str());
+        };
+
+        string type;
+        switch (entry.type) {
+            case UPSERT: type = "UPSERT"; break;
+            case DELETE: type = "DELETE"; break;
+        }
+
+        obj_idx = duk_push_object(ctx);
+        pushObjectProperty("uuid", string(entry.uuid));
+        pushObjectProperty("parentUUID", string(entry.parentUUID));
+        pushObjectProperty("publicKeyUsed", string(entry.publicKeyUsed.begin(), entry.publicKeyUsed.end()));
+        pushObjectProperty("type", type);
+        pushObjectProperty("key", entry.key);
+    };
+
+    auto pushEntries = [&] () {
+        duk_idx_t arr_idx;
+
+        arr_idx = duk_push_array(ctx);
+        duk_uarridx_t index = 0;
+        for (auto entry : this->entries) {
+            pushEntryObject(entry);
+            duk_put_prop_index(ctx, arr_idx, index++);
+        }
+
+        return arr_idx;
+    };
+
+    /// Register the validator
+    duk_eval_string(ctx, validator.c_str());
+    duk_push_string(ctx, "validator");
+
+    // TODO Abuse this to push data into the context (e.g. the master key)
+//    duk_eval_string(ctx, "var test = 'HELLO CRUDE WORLD!';");
+//    duk_push_string(ctx, "test");
+
+    /// Register the validation iterator and set it as the global object
+    duk_eval_string(ctx, iterator);
+    duk_get_global_string(ctx, "validate");
+
+    /// Push the entries as an argument to the iterator
+    pushEntries();
+
+    /// Call the iterator
+    if (duk_pcall(ctx, 1 /*numargs*/ ) != 0) {
+        printf("Error: %s\n", duk_safe_to_string(ctx, -1));
+    } else {
+        if (duk_is_array(ctx, -1)) {
+            vector<bool> validationResults;
+
+            for (duk_uarridx_t i = 0; i < duk_get_length(ctx, -1); i++) {
+                duk_get_prop_index(ctx, -1, i);
+
+                // TODO this is very hacky....do this without to_string but instead fetch the boolean directly
+                string boolean(duk_safe_to_string(ctx, -1));
+                if (boolean == "false") validationResults.push_back(false);
+                else if (boolean == "true") validationResults.push_back(true);
+                else {
+                    cerr << "Validator returned non-boolean value." << endl;
+                    return validationResults;
+                }
+
+                duk_pop(ctx);
+            }
+            return validationResults;
+        }
+    }
+
+    duk_pop(ctx);
+    duk_destroy_heap(ctx);
 
     return {};
 }
