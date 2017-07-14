@@ -9,6 +9,8 @@
 #include "../crypto/crypto.hpp"
 #include "Network.hpp"
 
+#define NETWORK shared_ptr<Network>
+
 class NetworkManager {
     APIProvider api;
 public:
@@ -16,12 +18,11 @@ public:
             : api{NULL, stor, net, relTimeProvider} {};
 
     Crypto::asym::KeyPair createNetwork() {
-        // TODO Initialize the data in the registries for that network
         return Crypto::asym::generateKeyPair();
     }
 
-    Network joinNetwork(string id, NETWORK_KEY_T key);
-    Network joinLastNetwork();
+    NETWORK joinNetwork(string id, NETWORK_KEY_T key);
+    NETWORK joinLastNetwork();
 
     bool lastJoinedAvailable();
 };

@@ -25,9 +25,7 @@ static void jsErrorHandler(void *udata, const char *msg) {
 
 template <typename VALUE_T>
 vector<bool> Registry<VALUE_T>::validateEntries(string validator) {
-    // TODO Verify the signature
-    // entry.verifySignature(trustedKeys)
-
+    // TODO Replace with C++ functions via Enum and add validator for nodes registry (where nodes may modify themselves)
     const char* iterator = R"(
         function validate(entries) {
             return entries.map(function (currentEntry, i, entries) { return validator(entries, i); });

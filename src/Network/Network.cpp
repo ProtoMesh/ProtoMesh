@@ -30,16 +30,22 @@ Network::Network(APIProvider api, Crypto::asym::PublicKey masterKey)
         }
     };
 
-    this->loadRegistry("network::nodes")->onChange(listener);
+    this->loadRegistry(NODES_REGISTRY)->onChange(listener);
 }
 
-shared_ptr<Registry<vector<uint8_t>>> Network::loadRegistry(string name) {
+STORED_REGISTRY_T Network::loadRegistry(string name) {
     auto sp = std::make_shared<Registry<vector<uint8_t>>>(api, name);
 
-    sp->clear(); cout << "CLEAR" << endl; // TODO Remove this
+    sp->clear(); // TODO Remove this
 
     this->registries.emplace(name, sp);
     return sp;
+}
+
+STORED_REGISTRY_T Network::getRegistry(string name) {
+    auto registry = this->registries.find(name);
+    if (registry == this->registries.end()) return nullptr;
+    return registry->second;
 }
 
 void Network::tick(unsigned int timeoutMS) {
@@ -57,4 +63,9 @@ void Network::tick(unsigned int timeoutMS) {
             r->sync();
         }
     }
+}
+
+void Network::registerNode(Crypto::UUID uid, vector<uint8_t> node, Crypto::asym::KeyPair authorization) {
+    cout << "Registered node: " << uid << " using key " << string(authorization.pub.getHash().begin()) << endl;
+    this->getRegistry(NODES_REGISTRY)->set(uid, node, authorization);
 }

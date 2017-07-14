@@ -1,28 +1,28 @@
 #include "NetworkManager.hpp"
 
-Network NetworkManager::joinNetwork(string id, NETWORK_KEY_T key)  {
+NETWORK NetworkManager::joinNetwork(string id, NETWORK_KEY_T key)  {
     string serializedKey(Crypto::serialize::uint8ArrToString(key.data(), NETWORK_KEY_SIZE));
     this->api.stor->set("networkKey::" + id, serializedKey);
     this->api.stor->set("lastJoinedNetwork", id);
 
     // TODO Mask this->net with the encryption
 
-    cout << "Joining network: " << serializedKey << endl;
 
     Crypto::asym::PublicKey masterKey(key);
+    cout << "Joining network: " << string(masterKey.getHash().begin(), PUB_HASH_SIZE) << " (" << serializedKey << ")" << endl;
 
     APIProvider api = this->api;
     auto keyProvider = std::make_shared<KeyProvider>(masterKey);
     api.key = keyProvider; // TODO Escapes local scope
 
-    return Network(api, masterKey);
+    return make_shared<Network>(api, masterKey);
 }
 
 bool NetworkManager::lastJoinedAvailable()  {
     return this->api.stor->has("lastJoinedNetwork");
 }
 
-Network NetworkManager::joinLastNetwork()  {
+NETWORK NetworkManager::joinLastNetwork()  {
     string lastNetworkID(this->api.stor->get_str("lastJoinedNetwork"));
     string serializedKey(this->api.stor->get_str("networkKey::" + lastNetworkID));
 

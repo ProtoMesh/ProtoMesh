@@ -128,6 +128,7 @@ namespace Crypto {
             };
         };
 
+        // TODO --important-- provide a platform unrelated PRNG
         inline KeyPair generateKeyPair() {
             // Generate two keys
             uint8_t privateKey[PRIV_KEY_SIZE] = {0};

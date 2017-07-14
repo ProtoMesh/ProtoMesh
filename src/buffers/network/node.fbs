@@ -3,9 +3,14 @@ include "crypto.fbs";
 
 namespace lumos.network;
 
+table Endpoint {
+    // Nothing here
+}
+
 table Node {
     uuid: UUID (required);
     publicKey: crypto.PublicKey (required);
+    endpoints: [Endpoint];
 }
 
 file_identifier "NODE";
