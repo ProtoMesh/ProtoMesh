@@ -17,10 +17,9 @@ public:
 
     vector<uint8_t> serializeForRegistry();
 
-//    void registerAt(shared_ptr<Network> network) {
-//        network->registerNode(this->serializeForRegistry());
-//        this->networks.push_back(network);
-//    };
+    void registerAt(shared_ptr<Network> network) {
+        this->networks.push_back(network);
+    };
 };
 
 

@@ -1,0 +1,19 @@
+include "uuid.fbs";
+include "crypto.fbs";
+
+namespace lumos.network;
+
+table GroupParticipant {
+    uuid: UUID (required);
+    encryptedGroupKey: [ubyte];
+}
+
+table Group {
+    uuid: UUID (required);
+    publicKey: crypto.PublicKey (required); // Not static! Might change
+
+    participants: [GroupParticipant];
+}
+
+file_identifier "GRUP";
+root_type Group;

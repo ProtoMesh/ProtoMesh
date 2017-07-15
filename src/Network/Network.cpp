@@ -4,7 +4,6 @@ Network::Network(APIProvider api, Crypto::asym::PublicKey masterKey)
     : api(api), masterKey(masterKey), registryBcast(api.net->createBroadcastSocket(MULTICAST_NETWORK, REGISTRY_PORT)) {
     using namespace lumos::network;
 
-
     std::function<void(RegistryEntry<vector<uint8_t>>)> listener = [&](RegistryEntry<vector<uint8_t>> entry) {
         /// Update api.key list according to change in node registry
         auto verifier = flatbuffers::Verifier(entry.value.data(), entry.value.size());
@@ -31,6 +30,7 @@ Network::Network(APIProvider api, Crypto::asym::PublicKey masterKey)
     };
 
     this->loadRegistry(NODES_REGISTRY)->onChange(listener);
+    this->loadRegistry(GROUPS_REGISTRY);
 }
 
 STORED_REGISTRY_T Network::loadRegistry(string name) {
@@ -57,15 +57,17 @@ void Network::tick(unsigned int timeoutMS) {
             r->onData(registryData);
             r->sync();
         }
-    } else {
-        for (auto reg : this->registries) {
-            STORED_REGISTRY_T r = reg.second;
-            r->sync();
-        }
-    }
+    } else for (auto reg : this->registries) reg.second->sync();
 }
 
 void Network::registerNode(Crypto::UUID uid, vector<uint8_t> node, Crypto::asym::KeyPair authorization) {
     cout << "Registered node: " << uid << " using key " << string(authorization.pub.getHash().begin()) << endl;
     this->getRegistry(NODES_REGISTRY)->set(uid, node, authorization);
 }
+
+//shared_ptr<Group> Network::get_group(Crypto::UUID uid) {
+//    STORED_REGISTRY_T groups = this->getRegistry(GROUPS_REGISTRY);
+//    if (!groups->has(uid)) return nullptr;
+//
+//    return make_shared<Group>(this, uid);
+//}

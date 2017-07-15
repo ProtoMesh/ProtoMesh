@@ -8,40 +8,25 @@ void onInterrupt(int) {
     interrupted++;
 }
 
-//NETWORK createOrJoinNetwork(NetworkManager networkManager) {
-//    if (networkManager.lastJoinedAvailable()) {
-//        /// Join the previous network
-//        NETWORK network = networkManager.joinLastNetwork();
-//        return network;
-//    }
-//    /// No previous network available so create a new one and join it.
-//    Crypto::asym::KeyPair netKeyPair = networkManager.createNetwork();
-//    NETWORK network = networkManager.joinNetwork("someNetwork", netKeyPair.pub.getCompressed());
-//    return network;
-//}
-
 int main() {
     signal(SIGINT, onInterrupt);
 
     NetworkManager networkManager(make_shared<LinuxNetwork>(), make_shared<LinuxStorage>(), make_shared<LinuxRelativeTimeProvider>());
-//    NETWORK network = createOrJoinNetwork(networkManager);
 
-    /// Create a network and join it
+    /// Create a network and join it (normally you'd just join)
     Crypto::asym::KeyPair masterKey = networkManager.createNetwork();
     NETWORK network = networkManager.joinNetwork("someNetwork", masterKey.pub.getCompressed());
 
-    /// Add a testNode to the network using the master key
+    /// Create a node (normally the parameters would be loaded from a file)
     Node testNode(Crypto::UUID(), Crypto::asym::generateKeyPair());
+    /// Tell the node which network to use
+    testNode.registerAt(network);
+
+    /// Add a testNode to the network using the master key (normally only done once)
     network->registerNode(testNode.uuid, testNode.serializeForRegistry(), masterKey);
 
-//    Crypto::asym::KeyPair pair(Crypto::asym::generateKeyPair());
-    while (!interrupted) {
-        network->tick(1000);
-//        if (interrupted % 2 != 0) {
-//            cout << endl << "Added entry." << endl;
-//            auto sp = network->registries.find("network::nodes")->second;
-//            sp->set("test", {1,2,3,4}, pair);
-//            interrupted++;
-//        }
-    }
+    /// Create a group (passing a UUID would attempt to load the group first and create it if that fails)
+    Group newGroup(Group::createGroup(network));
+
+    while (!interrupted) network->tick(1000);
 }
