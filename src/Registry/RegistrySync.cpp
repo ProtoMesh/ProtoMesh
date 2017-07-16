@@ -197,7 +197,8 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
             auto entryOffsets = entries->entries();
             list<RegistryEntry<VALUE_T>> deserializedEntries;
             for (auto offset : *entryOffsets) {
-                deserializedEntries.push_back(RegistryEntry<VALUE_T>(offset));
+                auto res = RegistryEntry<VALUE_T>::fromBuffer(offset);
+                if (res.isOk()) deserializedEntries.push_back(res.unwrap());
             }
             this->addEntries(deserializedEntries, 0); // TODO Replace 0 with the result of the binary search.
 

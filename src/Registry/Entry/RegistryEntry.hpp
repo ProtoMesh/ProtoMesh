@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <result.h>
 
 #include "crypto/crypto.hpp"
 
@@ -14,30 +15,37 @@
 
 using namespace std;
 
-enum RegistryEntryType {
+enum class RegistryEntryType {
     UPSERT,
     DELETE
 };
 
-enum SignatureVerificationResult {
-    OK,
-    PubKeyNotFound,
-    SignatureInvalid
+struct VerificationError {
+    enum class Kind { PubKeyNotFound, SignatureInvalid };
+    Kind kind;
+    std::string text;
+    VerificationError(Kind kind, std::string text) : kind(kind), text(text) {}
+};
+
+struct DeserializationError {
+    enum class Kind { WrongType, InvalidData, SignatureSizeMismatch, UsedKeySizeMismatch };
+    Kind kind;
+    std::string text;
+    DeserializationError(Kind kind, std::string text) : kind(kind), text(text) {}
 };
 
 template <class VALUE_T>
 class RegistryEntry {
-    void loadFromBuffer(const lumos::registry::Entry *entry);
+    static Result<RegistryEntry<VALUE_T>, DeserializationError> loadFromBuffer(const lumos::registry::Entry *entry);
 public:
     // Metadata
-    Crypto::UUID parentUUID;
     Crypto::UUID uuid;
+    Crypto::UUID parentUUID;
 
     SIGNATURE_T signature;
     PUB_HASH_T publicKeyUsed;
 
     RegistryEntryType type;
-    bool valid;
 
     // Content
     string key;
@@ -45,13 +53,14 @@ public:
 
     // Functions
     RegistryEntry(RegistryEntryType type, string key, VALUE_T value, Crypto::asym::KeyPair pair, Crypto::UUID parentID);
+    RegistryEntry(Crypto::UUID uuid, Crypto::UUID parentUUID, SIGNATURE_T signature, PUB_HASH_T publicKeyUsed, RegistryEntryType type, string key, VALUE_T value);
 
-    RegistryEntry(vector<uint8_t> serializedEntry);
-    RegistryEntry(const lumos::registry::Entry* serializedEntry);
+    static Result<RegistryEntry<VALUE_T>, DeserializationError> fromBuffer(const lumos::registry::Entry* serializedEntry);
+    static Result<RegistryEntry<VALUE_T>, DeserializationError> fromSerialized(vector<uint8_t> serializedEntry);
 
     vector<uint8_t> getSignatureContent() const;
 
-    SignatureVerificationResult verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey>* keys) const;
+    Result<bool, VerificationError> verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey>* keys) const;
 
     vector<uint8_t> serialize() const;
 

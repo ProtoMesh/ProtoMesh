@@ -20,6 +20,12 @@ public:
     void registerAt(shared_ptr<Network> network) {
         this->networks.push_back(network);
     };
+
+//    static lumos::network::Node deserialize(vector<uint8_t> );
+//
+//    static Crypto::asym::PublicKey getPublicKey(vector<uint8_t> serializedNode) {
+//
+//    }
 };
 
 

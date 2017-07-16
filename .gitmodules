@@ -10,3 +10,6 @@
 [submodule "lib/duktape"]
 	path = lib/duktape
 	url = https://github.com/svaarala/duktape-releases
+[submodule "lib/result"]
+	path = lib/result
+	url = https://github.com/oktal/result

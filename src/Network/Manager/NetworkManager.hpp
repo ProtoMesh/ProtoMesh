@@ -1,13 +1,13 @@
 #ifndef LUMOS_NETWORK_H
 #define LUMOS_NETWORK_H
 
-#include "../api/api.hpp"
-#include "../api/time.hpp"
-#include "../api/network.hpp"
-#include "../api/storage.hpp"
-#include "../Registry/Registry.hpp"
-#include "../crypto/crypto.hpp"
-#include "Network.hpp"
+#include "api/api.hpp"
+#include "api/time.hpp"
+#include "api/network.hpp"
+#include "api/storage.hpp"
+#include "Registry/Registry.hpp"
+#include "crypto/crypto.hpp"
+#include "Network/Network.hpp"
 
 #define NETWORK shared_ptr<Network>
 

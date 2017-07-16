@@ -13,8 +13,7 @@ vector<uint8_t> Node::serializeForRegistry() {
 
     /// Public key
     COMPRESSED_PUBLIC_KEY_T compressedKey(this->pair.pub.getCompressed());
-    vector<uint8_t> pubKey(compressedKey.begin(), compressedKey.end());
-    auto pubKeyVec = builder.CreateVector(pubKey);
+    auto pubKeyVec = builder.CreateVector(compressedKey.begin(), compressedKey.size());
     auto publicKey = lumos::crypto::CreatePublicKey(builder, pubKeyVec);
 
     network::NodeBuilder nodeBuilder(builder);

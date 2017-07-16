@@ -27,12 +27,11 @@
 
 using namespace std;
 
-enum RegistryModificationResult {
-    Completed,
-    AlreadyPresent,
-    PermissionDenied,
-    SignatureVerificationFailed,
-    ParsingError
+struct RegistryModificationError {
+    enum class Kind { AlreadyPresent, PermissionDenied, SignatureVerificationFailed, ParsingError };
+    Kind kind;
+    std::string text;
+    RegistryModificationError(Kind kind, std::string text) : kind(kind), text(text) {}
 };
 
 template <class VALUE_T>
@@ -52,10 +51,10 @@ public: // Make everything public when unit testing to make the developers life 
     /// Addition of entries
     string validator;
     vector<bool> validateEntries(string validator);
-    RegistryModificationResult updateHead(bool save, size_t resultIndex = 0);
-    RegistryModificationResult addEntry(RegistryEntry<VALUE_T> newEntry, bool save = true);
+    Result<bool, RegistryModificationError> updateHead(bool save, size_t resultIndex = 0);
+    Result<bool, RegistryModificationError> addEntry(RegistryEntry<VALUE_T> newEntry, bool save = true);
     void addEntries(list<RegistryEntry<VALUE_T>> newEntries, size_t startingIndex, bool save = true);
-    RegistryModificationResult addSerializedEntry(const lumos::registry::Entry* serialized, bool save = true);
+    Result<bool, RegistryModificationError> addSerializedEntry(const lumos::registry::Entry* serialized, bool save = true);
     Crypto::UUID getHeadUUID(); // Helper for addition (getting the corresponding parent)
 
     /// Synchronization
@@ -83,8 +82,8 @@ public:
 
     /// High level data manipulation
     VALUE_T get(string key);
-    RegistryModificationResult set(string key, VALUE_T value, Crypto::asym::KeyPair pair);
-    RegistryModificationResult del(string key, Crypto::asym::KeyPair pair);
+    Result<bool, RegistryModificationError> set(string key, VALUE_T value, Crypto::asym::KeyPair pair);
+    Result<bool, RegistryModificationError> del(string key, Crypto::asym::KeyPair pair);
     bool has(string key);
     void clear();
 

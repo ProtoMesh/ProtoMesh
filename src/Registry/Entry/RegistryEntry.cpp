@@ -9,67 +9,80 @@
 template <typename VALUE_T>
 RegistryEntry<VALUE_T>::RegistryEntry(RegistryEntryType type, string key, VALUE_T value, Crypto::asym::KeyPair pair,
                              Crypto::UUID parentUUID)
-        : parentUUID(parentUUID), uuid(), publicKeyUsed(pair.pub.getHash()), type(type), valid(true) , key(key), value(value){
+        : uuid(), parentUUID(parentUUID), publicKeyUsed(pair.pub.getHash()), type(type), key(key), value(value){
     this->signature = Crypto::asym::sign(this->getSignatureContent(), pair.priv);
 }
 
 template <typename VALUE_T>
-void RegistryEntry<VALUE_T>::loadFromBuffer(const lumos::registry::Entry* entry) {
+RegistryEntry<VALUE_T>::RegistryEntry(Crypto::UUID uuid, Crypto::UUID parentUUID, SIGNATURE_T signature, PUB_HASH_T publicKeyUsed, RegistryEntryType type, string key, VALUE_T value)
+    : uuid(uuid), parentUUID(parentUUID), signature(signature), publicKeyUsed(publicKeyUsed), type(type), key(key), value(value) {}
+
+template <typename VALUE_T>
+Result<RegistryEntry<VALUE_T>, DeserializationError> RegistryEntry<VALUE_T>::loadFromBuffer(const lumos::registry::Entry* entry) {
     using namespace lumos::registry;
 
-    auto uuid = entry->uuid();
-    this->uuid = Crypto::UUID(uuid->a(), uuid->b(), uuid->c(), uuid->d());
+    /// UUID and its parent
+    Crypto::UUID uuid(entry->uuid()->a(), entry->uuid()->b(), entry->uuid()->c(), entry->uuid()->d());
+    Crypto::UUID parentUUID(entry->parent()->a(), entry->parent()->b(), entry->parent()->c(), entry->parent()->d());
 
-    auto puuid = entry->parent();
-    this->parentUUID = Crypto::UUID(puuid->a(), puuid->b(), puuid->c(), puuid->d());
-
+    /// Type
+    RegistryEntryType type = RegistryEntryType::UPSERT;
     switch(entry->type()) {
         case EntryType_UPSERT:
-            this->type = RegistryEntryType::UPSERT;
+            type = RegistryEntryType::UPSERT;
             break;
         case EntryType_DELETE:
-            this->type = RegistryEntryType::DELETE;
+            type = RegistryEntryType::DELETE;
             break;
     }
 
-    this->key = entry->key()->c_str();
-    for (auto it=entry->value()->begin(); it!=entry->value()->end(); ++it) this->value.push_back(*it);
+    /// Key and value
+    string key(entry->key()->c_str());
+    vector<uint8_t> value(entry->value()->begin(), entry->value()->end());
 
+    /// Signature
+    SIGNATURE_T signature;
+    PUB_HASH_T publicKeyUsed;
     auto entry_sig = entry->signature();
 
+    /// Check the signature length for mismatches
+    if (entry_sig->data()->Length() != SIGNATURE_SIZE)
+        return Err(DeserializationError(DeserializationError::Kind::SignatureSizeMismatch, "Signature size of buffer was invalid."));
+    if (entry_sig->used_key()->Length() != PUB_HASH_SIZE)
+        return Err(DeserializationError(DeserializationError::Kind::UsedKeySizeMismatch, "PKU size of buffer was invalid."));
+
     for (flatbuffers::uoffset_t i = 0; i < entry_sig->data()->Length(); i++)
-        this->signature[i] = entry_sig->data()->Get(i);
+        signature[i] = entry_sig->data()->Get(i);
 
     for (flatbuffers::uoffset_t i = 0; i < entry_sig->used_key()->Length(); i++)
-        this->publicKeyUsed[i] = entry_sig->used_key()->Get(i);
+        publicKeyUsed[i] = entry_sig->used_key()->Get(i);
+
+
+    /// Create and return the entry
+    return Ok(RegistryEntry(uuid, parentUUID, signature, publicKeyUsed, type, key, value));
 }
 
-template <typename VALUE_T>
-RegistryEntry<VALUE_T>::RegistryEntry(const lumos::registry::Entry* entry) : valid(true) {
-    this->loadFromBuffer(entry);
-}
+template<typename VALUE_T>
+Result<RegistryEntry<VALUE_T>, DeserializationError> RegistryEntry<VALUE_T>::fromBuffer(const lumos::registry::Entry* serializedEntry) {
+    return RegistryEntry::loadFromBuffer(serializedEntry);
+};
 
-template <typename VALUE_T>
-RegistryEntry<VALUE_T>::RegistryEntry(vector<uint8_t> serializedEntry) : valid(true) {
+template<typename VALUE_T>
+Result<RegistryEntry<VALUE_T>, DeserializationError> RegistryEntry<VALUE_T>::fromSerialized(vector<uint8_t> serializedEntry) {
     using namespace lumos::registry;
 
-    // Verify buffer integrity
+    /// Verify buffer integrity
     auto verifier = flatbuffers::Verifier(serializedEntry.data(), serializedEntry.size());
-    if (!VerifyEntryBuffer(verifier)) {
-        cerr << "INVALID BUFFER" << endl;
-        valid = false;
-        return;
-    }
+    if (!VerifyEntryBuffer(verifier))
+        return Err(DeserializationError(DeserializationError::Kind::InvalidData, "Passed data is no valid registry entry!"));
 
-    // Check the buffer identifier
-    if (!flatbuffers::BufferHasIdentifier(serializedEntry.data(), lumos::registry::EntryIdentifier())) {
-        cerr << "Invalid buffer type!" << endl;
-        valid = false;
-        return;
-    }
+    /// Check the buffer identifier
+    if (!flatbuffers::BufferHasIdentifier(serializedEntry.data(), lumos::registry::EntryIdentifier()))
+        return Err(DeserializationError(DeserializationError::Kind::WrongType, "Passed data is not a registry entry!"));
 
+    /// Load and return the entry
     auto entry = GetEntry(serializedEntry.data());
-    this->loadFromBuffer(entry);
+    return RegistryEntry::loadFromBuffer(entry);
 }
 
 template<typename VALUE_T>
@@ -128,22 +141,24 @@ vector<uint8_t> RegistryEntry<VALUE_T>::getSignatureContent() const {
     pushAll(key);
 
     switch (this->type) {
-        case UPSERT: content.push_back(0); break;
-        case DELETE: content.push_back(1); break;
+        case RegistryEntryType::UPSERT: content.push_back(0); break;
+        case RegistryEntryType::DELETE: content.push_back(1); break;
     }
 
     return content;
 }
 
 template <typename VALUE_T>
-SignatureVerificationResult RegistryEntry<VALUE_T>::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey>* keys) const {
+Result<bool, VerificationError> RegistryEntry<VALUE_T>::verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey>* keys) const {
     // Search for the correct key to use
     auto it = keys->find(this->publicKeyUsed);
-    if (it == keys->end()) return SignatureVerificationResult::PubKeyNotFound;
+    if (it == keys->end()) return Err(VerificationError(VerificationError::Kind::PubKeyNotFound, "Public key not found!"));
 
     // Verify the signature
-    bool res = Crypto::asym::verify(this->getSignatureContent(), this->signature, &it->second);
-    return res ? SignatureVerificationResult::OK : SignatureVerificationResult::SignatureInvalid;
+    if (Crypto::asym::verify(this->getSignatureContent(), this->signature, &it->second))
+        return Ok(true);
+    else
+        return Err(VerificationError(VerificationError::Kind::SignatureInvalid, "Signature is invalid."));
 }
 
 template class RegistryEntry<vector<uint8_t>>;
@@ -164,15 +179,15 @@ SCENARIO("RegistryEntries", "[registry][entry]") {
 
     GIVEN("A basic UPSERT registry entry") {
         string key("someKey");
-        string val("someValue");
+        vector<uint8_t> val = {1,2,3,4,5};
         Crypto::UUID parentUUID(0, 1, 2, 3);
-        RegistryEntry<string> entry(RegistryEntryType::UPSERT, key, val, pair, parentUUID);
+        RegistryEntry<vector<uint8_t>> entry(RegistryEntryType::UPSERT, key, val, pair, parentUUID);
 
         WHEN("it is serialized") {
             vector<uint8_t> serialized(entry.serialize());
 
             AND_WHEN("it is reconstructed") {
-                RegistryEntry<string> reconstructedEntry(serialized);
+                RegistryEntry<vector<uint8_t>> reconstructedEntry(RegistryEntry<vector<uint8_t>>::fromSerialized(serialized).unwrap());
 
                 THEN("it should match the original entry") {
                     CAPTURE(entry.serialize());

@@ -1,6 +1,5 @@
 #include "../os-specifics/linux/linux.hpp"
-#include "Network/NetworkManager.hpp"
-#include "Node/Node.hpp"
+#include "Network/Manager/NetworkManager.hpp"
 
 volatile sig_atomic_t interrupted = 0;
 
@@ -25,8 +24,8 @@ int main() {
     /// Add a testNode to the network using the master key (normally only done once)
     network->registerNode(testNode.uuid, testNode.serializeForRegistry(), masterKey);
 
-    /// Create a group (passing a UUID would attempt to load the group first and create it if that fails)
-    Group newGroup(Group::createGroup(network));
+    /// Create a group
+    network->createGroup(masterKey);
 
     while (!interrupted) network->tick(1000);
 }

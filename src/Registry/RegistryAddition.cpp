@@ -47,8 +47,8 @@ vector<bool> Registry<VALUE_T>::validateEntries(string validator) {
 
         string type;
         switch (entry.type) {
-            case UPSERT: type = "UPSERT"; break;
-            case DELETE: type = "DELETE"; break;
+            case RegistryEntryType::UPSERT: type = "UPSERT"; break;
+            case RegistryEntryType::DELETE: type = "DELETE"; break;
         }
 
         obj_idx = duk_push_object(ctx);
@@ -120,10 +120,11 @@ vector<bool> Registry<VALUE_T>::validateEntries(string validator) {
 
 
 template <typename VALUE_T>
-RegistryModificationResult Registry<VALUE_T>::updateHead(bool save, size_t resultIndex) {
+Result<bool, RegistryModificationError> Registry<VALUE_T>::updateHead(bool save, size_t resultIndex) {
     using namespace lumos::registry;
 
-    RegistryModificationResult result = RegistryModificationResult::Completed;
+    RegistryModificationError::Kind errorKind = RegistryModificationError::Kind::PermissionDenied;
+    bool isError = false;
 
     this->headState.clear();
     this->hashChain.clear();
@@ -146,11 +147,17 @@ RegistryModificationResult Registry<VALUE_T>::updateHead(bool save, size_t resul
         this->hashChain.push_back(lastHash);
         /// Check if the entry is valid
         bool permitted = entryIndex < validationResults.size() && validationResults[entryIndex];
-        bool signatureValid = entry.verifySignature(&(this->api.key->keys)) == SignatureVerificationResult::OK;
+        bool signatureValid = entry.verifySignature(&(this->api.key->keys)).isOk();
         if (!permitted || !signatureValid) {
             if (entryIndex == resultIndex) {
-                if (!permitted) result = RegistryModificationResult::PermissionDenied;
-                if (!signatureValid) result = RegistryModificationResult::SignatureVerificationFailed;
+                if (!permitted) {
+                    isError = true;
+                    errorKind = RegistryModificationError::Kind::PermissionDenied;
+                }
+                if (!signatureValid) {
+                    isError = true;
+                    errorKind = RegistryModificationError::Kind::SignatureVerificationFailed;
+                }
             }
             entryIndex++;
             continue;
@@ -178,7 +185,9 @@ RegistryModificationResult Registry<VALUE_T>::updateHead(bool save, size_t resul
         this->api.stor->set(REGISTRY_STORAGE_PREFIX + this->name, serializedRegistry);
     }
 
-    return result;
+    if (isError)
+        return Err(RegistryModificationError(errorKind, "Insertion completed but entry is not valid because either the signature is invalid or the entry is not permitted"));
+    return Ok(true);
 }
 
 
@@ -186,16 +195,14 @@ RegistryModificationResult Registry<VALUE_T>::updateHead(bool save, size_t resul
 /// ---------------------------------------- Entry deserialization & Addition -----------------------------------------
 
 template <typename VALUE_T>
-RegistryModificationResult Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> newEntry, bool save) {
-    if (!newEntry.valid) return RegistryModificationResult::ParsingError;
-
+Result<bool, RegistryModificationError> Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> newEntry, bool save) {
     auto lastBorder = this->entries.size();
     auto insertAt = [&] (size_t index) {
         this->entries.insert(this->entries.begin() + index, newEntry);
-        RegistryModificationResult res = this->updateHead(save, index);
+        auto res = this->updateHead(save, index);
 
         /// Check whether or not the entry is valid and if so send it to the listeners
-        if (res == RegistryModificationResult::Completed && this->listeners.size() > 0)
+        if (res.isOk() && this->listeners.size() > 0)
             for (LISTENER_T listener : this->listeners) listener(newEntry);
 
 #ifdef UNIT_TESTING
@@ -222,7 +229,7 @@ RegistryModificationResult Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> ne
                 return insertAt(lastBorder);
             }
             /// This entry is equal (a duplicate) to the entry we encountered! Abort and don't insert.
-            else return RegistryModificationResult::AlreadyPresent;
+            else return Err(RegistryModificationError(RegistryModificationError::Kind::AlreadyPresent, "Attempted to insert duplicate entry."));
         }
     }
 
@@ -245,7 +252,7 @@ RegistryModificationResult Registry<VALUE_T>::addEntry(RegistryEntry<VALUE_T> ne
     if (newEntry.parentUUID == Crypto::UUID::Empty()) insertAt(0);
     else insertAt(lastBorder);
 
-    return RegistryModificationResult::Completed;
+    return Ok(true);
 }
 
 template <typename VALUE_T>
@@ -308,8 +315,12 @@ void Registry<VALUE_T>::addEntries(list<RegistryEntry<VALUE_T>> newEntries, size
 }
 
 template <typename VALUE_T>
-RegistryModificationResult Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* serialized, bool save) {
-    return this->addEntry(RegistryEntry<VALUE_T>(serialized), save);
+Result<bool, RegistryModificationError> Registry<VALUE_T>::addSerializedEntry(const lumos::registry::Entry* serialized, bool save) {
+    auto res = RegistryEntry<VALUE_T>::fromBuffer(serialized);
+    if (res.isOk())
+        return this->addEntry(res.unwrap(), save);
+    else
+        return Err(RegistryModificationError(RegistryModificationError::Kind::ParsingError, "Parsing failed (" + res.unwrapErr().text + ")"));
 }
 
 

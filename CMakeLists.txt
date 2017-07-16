@@ -21,12 +21,18 @@ set(ECC_SOURCES
         lib/micro-ecc/uECC_vli.h
         lib/micro-ecc/types.h)
 
+# Add result source
+include_directories(lib/result)
+set(RESULT_SOURCES
+        lib/result/result.h)
+
 # Define the lumos source files and its dependency on ECC and Duktape
 set(LUMOS_SOURCE_FILES
         ${ECC_SOURCES}
         ${DUKTAPE_SOURCES}
-        src/Network/NetworkManager.cpp
-        src/Network/NetworkManager.hpp
+        ${RESULT_SOURCES}
+        src/Network/Manager/NetworkManager.cpp
+        src/Network/Manager/NetworkManager.hpp
         src/Network/Network.hpp
         src/Network/Network.cpp
         src/const.hpp
@@ -48,7 +54,9 @@ set(LUMOS_SOURCE_FILES
         src/crypto/crypto_sym.cpp
         src/Network/Network.cpp
         src/Network/Network.hpp
-        src/Registry/Validators.hpp src/Node/Node.cpp src/Node/Node.hpp src/Group/Group.cpp src/Group/Group.hpp)
+        src/Registry/Validators.hpp
+        src/Node/Node.cpp
+        src/Node/Node.hpp src/Network/Groups.cpp src/Network/Nodes.cpp)
 # Add the lumos library target and its dependency on the flatbuffers
 add_library(lumos ${LUMOS_SOURCE_FILES})
 add_dependencies(lumos flatbuffer_headers)
