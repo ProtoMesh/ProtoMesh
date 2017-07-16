@@ -50,7 +50,7 @@ public:
     void registerNode(Crypto::UUID uid, vector<uint8_t> node, Crypto::asym::KeyPair authorization);
 
     /// Groups
-    Result<Crypto::UUID, GroupCreationError> createGroup(Crypto::asym::KeyPair authorization);
+    Result<Crypto::UUID, GroupCreationError> createGroup(Crypto::asym::KeyPair authorization, Crypto::UUID);
 };
 
 #include "Node/Node.hpp"

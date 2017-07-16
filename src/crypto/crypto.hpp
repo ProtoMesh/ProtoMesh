@@ -5,6 +5,7 @@
 #include <array>
 #include <vector>
 #include <algorithm>
+#include <result.h>
 
 #include "sha512.hpp"
 #include "uECC.h"
@@ -32,6 +33,7 @@ using namespace std;
 #define NETWORK_KEY_SIZE COMPRESSED_PUB_KEY_SIZE
 #define SIGNATURE_T array<uint8_t, PUB_KEY_SIZE>
 #define HASH vector<uint8_t>
+#define SHARED_KEY_T vector<uint8_t>
 
 // Defining the elliptic curve to use
 extern const struct uECC_Curve_t* ECC_CURVE;
@@ -77,9 +79,19 @@ namespace Crypto {
     namespace asym {
         bool verifyKeySize();
 
+
+        struct PublicKeyDeserializationError {
+            enum class Kind { KeySizeMismatch };
+            Kind kind;
+            std::string text;
+            PublicKeyDeserializationError(Kind kind, std::string text) : kind(kind), text(text) {}
+        };
+
         struct PublicKey {
         public:
             array<uint8_t, PUB_KEY_SIZE> raw;
+
+            static Result<PublicKey, PublicKeyDeserializationError> fromBuffer(const flatbuffers::Vector<uint8_t>* buffer);
 
             PublicKey(COMPRESSED_PUBLIC_KEY_T compressedKey);
             PublicKey(uint8_t* publicKey);
@@ -111,6 +123,8 @@ namespace Crypto {
 
         SIGNATURE_T sign(vector<uint8_t> text, PRIVATE_KEY_T privKey);
         bool verify(vector<uint8_t> text, SIGNATURE_T signature, PublicKey* pubKey);
+
+        SHARED_KEY_T generateSharedSecret(PublicKey publicKey, PRIVATE_KEY_T privateKey);
     }
 
     namespace net {

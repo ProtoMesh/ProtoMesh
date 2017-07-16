@@ -4,8 +4,8 @@ void Network::onGroupRegistryChange(RegistryEntry<vector<uint8_t>> entry) {
     // TODO Update internal state
 }
 
-Result<Crypto::UUID, GroupCreationError> Network::createGroup(Crypto::asym::KeyPair authorization) {
-    using namespace lumos::network;
+Result<Crypto::UUID, GroupCreationError> Network::createGroup(Crypto::asym::KeyPair authorization, Crypto::UUID nodeID) {
+    using namespace lumos;
 
     flatbuffers::FlatBufferBuilder builder;
 
@@ -26,10 +26,23 @@ Result<Crypto::UUID, GroupCreationError> Network::createGroup(Crypto::asym::KeyP
         lumos::UUID pid(participantID.a, participantID.b, participantID.c, participantID.d);
 
         /// Get the participants public key from the registry
-        auto participatingNode = this->getRegistry(GROUPS_REGISTRY)->get(participantID);
+        auto participatingNode = this->getRegistry(NODES_REGISTRY)->get(participantID);
 
-        auto participant = CreateGroupParticipant(builder, &pid, builder.CreateVector({}));
+        if (participatingNode.isOk()) {
+            auto nodePubKey = Node::getPublicKey(participatingNode.unwrap());
+
+            if (nodePubKey.isOk()) {
+                Crypto::asym::PublicKey targetKey(nodePubKey.unwrap());
+
+                SHARED_KEY_T key = Crypto::asym::generateSharedSecret(targetKey, authorization.priv);
+
+                auto participant = network::CreateGroupParticipant(builder, &pid, builder.CreateVector({}));
+            }
+        }
+
     };
+
+    createParticipant(nodeID);
 
 //    auto entry = CreateGroup(builder, &uid, publicKey, );
 //    builder.Finish(entry, GroupIdentifier());

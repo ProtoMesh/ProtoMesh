@@ -9,25 +9,26 @@ void Network::onNodeRegistryChange(RegistryEntry<vector<uint8_t>> entry) {
         auto node = GetNode(entry.value.data());
 
         /// Load the public key and abort if its size is not correct
-        vector<uint8_t> compressedData(node->publicKey()->compressed()->begin(), node->publicKey()->compressed()->end());
-        if (compressedData.size() != COMPRESSED_PUB_KEY_SIZE) return;
-        array<uint8_t, COMPRESSED_PUB_KEY_SIZE> compressedKey;
-        copy_n(compressedData.begin(), COMPRESSED_PUB_KEY_SIZE, compressedKey.begin());
-        Crypto::asym::PublicKey publicKey(compressedKey);
+        auto publicKey = Crypto::asym::PublicKey::fromBuffer(node->publicKey()->compressed());
+
+        if (publicKey.isErr()) return;
 
         /// Update the key api according to the change type
         switch (entry.type) {
             case RegistryEntryType::UPSERT:
-                this->api.key->insertKey(publicKey.getHash(), publicKey);
+                this->api.key->insertKey(publicKey.unwrap().getHash(), publicKey.unwrap());
                 break;
             case RegistryEntryType::DELETE:
-                this->api.key->removeKey(publicKey.getHash());
+                this->api.key->removeKey(publicKey.unwrap().getHash());
                 break;
         }
     }
 }
 
 void Network::registerNode(Crypto::UUID uid, vector<uint8_t> node, Crypto::asym::KeyPair authorization) {
-    cout << "Registered node: " << uid << " using key " << string(authorization.pub.getHash().begin()) << endl;
     this->getRegistry(NODES_REGISTRY)->set(uid, node, authorization);
+
+    // TODO DEBUG OUTPUT
+    auto hash = authorization.pub.getHash();
+    cout << "Registered node: " << uid << " using key " << string(hash.begin(), hash.end()) << endl;
 }

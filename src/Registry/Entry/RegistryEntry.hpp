@@ -20,23 +20,23 @@ enum class RegistryEntryType {
     DELETE
 };
 
-struct VerificationError {
+struct RegistryEntryVerificationError {
     enum class Kind { PubKeyNotFound, SignatureInvalid };
     Kind kind;
     std::string text;
-    VerificationError(Kind kind, std::string text) : kind(kind), text(text) {}
+    RegistryEntryVerificationError(Kind kind, std::string text) : kind(kind), text(text) {}
 };
 
-struct DeserializationError {
+struct RegistryEntryDeserializationError {
     enum class Kind { WrongType, InvalidData, SignatureSizeMismatch, UsedKeySizeMismatch };
     Kind kind;
     std::string text;
-    DeserializationError(Kind kind, std::string text) : kind(kind), text(text) {}
+    RegistryEntryDeserializationError(Kind kind, std::string text) : kind(kind), text(text) {}
 };
 
 template <class VALUE_T>
 class RegistryEntry {
-    static Result<RegistryEntry<VALUE_T>, DeserializationError> loadFromBuffer(const lumos::registry::Entry *entry);
+    static Result<RegistryEntry<VALUE_T>, RegistryEntryDeserializationError> loadFromBuffer(const lumos::registry::Entry *entry);
 public:
     // Metadata
     Crypto::UUID uuid;
@@ -55,12 +55,12 @@ public:
     RegistryEntry(RegistryEntryType type, string key, VALUE_T value, Crypto::asym::KeyPair pair, Crypto::UUID parentID);
     RegistryEntry(Crypto::UUID uuid, Crypto::UUID parentUUID, SIGNATURE_T signature, PUB_HASH_T publicKeyUsed, RegistryEntryType type, string key, VALUE_T value);
 
-    static Result<RegistryEntry<VALUE_T>, DeserializationError> fromBuffer(const lumos::registry::Entry* serializedEntry);
-    static Result<RegistryEntry<VALUE_T>, DeserializationError> fromSerialized(vector<uint8_t> serializedEntry);
+    static Result<RegistryEntry<VALUE_T>, RegistryEntryDeserializationError> fromBuffer(const lumos::registry::Entry* serializedEntry);
+    static Result<RegistryEntry<VALUE_T>, RegistryEntryDeserializationError> fromSerialized(vector<uint8_t> serializedEntry);
 
     vector<uint8_t> getSignatureContent() const;
 
-    Result<bool, VerificationError> verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey>* keys) const;
+    Result<bool, RegistryEntryVerificationError> verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey>* keys) const;
 
     vector<uint8_t> serialize() const;
 

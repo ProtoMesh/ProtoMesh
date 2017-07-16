@@ -7,6 +7,13 @@ using namespace std;
 #include "Network/Network.hpp"
 #include "crypto/crypto.hpp"
 
+struct NodeDeserializationError {
+    enum class Kind { WrongType, InvalidData };
+    Kind kind;
+    std::string text;
+    NodeDeserializationError(Kind kind, std::string text) : kind(kind), text(text) {}
+};
+
 class Node {
     vector<shared_ptr<Network>> networks;
 public:
@@ -21,11 +28,32 @@ public:
         this->networks.push_back(network);
     };
 
-//    static lumos::network::Node deserialize(vector<uint8_t> );
-//
-//    static Crypto::asym::PublicKey getPublicKey(vector<uint8_t> serializedNode) {
-//
-//    }
+    static Result<const lumos::network::Node*, NodeDeserializationError> deserialize(vector<uint8_t> serializedNode) {
+        using namespace lumos::network;
+
+        /// Verify buffer integrity
+        auto verifier = flatbuffers::Verifier(serializedNode.data(), serializedNode.size());
+        if (!VerifyNodeBuffer(verifier))
+            return Err(NodeDeserializationError(NodeDeserializationError::Kind::InvalidData, "Passed data is no valid node!"));
+
+        /// Check the buffer identifier
+        if (!flatbuffers::BufferHasIdentifier(serializedNode.data(), NodeIdentifier()))
+            return Err(NodeDeserializationError(NodeDeserializationError::Kind::WrongType, "Passed data is not a node!"));
+
+        /// Load and return the entry
+        auto entry = GetNode(serializedNode.data());
+
+        return Ok(entry);
+    };
+
+    static Result<Crypto::asym::PublicKey, NodeDeserializationError> getPublicKey(vector<uint8_t> serializedNode) {
+        auto node = Node::deserialize(serializedNode);
+        if (node.isErr()) return Err(node.unwrapErr());
+
+        auto key = Crypto::asym::PublicKey::fromBuffer(node.unwrap()->publicKey()->compressed());
+        if (key.isErr()) return Err(NodeDeserializationError(NodeDeserializationError::Kind::InvalidData, "Public key data was invalid."));
+        return Ok(key.unwrap());
+    }
 };
 
 

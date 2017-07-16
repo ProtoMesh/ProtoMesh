@@ -36,6 +36,15 @@ namespace Crypto {
             copy(begin(key), end(key), begin(this->raw));
         }
 
+        Result<PublicKey, PublicKeyDeserializationError> PublicKey::fromBuffer(const flatbuffers::Vector<uint8_t>* buffer) {
+            vector<uint8_t> compressedData(buffer->begin(), buffer->end());
+            if (compressedData.size() != COMPRESSED_PUB_KEY_SIZE) return Err(PublicKeyDeserializationError(PublicKeyDeserializationError::Kind::KeySizeMismatch, "Compressed key size mismatch."));
+            array<uint8_t, COMPRESSED_PUB_KEY_SIZE> compressedKey;
+            copy_n(compressedData.begin(), COMPRESSED_PUB_KEY_SIZE, compressedKey.begin());
+
+            return Ok(Crypto::asym::PublicKey(compressedKey));
+        }
+
         COMPRESSED_PUBLIC_KEY_T PublicKey::getCompressed() {
             // Compress the public key
             uint8_t cpubKey[COMPRESSED_PUB_KEY_SIZE];
@@ -79,6 +88,16 @@ namespace Crypto {
             return (bool) uECC_verify(pubKey->raw.data(), hash, sizeof(hash), signature.data(), ECC_CURVE);
         }
 
+        SHARED_KEY_T generateSharedSecret(PublicKey publicKey, PRIVATE_KEY_T privateKey) {
+            uint8_t sharedSecret[32] = {0};
+            uECC_shared_secret(publicKey.raw.data(), privateKey.data(), sharedSecret, ECC_CURVE);
+            /// Copy the secret into a vector
+            vector<uint8_t> secret(sharedSecret, &sharedSecret[0] + 32);
+
+            /// Hash the key and return it
+            return Crypto::hash::sha512Vec(secret);
+        }
+
 #ifdef UNIT_TESTING
         SCENARIO("Elliptic curve cryptography", "[crypto][asym]") {
             THEN("the key sizes should be valid") {
@@ -87,6 +106,19 @@ namespace Crypto {
 
             GIVEN("a generated KeyPair") {
                 KeyPair pair(Crypto::asym::generateKeyPair());
+
+                GIVEN("a second KeyPair") {
+                    KeyPair pair2(Crypto::asym::generateKeyPair());
+
+                    WHEN("the shared secret of both (in both directions) is generated") {
+                        SHARED_KEY_T key1(Crypto::asym::generateSharedSecret(pair.pub, pair2.priv));
+                        SHARED_KEY_T key2(Crypto::asym::generateSharedSecret(pair2.pub, pair.priv));
+
+                        THEN("the two keys should be identical") {
+                            REQUIRE( key1 == key2 );
+                        }
+                    }
+                }
 
                 GIVEN("the public key of this KeyPair") {
                     PublicKey pub = pair.pub;

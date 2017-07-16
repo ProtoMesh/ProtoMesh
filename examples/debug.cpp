@@ -25,7 +25,7 @@ int main() {
     network->registerNode(testNode.uuid, testNode.serializeForRegistry(), masterKey);
 
     /// Create a group
-    network->createGroup(masterKey);
+    network->createGroup(masterKey, testNode.uuid);
 
     while (!interrupted) network->tick(1000);
 }
