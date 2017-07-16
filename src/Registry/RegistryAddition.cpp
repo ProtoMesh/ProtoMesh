@@ -374,14 +374,14 @@ Result<bool, RegistryModificationError> Registry<VALUE_T>::addSerializedEntry(co
                 size_t registrySize = reg.entries.size();
                 vector<uint8_t> prevHeadHash(reg.getHeadHash());
 
-                THEN("has should be true") { REQUIRE(reg.has(key)); }
+                THEN("has should be true") { REQUIRE(reg.get(key).isOk()); }
                 THEN("the read value should be equal") {
-                    REQUIRE( reg.get(key) == val );
+                    REQUIRE( reg.get(key).unwrap() == val );
 
                     AND_WHEN("the same key is modified by a different user") {
                         reg.set(key, {5, 4, 3, 2, 1}, Crypto::asym::generateKeyPair());
 
-                        THEN("the value should not have changed") { REQUIRE(reg.get(key) == val); }
+                        THEN("the value should not have changed") { REQUIRE(reg.get(key).unwrap() == val); }
                     }
                 }
 
@@ -393,13 +393,13 @@ Result<bool, RegistryModificationError> Registry<VALUE_T>::addSerializedEntry(co
                 AND_WHEN("the registry is cleared") {
                     reg.clear();
 
-                    THEN("the read value should be empty") { REQUIRE( reg.get(key) == empty ); }
+                    THEN("the read value should be empty") { REQUIRE( reg.get(key).isErr() ); }
                 }
 
                 AND_WHEN("the value is deleted") {
                     reg.del(key, pair);
 
-                    THEN("the read value should be empty") { REQUIRE( reg.get(key) == empty ); }
+                    THEN("the read value should be empty") { REQUIRE( reg.get(key).isErr() ); }
                     THEN("the head hash should differ") { REQUIRE_FALSE( reg.getHeadHash() == prevHeadHash ); }
 
                     AND_WHEN("the value is deleted a second time") {

@@ -43,15 +43,16 @@ HASH Registry<VALUE_T>::getHeadHash() const {
 /// ------------------------------------------ High level data manipulation -------------------------------------------
 
 template <typename VALUE_T>
-VALUE_T Registry<VALUE_T>::get(string key) {
+Result<VALUE_T, RegistryGetError> Registry<VALUE_T>::get(string key) {
     auto i = this->headState.find(key);
-    if (i != this->headState.end()) return i->second;
-    return {};
+    if (i != this->headState.end()) return Ok(i->second);
+    return Err(RegistryGetError(RegistryGetError::Kind::EntryNotPresent, "No entry with that key is present!"));
 }
 
 template <typename VALUE_T>
 Result<bool, RegistryModificationError> Registry<VALUE_T>::set(string key, VALUE_T value, Crypto::asym::KeyPair pair) {
-    if (this->has(key) && this->get(key) == value) return Err(RegistryModificationError(RegistryModificationError::Kind::AlreadyPresent, "Entry would be a duplicate."));
+    auto entry = this->get(key);
+    if (entry.isOk() && entry.unwrap() == value) return Err(RegistryModificationError(RegistryModificationError::Kind::AlreadyPresent, "Entry would be a duplicate."));
     return this->addEntry(
             RegistryEntry<VALUE_T>(RegistryEntryType::UPSERT, key, value, pair, this->getHeadUUID())
     );
@@ -59,16 +60,10 @@ Result<bool, RegistryModificationError> Registry<VALUE_T>::set(string key, VALUE
 
 template <typename VALUE_T>
 Result<bool, RegistryModificationError> Registry<VALUE_T>::del(string key, Crypto::asym::KeyPair pair) {
-    if (!this->has(key)) return Err(RegistryModificationError(RegistryModificationError::Kind::AlreadyPresent, "Entry would be a duplicate."));
+    if (this->get(key).isErr()) return Err(RegistryModificationError(RegistryModificationError::Kind::AlreadyPresent, "Entry would be a duplicate."));
     return this->addEntry(
             RegistryEntry<VALUE_T>(RegistryEntryType::DELETE, key, {}, pair, this->getHeadUUID())
     );
-}
-
-template <typename VALUE_T>
-bool Registry<VALUE_T>::has(string key) {
-    auto i = this->headState.find(key);
-    return i != this->headState.end();
 }
 
 template <typename VALUE_T>

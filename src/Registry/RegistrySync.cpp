@@ -322,7 +322,7 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
                     }
 
                     THEN("the second registry should contain the added entry") {
-                        REQUIRE(reg2.has("test"));
+                        REQUIRE(reg2.get("test").isOk());
                     }
 
                     THEN("the two registries should be identical") {

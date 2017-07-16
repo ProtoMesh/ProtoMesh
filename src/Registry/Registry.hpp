@@ -34,6 +34,13 @@ struct RegistryModificationError {
     RegistryModificationError(Kind kind, std::string text) : kind(kind), text(text) {}
 };
 
+struct RegistryGetError {
+    enum class Kind { EntryNotPresent };
+    Kind kind;
+    std::string text;
+    RegistryGetError(Kind kind, std::string text) : kind(kind), text(text) {}
+};
+
 template <class VALUE_T>
 class Registry {
 #ifdef UNIT_TESTING
@@ -81,10 +88,9 @@ public:
     Registry(APIProvider api, string name, string validator = DEFAULT_VALIDATOR);
 
     /// High level data manipulation
-    VALUE_T get(string key);
+    Result<VALUE_T, RegistryGetError> get(string key);
     Result<bool, RegistryModificationError> set(string key, VALUE_T value, Crypto::asym::KeyPair pair);
     Result<bool, RegistryModificationError> del(string key, Crypto::asym::KeyPair pair);
-    bool has(string key);
     void clear();
 
     /// Listeners
