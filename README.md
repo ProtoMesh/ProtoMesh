@@ -5,3 +5,6 @@ It is ment to adress the most common problems many of today's implementations ha
 - Full encryption of all communication as a base layer of security
 - Group based permission handling by another encryption layer
 - Inheritance of permissions and properties
+
+Until this repository gets a proper explanation of the design goals and the concept please have a look over here:
+https://github.com/TheMegaTB/SMP/blob/master/README.md
