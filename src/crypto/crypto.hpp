@@ -42,40 +42,14 @@ namespace Crypto {
     public:
         uint32_t a=0, b=0, c=0, d=0;
 
-        static UUID Empty() {
-            return UUID(0, 0, 0, 0);
-        }
+        static UUID Empty() { return UUID(0, 0, 0, 0); }
         UUID(uint32_t a, uint32_t b, uint32_t c, uint32_t d) : a(a), b(b), c(c), d(d) {};
-        UUID() {
-            random_device rd;
-            default_random_engine generator(rd());
-            uniform_int_distribution<uint32_t> distribution(0, numeric_limits<uint32_t>::max());
+        UUID();
+        UUID(const lumos::UUID* id);
 
-            a = distribution(generator);
-            b = distribution(generator);
-            c = distribution(generator);
-            d = distribution(generator);
-        }
-        UUID(const lumos::UUID* id) {
-            a = (uint32_t) id->a();
-            b = (uint32_t) id->b();
-            c = (uint32_t) id->c();
-            d = (uint32_t) id->d();
-        }
+        vector<uint8_t> toVector() const;
 
-        operator string() const {
-            stringstream ss;
-            ss << hex << nouppercase << setfill('0');
-
-            ss << setw(8) << (a) << '-';
-            ss << setw(4) << (b >> 16) << '-';
-            ss << setw(4) << (b & 0xFFFF) << '-';
-            ss << setw(4) << (c >> 16) << '-';
-            ss << setw(4) << (c & 0xFFFF);
-            ss << setw(8) << d;
-
-            return ss.str();
-        }
+        operator string() const;
         inline tuple<uint32_t, uint32_t, uint32_t, uint32_t> tie() const { return std::tie(a, b, c, d); }
         inline bool operator==(const UUID &other) { return this->tie() == other.tie(); }
         inline bool operator!=(const UUID &other) { return this->tie() != other.tie(); }
@@ -83,14 +57,11 @@ namespace Crypto {
         inline bool operator<(const UUID &other) { return this->tie() < other.tie(); }
         inline bool operator<(const UUID &other) const { return this->tie() < other.tie(); }
     };
-
     inline std::ostream& operator<< (std::ostream &out, const UUID &uid) { out << string(uid); return out; }
 
-    string generateUUID();
-
     namespace hash {
-        string sha512(string message);
-        HASH sha512Vec(string message);
+        string sha512(vector<uint8_t> message);
+        HASH sha512Vec(vector<uint8_t> message);
     }
 
     namespace serialize {
@@ -98,10 +69,10 @@ namespace Crypto {
         vector<uint8_t> stringToUint8Array(string hex);
     }
 
-//    namespace sym {
-//        vector<uint8_t> encrypt(string text, string key);
-//        string decrypt(vector<uint8_t> ciphertext, string key);
-//    }
+    namespace sym {
+        vector<uint8_t> encrypt(string text, string key);
+        string decrypt(vector<uint8_t> ciphertext, string key);
+    }
 
     namespace asym {
         bool verifyKeySize();
@@ -138,8 +109,8 @@ namespace Crypto {
             return KeyPair(privateKey, publicKey);
         }
 
-        SIGNATURE_T sign(string text, PRIVATE_KEY_T privKey);
-        bool verify(string text, SIGNATURE_T signature, PublicKey* pubKey);
+        SIGNATURE_T sign(vector<uint8_t> text, PRIVATE_KEY_T privKey);
+        bool verify(vector<uint8_t> text, SIGNATURE_T signature, PublicKey* pubKey);
     }
 
     namespace net {

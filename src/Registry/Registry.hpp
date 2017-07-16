@@ -76,7 +76,7 @@ public: // Make everything public when unit testing to make the developers life 
     vector<LISTENER_T> listeners;
 public:
     vector<RegistryEntry<VALUE_T>> entries;
-    vector<string> hashChain;
+    vector<vector<uint8_t>> hashChain;
 
     /// Constructor
     Registry(APIProvider api, string name, string validator = DEFAULT_VALIDATOR);
@@ -96,7 +96,7 @@ public:
     void onData(vector<uint8_t> incomingData);
 
     /// Comparison
-    string getHeadHash() const;
+    HASH getHeadHash() const;
     inline bool operator==(const Registry &other) {
         return this->getHeadHash() == other.getHeadHash();
     }

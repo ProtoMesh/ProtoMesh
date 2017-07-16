@@ -6,7 +6,7 @@ table Head {
     name: string (required);
     instance: UUID (required);
 
-    head: string (required);
+    head: [ubyte] (required);
     length: ulong;
 }
 

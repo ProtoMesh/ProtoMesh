@@ -5,7 +5,7 @@ namespace lumos.registry.sync;
 table Hash {
     answerID: UUID (required);
     instance: UUID (required);
-    hash: string;
+    hash: [ubyte];
 }
 
 file_identifier "RHSH";

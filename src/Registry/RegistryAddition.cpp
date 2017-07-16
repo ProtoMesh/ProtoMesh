@@ -133,14 +133,16 @@ RegistryModificationResult Registry<VALUE_T>::updateHead(bool save, size_t resul
     flatbuffers::FlatBufferBuilder builder;
     vector<flatbuffers::Offset<Entry>> entryOffsets;
 
-    string lastHash = "";
+    vector<uint8_t> lastHash;
 
     size_t entryIndex = 0;
     for (auto &entry : entries) {
         /// Save entries
         entryOffsets.push_back(entry.toFlatbufferOffset(builder));
         /// Generate hash for the entry
-        lastHash = Crypto::hash::sha512(lastHash + entry.getSignatureText());
+        vector<uint8_t> sigContent(entry.getSignatureContent());
+        for (uint8_t v : lastHash) sigContent.push_back(v);
+        lastHash = Crypto::hash::sha512Vec(sigContent);
         this->hashChain.push_back(lastHash);
         /// Check if the entry is valid
         bool permitted = entryIndex < validationResults.size() && validationResults[entryIndex];
@@ -359,7 +361,7 @@ RegistryModificationResult Registry<VALUE_T>::addSerializedEntry(const lumos::re
                 vector<uint8_t> empty = {};
                 reg.set(key, val, pair);
                 size_t registrySize = reg.entries.size();
-                string prevHeadHash(reg.getHeadHash());
+                vector<uint8_t> prevHeadHash(reg.getHeadHash());
 
                 THEN("has should be true") { REQUIRE(reg.has(key)); }
                 THEN("the read value should be equal") {

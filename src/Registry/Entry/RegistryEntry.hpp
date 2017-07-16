@@ -49,7 +49,7 @@ public:
     RegistryEntry(vector<uint8_t> serializedEntry);
     RegistryEntry(const lumos::registry::Entry* serializedEntry);
 
-    string getSignatureText() const;
+    vector<uint8_t> getSignatureContent() const;
 
     SignatureVerificationResult verifySignature(map<PUB_HASH_T, Crypto::asym::PublicKey>* keys) const;
 

@@ -10,7 +10,7 @@ template <typename VALUE_T>
 RegistryEntry<VALUE_T>::RegistryEntry(RegistryEntryType type, string key, VALUE_T value, Crypto::asym::KeyPair pair,
                              Crypto::UUID parentUUID)
         : parentUUID(parentUUID), uuid(), publicKeyUsed(pair.pub.getHash()), type(type), valid(true) , key(key), value(value){
-    this->signature = Crypto::asym::sign(this->getSignatureText(), pair.priv);
+    this->signature = Crypto::asym::sign(this->getSignatureContent(), pair.priv);
 }
 
 template <typename VALUE_T>
@@ -114,21 +114,25 @@ vector<uint8_t> RegistryEntry<VALUE_T>::serialize() const {
 }
 
 template <typename VALUE_T>
-string RegistryEntry<VALUE_T>::getSignatureText() const {
-    string signatureText;
+vector<uint8_t> RegistryEntry<VALUE_T>::getSignatureContent() const {
+    vector<uint8_t> content(this->value.begin(), this->value.end());
 
-    vector<uint8_t> val(this->value.data(), &this->value[this->value.size()]);
+    auto pushAll = [&] (vector<uint8_t> vec) {
+        for (uint8_t v : vec) content.push_back(v);
+    };
 
-    signatureText += string(this->uuid);
-    signatureText += string(this->parentUUID);
-    signatureText += this->key;
-    signatureText += Crypto::serialize::uint8ArrToString(val.data(), val.size());
+    pushAll(this->uuid.toVector());
+    pushAll(this->parentUUID.toVector());
+
+    vector<uint8_t> key(this->key.begin(), this->key.end());
+    pushAll(key);
+
     switch (this->type) {
-        case UPSERT: signatureText += "UPSERT"; break;
-        case DELETE: signatureText += "DELETE"; break;
+        case UPSERT: content.push_back(0); break;
+        case DELETE: content.push_back(1); break;
     }
 
-    return signatureText;
+    return content;
 }
 
 template <typename VALUE_T>
@@ -138,7 +142,7 @@ SignatureVerificationResult RegistryEntry<VALUE_T>::verifySignature(map<PUB_HASH
     if (it == keys->end()) return SignatureVerificationResult::PubKeyNotFound;
 
     // Verify the signature
-    bool res = Crypto::asym::verify(this->getSignatureText(), this->signature, &it->second);
+    bool res = Crypto::asym::verify(this->getSignatureContent(), this->signature, &it->second);
     return res ? SignatureVerificationResult::OK : SignatureVerificationResult::SignatureInvalid;
 }
 
@@ -182,7 +186,7 @@ SCENARIO("RegistryEntries", "[registry][entry]") {
                 }
 
                 THEN("it's signature text should match the original") {
-                    REQUIRE(entry.getSignatureText() == reconstructedEntry.getSignatureText());
+                    REQUIRE(entry.getSignatureContent() == reconstructedEntry.getSignatureContent());
                 }
             }
         }

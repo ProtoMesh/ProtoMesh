@@ -34,10 +34,10 @@ Crypto::UUID Registry<VALUE_T>::getHeadUUID() {
 }
 
 template <typename VALUE_T>
-string Registry<VALUE_T>::getHeadHash() const {
+HASH Registry<VALUE_T>::getHeadHash() const {
     if (this->hashChain.size() > 0)
         return this->hashChain.back();
-    return "";
+    return {};
 }
 
 /// ------------------------------------------ High level data manipulation -------------------------------------------

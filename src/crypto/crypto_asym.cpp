@@ -54,12 +54,13 @@ namespace Crypto {
 
         PUB_HASH_T PublicKey::getHash() {
             PUB_HASH_T hash;
-            string ssHash(Crypto::hash::sha512(Crypto::serialize::uint8ArrToString(this->raw.data(), PUB_KEY_SIZE)));
+            vector<uint8_t> data(this->raw.begin(), this->raw.end());
+            string ssHash(Crypto::hash::sha512(data));
             copy_n(begin(ssHash), PUB_HASH_SIZE, begin(hash));
             return hash;
         }
 
-        SIGNATURE_T sign(string text, PRIVATE_KEY_T privKey) {
+        SIGNATURE_T sign(vector<uint8_t> text, PRIVATE_KEY_T privKey) {
             // Generate the hash and create a signature from it
             HASH hashVec = Crypto::hash::sha512Vec(text);
             uint8_t *hash = hashVec.data();
@@ -72,7 +73,7 @@ namespace Crypto {
             return signature;
         }
 
-        bool verify(string text, SIGNATURE_T signature, PublicKey* pubKey) {
+        bool verify(vector<uint8_t> text, SIGNATURE_T signature, PublicKey* pubKey) {
             HASH hashVec = Crypto::hash::sha512Vec(text);
             uint8_t *hash = hashVec.data();
             return (bool) uECC_verify(pubKey->raw.data(), hash, sizeof(hash), signature.data(), ECC_CURVE);
@@ -116,7 +117,7 @@ namespace Crypto {
                 }
 
                 GIVEN("the signature of a message") {
-                    string msg("someMessage");
+                    vector<uint8_t> msg = {1,2,3,4,5};
                     SIGNATURE_T sig(sign(msg, pair.priv));
 
                     THEN("it should be valid when validated w/ the corresponding public key") {
@@ -129,7 +130,8 @@ namespace Crypto {
                     }
 
                     THEN("it should not be valid when validated w/ different text") {
-                        REQUIRE_FALSE(verify(msg+"diff", sig, &pair.pub));
+                        msg.push_back(6);
+                        REQUIRE_FALSE(verify(msg, sig, &pair.pub));
                     }
 
                     THEN("it should not be valid when the signature is altered") {

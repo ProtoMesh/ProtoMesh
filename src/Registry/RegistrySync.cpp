@@ -120,7 +120,7 @@ void Registry<VALUE_T>::sync(bool force) {
     /// Create all properties
     lumos::UUID id(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
     auto name = builder.CreateString(this->name);
-    auto headStr = builder.CreateString(this->getHeadHash());
+    auto headStr = builder.CreateVector(this->getHeadHash());
 
     /// Create the head buffer
     auto head = CreateHead(builder, name, &id, headStr, this->entries.size());
@@ -157,10 +157,13 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
             /// Create all hash properties
             auto answerID = lumos::UUID(*req->requestID());
             lumos::UUID instance(this->instanceIdentifier.a, this->instanceIdentifier.b, this->instanceIdentifier.c, this->instanceIdentifier.d);
-            auto hashStr = builder.CreateString(this->hashChain.size() > req->index() ? this->hashChain[req->index()] : "");
+
+            vector<uint8_t> rawHashVec;
+            if (this->hashChain.size() > req->index()) rawHashVec = this->hashChain[req->index()];
+            auto hashVec = builder.CreateVector(rawHashVec);
 
             /// Create the hash
-            auto hash = CreateHash(builder, &answerID, &instance, hashStr);
+            auto hash = CreateHash(builder, &answerID, &instance, hashVec);
 
             /// Convert it to a byte array
             builder.Finish(hash, HashIdentifier());
@@ -173,7 +176,8 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
     };
     ///   Head related
     auto onHead = [&] (const Head* req) {
-        if (!this->isSyncInProgress() && req->head()->str() != this->getHeadHash()) {
+        vector<uint8_t> head(req->head()->begin(), req->head()->end());
+        if (!this->isSyncInProgress() && head != this->getHeadHash()) {
             /// We got a potential candidate for synchronization. Start the binary search!
             size_t l_remote = req->length();
             size_t l_min = min(l_remote, (size_t) this->entries.size()-1);
@@ -214,7 +218,8 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
                 return;
             }
 
-            if (this->hashChain[index] == hash->hash()->str())
+            vector<uint8_t> hashVec(hash->hash()->begin(), hash->hash()->end());
+            if (this->hashChain[index] == hashVec)
                 min = index+1;
             else
                 max = index-1;
