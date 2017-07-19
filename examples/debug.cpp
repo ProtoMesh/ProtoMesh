@@ -25,7 +25,8 @@ int main() {
     network->registerNode(testNode.uuid, testNode.serializeForRegistry(), masterKey);
 
     /// Create a group
-    network->createGroup(masterKey, testNode.uuid);
+    auto gid = network->createGroup(masterKey, {testNode.uuid});
+    cout << gid.unwrap() << endl;
 
     while (!interrupted) network->tick(1000);
 }

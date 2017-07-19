@@ -18,7 +18,7 @@ class Node;
 class Group;
 
 struct GroupCreationError {
-    enum class Kind { AlreadyPresent };
+    enum class Kind { AlreadyPresent, InsertionFailed };
     Kind kind;
     std::string text;
     GroupCreationError(Kind kind, std::string text) : kind(kind), text(text) {}
@@ -50,7 +50,7 @@ public:
     void registerNode(Crypto::UUID uid, vector<uint8_t> node, Crypto::asym::KeyPair authorization);
 
     /// Groups
-    Result<Crypto::UUID, GroupCreationError> createGroup(Crypto::asym::KeyPair authorization, Crypto::UUID);
+    Result<Crypto::UUID, GroupCreationError> createGroup(Crypto::asym::KeyPair authorization, vector<Crypto::UUID> participants = {}, Crypto::UUID groupID = Crypto::UUID());
 };
 
 #include "Node/Node.hpp"

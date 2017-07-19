@@ -10,8 +10,10 @@ table GroupParticipant {
 
 table Group {
     uuid: UUID (required);
-    publicKey: crypto.PublicKey (required); // Not static! Might change
+    publicKey: crypto.PublicKey (required);
 
+    // Public key of person which encrypted the group keys
+    peerPublicKey: crypto.PublicKey (required);
     participants: [GroupParticipant];
 }
 
