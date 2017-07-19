@@ -28,26 +28,26 @@ public:
         this->networks.push_back(network);
     };
 
-    static Result<const lumos::network::Node*, NodeDeserializationError> deserialize(vector<uint8_t> serializedNode) {
+    static Result<const lumos::network::Node*, NodeDeserializationError> deserialize(vector<uint8_t>* serializedNode) {
         using namespace lumos::network;
 
         /// Verify buffer integrity
-        auto verifier = flatbuffers::Verifier(serializedNode.data(), serializedNode.size());
+        auto verifier = flatbuffers::Verifier(serializedNode->data(), serializedNode->size());
         if (!VerifyNodeBuffer(verifier))
             return Err(NodeDeserializationError(NodeDeserializationError::Kind::InvalidData, "Passed data is no valid node!"));
 
         /// Check the buffer identifier
-        if (!flatbuffers::BufferHasIdentifier(serializedNode.data(), NodeIdentifier()))
+        if (!flatbuffers::BufferHasIdentifier(serializedNode->data(), NodeIdentifier()))
             return Err(NodeDeserializationError(NodeDeserializationError::Kind::WrongType, "Passed data is not a node!"));
 
         /// Load and return the entry
-        auto entry = GetNode(serializedNode.data());
+        auto entry = GetNode(serializedNode->data());
 
         return Ok(entry);
     };
 
     static Result<Crypto::asym::PublicKey, NodeDeserializationError> getPublicKey(vector<uint8_t> serializedNode) {
-        auto node = Node::deserialize(serializedNode);
+        auto node(Node::deserialize(&serializedNode));
         if (node.isErr()) return Err(node.unwrapErr());
 
         auto key = Crypto::asym::PublicKey::fromBuffer(node.unwrap()->publicKey()->compressed());
