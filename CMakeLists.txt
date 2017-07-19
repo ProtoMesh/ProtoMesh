@@ -31,8 +31,6 @@ include_directories(lib/AES)
 set(AES_SOURCES
         lib/AES/aes.h
         lib/AES/aes.c)
-# Fix some weird CMake bug where the linker can't find anything defined in aes.c by compiling it as a C++ file
-SET_SOURCE_FILES_PROPERTIES( lib/AES/aes.c PROPERTIES LANGUAGE CXX )
 
 # Define the lumos source files and its dependency on ECC and Duktape
 set(LUMOS_SOURCE_FILES

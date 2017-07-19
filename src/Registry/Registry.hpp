@@ -88,6 +88,7 @@ public:
     Registry(APIProvider api, string name, string validator = DEFAULT_VALIDATOR);
 
     /// High level data manipulation
+    // TODO Add function to check whether or not an insertion would be valid without executing it (useful for e.g. group modification)
     Result<VALUE_T, RegistryGetError> get(string key);
     Result<bool, RegistryModificationError> set(string key, VALUE_T value, Crypto::asym::KeyPair pair);
     Result<bool, RegistryModificationError> del(string key, Crypto::asym::KeyPair pair);

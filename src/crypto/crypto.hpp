@@ -10,9 +10,13 @@
 #include <vector>
 #include <algorithm>
 #include <result.h>
-#include <aes.h>
 #include <buffers/crypto_generated.h>
 #include <buffers/uuid_generated.h>
+extern "C" {
+    /// Implemented @ lib/AES/aes.c
+    void AES_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv);
+    void AES_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv);
+}
 
 #include "sha512.hpp"
 #include "uECC.h"
