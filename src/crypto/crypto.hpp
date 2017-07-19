@@ -1,33 +1,40 @@
 #ifndef LUMOS_CRYPTO_HPP
 #define LUMOS_CRYPTO_HPP
 
+#define CBC 1
+#define EBC 0
+#define AES256 1
+
 #include <random>
 #include <array>
 #include <vector>
 #include <algorithm>
 #include <result.h>
+#include <aes.h>
 #include <buffers/crypto_generated.h>
+#include <buffers/uuid_generated.h>
 
 #include "sha512.hpp"
 #include "uECC.h"
 #include "../api/network.hpp"
 
-#include "../buffers/uuid_generated.h"
-
 using namespace std;
 
-// Defining ECC key sizes
+/// Defining ECC key sizes
 #define PRIV_KEY_SIZE 32
 #define PUB_KEY_SIZE 64
 #define COMPRESSED_PUB_KEY_SIZE PRIV_KEY_SIZE + 1
 #define SIGNATURE_SIZE PUB_KEY_SIZE
 
-// Define the size in bytes of the short hash to identify a public key
-// Is required to be dividable by two.
+/// Define the size in bytes of the short hash to identify a public key
+/// Is required to be dividable by two.
 #define PUB_HASH_SIZE PUB_KEY_SIZE / 4
-#define PUB_HASH_T array<char, PUB_HASH_SIZE> // First PUB_HASH_SIZE characters of the HASH of the hex representation of the public key
+#define PUB_HASH_T array<char, PUB_HASH_SIZE>  // First PUB_HASH_SIZE characters of the HASH of the hex representation of the public key
 
-// Defining cryptography types
+/// Define AES related constants
+#define IV_SIZE 32  // Since we use AES256 the IV may have a size of 32 * sizeof(uint8_t) = 256.
+
+/// Defining cryptography types
 #define COMPRESSED_PUBLIC_KEY_T array<uint8_t, COMPRESSED_PUB_KEY_SIZE>
 #define PRIVATE_KEY_T array<uint8_t, PRIV_KEY_SIZE>
 #define NETWORK_KEY_T COMPRESSED_PUBLIC_KEY_T
@@ -36,10 +43,10 @@ using namespace std;
 #define HASH vector<uint8_t>
 #define SHARED_KEY_T vector<uint8_t>
 
-// Defining the elliptic curve to use
+/// Defining the elliptic curve to use
 extern const struct uECC_Curve_t* ECC_CURVE;
 
-// Define the cryptography namespace
+/// Define the cryptography namespace
 namespace Crypto {
     class UUID {
     public:
@@ -73,8 +80,15 @@ namespace Crypto {
     }
 
     namespace sym {
-        vector<uint8_t> encrypt(string text, string key);
-        string decrypt(vector<uint8_t> ciphertext, string key);
+        struct AESError {
+            enum class Kind { IVTooSmall };
+            Kind kind;
+            std::string text;
+            AESError(Kind kind, std::string text) : kind(kind), text(text) {}
+        };
+
+        Result<vector<uint8_t>, AESError> encrypt(vector<uint8_t> text, vector<uint8_t> key, vector<uint8_t> iv);
+        vector<uint8_t> decrypt(vector<uint8_t> ciphertext, vector<uint8_t> key);
     }
 
     namespace asym {
