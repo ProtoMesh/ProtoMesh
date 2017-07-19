@@ -12,9 +12,7 @@ vector<uint8_t> Node::serializeForRegistry() {
     UUID uid(this->uuid.a, this->uuid.b, this->uuid.c, this->uuid.d);
 
     /// Public key
-    COMPRESSED_PUBLIC_KEY_T compressedKey(this->pair.pub.getCompressed());
-    auto pubKeyVec = builder.CreateVector(compressedKey.begin(), compressedKey.size());
-    auto publicKey = lumos::crypto::CreatePublicKey(builder, pubKeyVec);
+    auto publicKey = this->pair.pub.toBuffer(&builder);
 
     network::NodeBuilder nodeBuilder(builder);
     nodeBuilder.add_uuid(&uid);

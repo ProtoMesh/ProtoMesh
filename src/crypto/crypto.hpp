@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <result.h>
+#include <buffers/crypto_generated.h>
 
 #include "sha512.hpp"
 #include "uECC.h"
@@ -100,6 +101,8 @@ namespace Crypto {
             string getCompressedString();
             COMPRESSED_PUBLIC_KEY_T getCompressed();
             PUB_HASH_T getHash();
+
+            flatbuffers::Offset<lumos::crypto::PublicKey> toBuffer(flatbuffers::FlatBufferBuilder* builder);
         };
 
         struct KeyPair {
