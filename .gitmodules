@@ -13,3 +13,6 @@
 [submodule "lib/result"]
 	path = lib/result
 	url = https://github.com/oktal/result
+[submodule "lib/AES"]
+	path = lib/AES
+	url = https://github.com/kokke/tiny-AES128-C
