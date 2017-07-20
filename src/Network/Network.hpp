@@ -8,6 +8,7 @@
 
 #include "../const.hpp"
 #include "../Registry/Registry.hpp"
+#include "../Logger/Logger.hpp"
 
 #include "buffers/uuid_generated.h"
 #include "buffers/network/node_generated.h"

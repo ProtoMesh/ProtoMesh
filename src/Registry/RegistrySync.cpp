@@ -142,7 +142,7 @@ void Registry<VALUE_T>::onData(vector<uint8_t> incomingData) {
     uint8_t* data = incomingData.data();
     auto verifier = flatbuffers::Verifier(data, incomingData.size());
     auto hasIdentifier = [&] (const char * id) -> bool { return flatbuffers::BufferHasIdentifier(data, id); };
-    auto onVerifyFail = [] () { cerr << "[REG|SYNC] Received invalid buffer" << endl; };
+    auto onVerifyFail = [] () { Logger(Error) << "Received invalid registry buffer" << endl; };
 
     /// Lambdas regarding sync stages
     ///   Request related

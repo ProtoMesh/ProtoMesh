@@ -15,7 +15,6 @@ struct NodeDeserializationError {
 };
 
 class Node {
-    vector<shared_ptr<Network>> networks;
 public:
     Crypto::UUID uuid;
     Crypto::asym::KeyPair pair;
@@ -23,10 +22,6 @@ public:
     Node(Crypto::UUID uuid, Crypto::asym::KeyPair keys) : uuid(uuid), pair(keys) {};
 
     vector<uint8_t> serializeForRegistry();
-
-    void registerAt(shared_ptr<Network> network) {
-        this->networks.push_back(network);
-    };
 
     static Result<const lumos::network::Node*, NodeDeserializationError> deserialize(vector<uint8_t>* serializedNode) {
         using namespace lumos::network;

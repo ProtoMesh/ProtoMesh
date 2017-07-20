@@ -51,11 +51,15 @@ Result<Crypto::UUID, GroupModificationError> Network::createGroup(Crypto::asym::
                     auto cipheredPrivateKey = builder.CreateVector(cipherText.unwrap());
                     return Ok(network::CreateGroupParticipant(builder, &pid, cipheredPrivateKey));
                 } else {
-                    cerr << "Error encrypting the group private key! (" << cipherText.unwrapErr().text << ")" << endl;
+                    Logger(Warn) << "Failed to encrypt group key for " << participantID << endl;
+                    Logger(Warn) << "   Reason:" << cipherText.unwrapErr().text << endl;
                 }
+            } else {
+                Logger(Warn) << "Couldn't decrypt public key of " << participantID << endl;
             }
+        } else {
+            Logger(Warn) << "Attempted to add " << participantID << " to a group but the node doesn't exist." << endl;
         }
-
         return Err(false);
     };
 
@@ -65,7 +69,6 @@ Result<Crypto::UUID, GroupModificationError> Network::createGroup(Crypto::asym::
     for (auto participantID : participants) {
         auto participant = createParticipant(participantID);
         if (participant.isOk()) groupParticipants.push_back(participant.unwrap());
-        else cerr << "Error creating participant!" << endl;
     }
     auto participantsVec = builder.CreateVector(groupParticipants);
 

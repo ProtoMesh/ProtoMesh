@@ -7,9 +7,8 @@ NETWORK NetworkManager::joinNetwork(string id, NETWORK_KEY_T key)  {
 
     // TODO Mask this->net with the encryption
 
-
     Crypto::asym::PublicKey masterKey(key);
-    cout << "Joining network: " << string(masterKey.getHash().begin(), PUB_HASH_SIZE) << " (" << serializedKey << ")" << endl;
+    Logger(Info) << "Joining network " << string(masterKey.getHash().begin(), PUB_HASH_SIZE) << endl;
 
     APIProvider api = this->api;
     auto keyProvider = std::make_shared<KeyProvider>(masterKey);

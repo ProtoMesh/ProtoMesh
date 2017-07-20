@@ -65,7 +65,9 @@ set(LUMOS_SOURCE_FILES
         src/Node/Node.cpp
         src/Node/Node.hpp
         src/Network/Groups.cpp
-        src/Network/Nodes.cpp)
+        src/Network/Nodes.cpp
+        src/Logger/Logger.cpp
+        src/Logger/Logger.hpp)
 
 # Add the lumos library target and its dependency on the flatbuffers
 add_library(lumos ${LUMOS_SOURCE_FILES})

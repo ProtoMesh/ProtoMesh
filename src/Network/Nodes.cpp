@@ -28,7 +28,7 @@ void Network::onNodeRegistryChange(RegistryEntry<vector<uint8_t>> entry) {
 void Network::registerNode(Crypto::UUID uid, vector<uint8_t> node, Crypto::asym::KeyPair authorization) {
     this->getRegistry(NODES_REGISTRY)->set(uid, node, authorization);
 
-    // TODO DEBUG OUTPUT
     auto hash = authorization.pub.getHash();
-    cout << "Registered node: " << uid << " using key " << string(hash.begin(), hash.end()) << endl;
+    Logger(Info) << "Registered node " << uid << endl;
+    Logger(Debug) << "  Using the key " << string(hash.begin(), hash.end()) << endl;
 }

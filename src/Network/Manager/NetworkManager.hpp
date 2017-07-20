@@ -8,6 +8,7 @@
 #include "Registry/Registry.hpp"
 #include "crypto/crypto.hpp"
 #include "Network/Network.hpp"
+#include "Logger/Logger.hpp"
 
 #define NETWORK shared_ptr<Network>
 

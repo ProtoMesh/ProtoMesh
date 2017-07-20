@@ -14,6 +14,7 @@
 #include "../api/api.hpp"
 #include "../api/storage.hpp"
 #include "../api/network.hpp"
+#include "../Logger/Logger.hpp"
 #include "../api/time.hpp"
 
 #include "../buffers/registry/registry_generated.h"
