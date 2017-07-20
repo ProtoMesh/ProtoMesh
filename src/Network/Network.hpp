@@ -17,11 +17,18 @@
 class Node;
 class Group;
 
-struct GroupCreationError {
-    enum class Kind { AlreadyPresent, InsertionFailed };
+struct GroupModificationError {
+    enum class Kind { InsertionFailed };
     Kind kind;
     std::string text;
-    GroupCreationError(Kind kind, std::string text) : kind(kind), text(text) {}
+    GroupModificationError(Kind kind, std::string text) : kind(kind), text(text) {}
+};
+
+struct GroupRetrievalError {
+    enum class Kind { GroupDoesNotExist };
+    Kind kind;
+    std::string text;
+    GroupRetrievalError(Kind kind, std::string text) : kind(kind), text(text) {}
 };
 
 class Network {
@@ -50,7 +57,14 @@ public:
     void registerNode(Crypto::UUID uid, vector<uint8_t> node, Crypto::asym::KeyPair authorization);
 
     /// Groups
-    Result<Crypto::UUID, GroupCreationError> createGroup(Crypto::asym::KeyPair authorization, vector<Crypto::UUID> participants = {}, Crypto::UUID groupID = Crypto::UUID());
+    ///     Modifications
+    Result<Crypto::UUID, GroupModificationError> createGroup(Crypto::asym::KeyPair authorization, vector<Crypto::UUID> participants = {}, Crypto::UUID groupID = Crypto::UUID());
+    Result<Crypto::UUID, GroupModificationError> addGroupParticipant(Crypto::asym::KeyPair authorization, Crypto::UUID participant, Crypto::UUID groupID);
+    ///     Data retrieval
+    Result<vector<uint8_t>, GroupRetrievalError> getSerializedGroup(Crypto::UUID groupID);
+    Result<const lumos::network::Group*, GroupRetrievalError> getGroup(vector<uint8_t> serializedGroup);
+    Result<Crypto::asym::KeyPair, GroupRetrievalError> getGroupPublicKey(Crypto::UUID groupID);
+    Result<Crypto::asym::KeyPair, GroupRetrievalError> getGroupKeyPair(Crypto::UUID groupID, Crypto::UUID nodeID, Crypto::asym::KeyPair node);
 };
 
 #include "Node/Node.hpp"

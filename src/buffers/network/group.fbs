@@ -12,7 +12,7 @@ table Group {
     uuid: UUID (required);
     publicKey: crypto.PublicKey (required);
 
-    // Public key of person which encrypted the group keys
+    /// Public key of the person which encrypted the participants keys
     peerPublicKey: crypto.PublicKey (required);
     participants: [GroupParticipant];
 }

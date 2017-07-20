@@ -4,7 +4,7 @@ void Network::onGroupRegistryChange(RegistryEntry<vector<uint8_t>> entry) {
     // TODO Update internal state
 }
 
-Result<Crypto::UUID, GroupCreationError> Network::createGroup(Crypto::asym::KeyPair authorization, vector<Crypto::UUID> participants, Crypto::UUID groupID) {
+Result<Crypto::UUID, GroupModificationError> Network::createGroup(Crypto::asym::KeyPair authorization, vector<Crypto::UUID> participants, Crypto::UUID groupID) {
     using namespace lumos;
 
     flatbuffers::FlatBufferBuilder builder;
@@ -82,5 +82,5 @@ Result<Crypto::UUID, GroupCreationError> Network::createGroup(Crypto::asym::KeyP
     if (res.isOk())
         return Ok(groupID);
     else
-        return Err(GroupCreationError(GroupCreationError::Kind::InsertionFailed, "Couldn't insert the group into the registry. Reason: " + res.unwrapErr().text));
+        return Err(GroupModificationError(GroupModificationError::Kind::InsertionFailed, "Couldn't insert the group into the registry. Reason: " + res.unwrapErr().text));
 }
