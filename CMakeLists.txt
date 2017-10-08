@@ -9,10 +9,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -Wno-unus
 set(FLATBUFFERS_DIR src/buffers)
 include(cmake/BuildFlatbuffers.cmake)
 
-# Add duktape sources
-set(DUKTAPE_SOURCES lib/duktape/src/duk_config.h lib/duktape/src/duktape.c lib/duktape/src/duktape.h)
-include_directories(lib/duktape/src)
-
 # Add micro-ecc and its sources
 include_directories(lib/micro-ecc)
 set(ECC_SOURCES
@@ -36,12 +32,7 @@ set(AES_SOURCES
 set(LUMOS_SOURCE_FILES
         ${AES_SOURCES}
         ${ECC_SOURCES}
-        ${DUKTAPE_SOURCES}
         ${RESULT_SOURCES}
-        src/Network/Manager/NetworkManager.cpp
-        src/Network/Manager/NetworkManager.hpp
-        src/Network/Network.hpp
-        src/Network/Network.cpp
         src/const.hpp
         src/api/api.hpp
         src/api/time.hpp
@@ -53,19 +44,6 @@ set(LUMOS_SOURCE_FILES
         src/crypto/crypto.cpp
         src/crypto/crypto_sym.cpp
         src/crypto/crypto_asym.cpp
-        src/Registry/Registry.hpp
-        src/Registry/Registry.cpp
-        src/Registry/RegistrySync.cpp
-        src/Registry/RegistryAddition.cpp
-        src/Registry/Entry/RegistryEntry.cpp
-        src/Registry/Entry/RegistryEntry.hpp
-        src/Network/Network.cpp
-        src/Network/Network.hpp
-        src/Registry/Validators.hpp
-        src/Node/Node.cpp
-        src/Node/Node.hpp
-        src/Network/Groups.cpp
-        src/Network/Nodes.cpp
         src/Logger/Logger.cpp
         src/Logger/Logger.hpp)
 
