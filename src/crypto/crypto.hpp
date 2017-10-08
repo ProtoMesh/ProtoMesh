@@ -7,6 +7,7 @@
 
 #include <random>
 #include <array>
+#include <utility>
 #include <vector>
 #include <algorithm>
 #include <result.h>
@@ -27,12 +28,12 @@ using namespace std;
 /// Defining ECC key sizes
 #define PRIV_KEY_SIZE 32
 #define PUB_KEY_SIZE 64
-#define COMPRESSED_PUB_KEY_SIZE PRIV_KEY_SIZE + 1
+#define COMPRESSED_PUB_KEY_SIZE (PRIV_KEY_SIZE + 1)
 #define SIGNATURE_SIZE PUB_KEY_SIZE
 
 /// Define the size in bytes of the short hash to identify a public key
 /// Is required to be dividable by two.
-#define PUB_HASH_SIZE PUB_KEY_SIZE / 4
+#define PUB_HASH_SIZE (PUB_KEY_SIZE / 4)
 #define PUB_HASH_T array<char, PUB_HASH_SIZE>  // First PUB_HASH_SIZE characters of the HASH of the hex representation of the public key
 
 /// Define AES related constants
@@ -56,14 +57,14 @@ namespace Crypto {
     public:
         uint32_t a=0, b=0, c=0, d=0;
 
-        static UUID Empty() { return UUID(0, 0, 0, 0); }
+        static UUID Empty() { return {0, 0, 0, 0}; }
         UUID(uint32_t a, uint32_t b, uint32_t c, uint32_t d) : a(a), b(b), c(c), d(d) {};
         UUID();
-        UUID(const lumos::UUID* id);
+        explicit UUID(const lumos::UUID* id);
 
         vector<uint8_t> toVector() const;
 
-        operator string() const;
+        explicit operator string() const;
         inline tuple<uint32_t, uint32_t, uint32_t, uint32_t> tie() const { return std::tie(a, b, c, d); }
         inline bool operator==(const UUID &other) { return this->tie() == other.tie(); }
         inline bool operator!=(const UUID &other) { return this->tie() != other.tie(); }
@@ -88,7 +89,7 @@ namespace Crypto {
             enum class Kind { IVTooSmall };
             Kind kind;
             std::string text;
-            AESError(Kind kind, std::string text) : kind(kind), text(text) {}
+            AESError(Kind kind, std::string text) : kind(kind), text(std::move(text)) {}
         };
 
         Result<vector<uint8_t>, AESError> encrypt(vector<uint8_t> text, vector<uint8_t> key, vector<uint8_t> iv);
@@ -103,7 +104,7 @@ namespace Crypto {
             enum class Kind { KeySizeMismatch };
             Kind kind;
             std::string text;
-            PublicKeyDeserializationError(Kind kind, std::string text) : kind(kind), text(text) {}
+            PublicKeyDeserializationError(Kind kind, std::string text) : kind(kind), text(std::move(text)) {}
         };
 
         struct PublicKey {
@@ -112,9 +113,9 @@ namespace Crypto {
 
             static Result<PublicKey, PublicKeyDeserializationError> fromBuffer(const flatbuffers::Vector<uint8_t>* buffer);
 
-            PublicKey(COMPRESSED_PUBLIC_KEY_T compressedKey);
-            PublicKey(uint8_t* publicKey);
-            PublicKey(string publicKey); // takes a hex representation of a compressed pub key
+            explicit PublicKey(COMPRESSED_PUBLIC_KEY_T compressedKey);
+            explicit PublicKey(uint8_t* publicKey);
+            explicit PublicKey(string publicKey); // takes a hex representation of a compressed pub key
 
             string getCompressedString();
             COMPRESSED_PUBLIC_KEY_T getCompressed();
@@ -139,7 +140,7 @@ namespace Crypto {
             uint8_t publicKey[PUB_KEY_SIZE] = {0};
             uECC_make_key(publicKey, privateKey, ECC_CURVE);
 
-            return KeyPair(privateKey, publicKey);
+            return {privateKey, publicKey};
         }
 
         SIGNATURE_T sign(vector<uint8_t> text, PRIVATE_KEY_T privKey);
@@ -153,7 +154,7 @@ namespace Crypto {
             BCAST_SOCKET_T sock;
             NETWORK_KEY_T key;
         public:
-            inline EncryptedBroadcastSocket(BCAST_SOCKET_T sock, NETWORK_KEY_T key) : sock(sock), key(key) {};
+            inline EncryptedBroadcastSocket(BCAST_SOCKET_T sock, NETWORK_KEY_T key) : sock(std::move(sock)), key(key) {};
             inline void broadcast(vector<uint8_t> message) override {
                 // TODO Encrypt message
                 this->sock->broadcast(message);

@@ -39,7 +39,7 @@ string Logger::getLevelPrefix(LogLevel level, string customPrefix) {
             break;
         case Custom:
             prefixColor = Blue;
-            prefix = customPrefix;
+            prefix = std::move(customPrefix);
             break;
     }
     stringstream tmp;
@@ -52,14 +52,14 @@ void Logger::log(LogLevel level, string msg, string file, int line, string func,
     Logger(level) << msg;
 }
 
-void Logger::setOutputStream(ostream *outputStream) { logOutputStream.rdbuf(outputStream->rdbuf()); }
+void Logger::setOutputStream(ostream *outputStream) { logOutputStream = outputStream; }
 
 int Logger::LogBuf::sync() {
-    if (level < minimumLogLevel || str().size() == 0) return -1;
+    if (level < minimumLogLevel || str().empty()) return -1;
 
     /// Print the log level prefix
     string prefix = Logger::getLevelPrefix(level, this->customLevelName);
-    logOutputStream << prefix;
+    *logOutputStream << prefix;
 
     /// Remove newlines from the message (since they are replaced with the postfix)
     string msg(str());
@@ -67,7 +67,7 @@ int Logger::LogBuf::sync() {
 
     /// Print the message and keep record of its size
     this->messageLength = msg.size();
-    logOutputStream << msg << Color_Reset;
+    *logOutputStream << msg << Color_Reset;
 
     /// Clear the message
     str("");
@@ -93,9 +93,9 @@ void Logger::LogBuf::printPostfix() {
     }
     // TODO Add context block
 
-    int offset = outputWidth - this->messageLength - prefixSize;
+    auto offset = static_cast<int>(outputWidth - this->messageLength - prefixSize);
 
-    logOutputStream << DarkGrey << setw(offset) << setfill(' ') << postfix.str();
-    logOutputStream << Color_Reset << endl;
+    *logOutputStream << DarkGrey << setw(offset) << setfill(' ') << postfix.str();
+    *logOutputStream << Color_Reset << endl;
     messageLength = 0;
 }
