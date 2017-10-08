@@ -1,5 +1,5 @@
-#ifndef LUMOS_CRYPTO_HPP
-#define LUMOS_CRYPTO_HPP
+#ifndef HoMesh_CRYPTO_HPP
+#define HoMesh_CRYPTO_HPP
 
 #define CBC 1
 #define EBC 0
@@ -60,7 +60,7 @@ namespace Crypto {
         static UUID Empty() { return {0, 0, 0, 0}; }
         UUID(uint32_t a, uint32_t b, uint32_t c, uint32_t d) : a(a), b(b), c(c), d(d) {};
         UUID();
-        explicit UUID(const lumos::UUID* id);
+        explicit UUID(const hoMesh::UUID* id);
 
         vector<uint8_t> toVector() const;
 
@@ -121,7 +121,7 @@ namespace Crypto {
             COMPRESSED_PUBLIC_KEY_T getCompressed();
             PUB_HASH_T getHash();
 
-            flatbuffers::Offset<lumos::crypto::PublicKey> toBuffer(flatbuffers::FlatBufferBuilder* builder);
+            flatbuffers::Offset<hoMesh::crypto::PublicKey> toBuffer(flatbuffers::FlatBufferBuilder* builder);
         };
 
         struct KeyPair {
@@ -186,4 +186,4 @@ namespace Crypto {
 }
 
 
-#endif //LUMOS_CRYPTO_HPP
+#endif //HoMesh_CRYPTO_HPP

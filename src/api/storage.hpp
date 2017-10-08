@@ -1,5 +1,5 @@
-#ifndef LUMOS_STORAGE_HPP
-#define LUMOS_STORAGE_HPP
+#ifndef HoMesh_STORAGE_HPP
+#define HoMesh_STORAGE_HPP
 
 #include <string>
 #include <vector>
@@ -32,4 +32,4 @@ public:
     };
 #endif
 
-#endif //LUMOS_STORAGE_HPP
+#endif //HoMesh_STORAGE_HPP

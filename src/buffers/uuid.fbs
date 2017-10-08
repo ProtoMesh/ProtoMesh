@@ -1,4 +1,4 @@
-namespace lumos;
+namespace hoMesh;
 
 struct UUID {
     a: uint;

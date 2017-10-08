@@ -1,5 +1,5 @@
-#ifndef LUMOS_LIBRARY_H
-#define LUMOS_LIBRARY_H
+#ifndef HoMesh_LIBRARY_H
+#define HoMesh_LIBRARY_H
 
 #include <string>
 #include <memory>

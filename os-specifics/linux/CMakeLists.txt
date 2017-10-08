@@ -1,4 +1,4 @@
-project(lumos_device_linux)
+project(hoMesh_device_linux)
 
 add_library(${PROJECT_NAME} linux.hpp linux.cpp)
 

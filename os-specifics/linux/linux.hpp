@@ -1,5 +1,5 @@
-#ifndef LUMOS_LINUX_HPP
-#define LUMOS_LINUX_HPP
+#ifndef HoMesh_LINUX_HPP
+#define HoMesh_LINUX_HPP
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -13,7 +13,7 @@
 #include "api/storage.hpp"
 #include "api/time.hpp"
 
-#define STORAGE_PREFIX "/.config/lumos"
+#define STORAGE_PREFIX "/.config/hoMesh"
 
 using boost::asio::ip::udp;
 
@@ -62,4 +62,4 @@ public:
     }
 };
 
-#endif //LUMOS_LINUX_HPP
+#endif //HoMesh_LINUX_HPP

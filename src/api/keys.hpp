@@ -1,5 +1,5 @@
-#ifndef LUMOS_KEYS_HPP
-#define LUMOS_KEYS_HPP
+#ifndef HoMesh_KEYS_HPP
+#define HoMesh_KEYS_HPP
 
 #include <map>
 
@@ -19,4 +19,4 @@ public:
     void insertKey(PUB_HASH_T hash, Crypto::asym::PublicKey key) { this->keys.emplace(hash, key); }
 };
 
-#endif //LUMOS_KEYS_HPP
+#endif //HoMesh_KEYS_HPP

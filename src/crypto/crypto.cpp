@@ -18,7 +18,7 @@ namespace Crypto {
         d = distribution(generator);
     }
 
-    UUID::UUID(const lumos::UUID *id) {
+    UUID::UUID(const hoMesh::UUID *id) {
         a = (uint32_t) id->a();
         b = (uint32_t) id->b();
         c = (uint32_t) id->c();

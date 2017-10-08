@@ -1,5 +1,5 @@
-#ifndef LUMOS_API_PROVIDER_HPP
-#define LUMOS_API_PROVIDER_HPP
+#ifndef HoMesh_API_PROVIDER_HPP
+#define HoMesh_API_PROVIDER_HPP
 
 #include "keys.hpp"
 #include "storage.hpp"
@@ -13,4 +13,4 @@ struct APIProvider {
     shared_ptr<RelativeTimeProvider> time;
 };
 
-#endif //LUMOS_API_PROVIDER_HPP
+#endif //HoMesh_API_PROVIDER_HPP

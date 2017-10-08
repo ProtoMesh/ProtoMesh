@@ -1,5 +1,5 @@
-#ifndef LUMOS_CONST_HPP
-#define LUMOS_CONST_HPP
+#ifndef HoMesh_CONST_HPP
+#define HoMesh_CONST_HPP
 
 /// Networking
 #define MULTICAST_NETWORK "235.17.10.20"
@@ -24,4 +24,4 @@
 #define NODES_REGISTRY  "network::nodes"
 #define GROUPS_REGISTRY "network::groups"
 
-#endif //LUMOS_CONST_HPP
+#endif //HoMesh_CONST_HPP

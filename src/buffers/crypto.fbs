@@ -1,4 +1,4 @@
-namespace lumos.crypto;
+namespace hoMesh.crypto;
 
 table PublicKey {
     compressed: [ubyte] (required);
