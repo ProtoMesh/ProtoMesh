@@ -140,48 +140,13 @@ namespace Crypto {
             uint8_t publicKey[PUB_KEY_SIZE] = {0};
             uECC_make_key(publicKey, privateKey, ECC_CURVE);
 
-            return {privateKey, publicKey};
+            return {std::move(privateKey), std::move(publicKey)};
         }
 
         SIGNATURE_T sign(vector<uint8_t> text, PRIVATE_KEY_T privKey);
         bool verify(vector<uint8_t> text, SIGNATURE_T signature, PublicKey* pubKey);
 
         SHARED_KEY_T generateSharedSecret(PublicKey publicKey, PRIVATE_KEY_T privateKey);
-    }
-
-    namespace net {
-        class EncryptedBroadcastSocket : public BroadcastSocket {
-            BCAST_SOCKET_T sock;
-            NETWORK_KEY_T key;
-        public:
-            inline EncryptedBroadcastSocket(BCAST_SOCKET_T sock, NETWORK_KEY_T key) : sock(std::move(sock)), key(key) {};
-            inline void broadcast(vector<uint8_t> message) override {
-                // TODO Encrypt message
-                this->sock->broadcast(message);
-                cout << key.size() << endl;
-            };
-            inline void send(string ip, unsigned short port, string message) override {
-                // TODO Encrypt message
-                this->sock->send(ip, port, message);
-            };
-            inline int recv(vector<uint8_t> *msg, unsigned int timeout_ms) override {
-                // TODO Decrypt message
-                return this->sock->recv(msg, timeout_ms);
-            };
-        };
-
-        class EncryptedNetworkProvider : public NetworkProvider {
-            shared_ptr<NetworkProvider> net;
-            NETWORK_KEY_T key;
-        public:
-            inline EncryptedNetworkProvider(NetworkProvider* net, NETWORK_KEY_T key) : net(net), key(key) {};
-            BCAST_SOCKET_T createBroadcastSocket(std::string multicastGroup, unsigned short port) override {
-                return BCAST_SOCKET_T(
-                        new EncryptedBroadcastSocket(this->net->createBroadcastSocket(multicastGroup, port), this->key)
-                );
-            };
-            SOCKET_T openChannel(string ip) override { return nullptr; };
-        };
     }
 }
 

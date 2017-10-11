@@ -67,10 +67,10 @@ target_link_libraries(hoMesh_test flatbuffers)
 add_dependencies(hoMesh_test flatbuffer_headers)
 
 
-# Compilation of the linux specific example.
-## Include hoMesh source files and the linux specific folder
+# Compilation of the unix specific example.
+## Include hoMesh source files and the unix specific folder
 include_directories(src)
-add_subdirectory(os-specifics/linux)
-## Add the executable target and link it to hoMesh and the linux library
+add_subdirectory(os-specifics/unix)
+## Add the executable target and link it to hoMesh and the unix library
 add_executable(hoMesh_debug examples/debug.cpp)
 target_link_libraries(hoMesh_debug hoMesh hoMesh_device_linux)

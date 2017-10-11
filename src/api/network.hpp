@@ -8,39 +8,38 @@
 #include <deque>
 #include <iostream>
 
-#define SOCKET_T std::shared_ptr<Socket>
-class Socket {
-public:
-    virtual void send(std::string ip, unsigned short port, std::string message)= 0;
-
-    virtual int recv(std::string *msg, unsigned int timeout_ms)= 0;
+enum NetworkType {
+    BLUETOOTH,
+    WIFI,
+    WIRED,
+    NATIVE,
+    OTHER
 };
 
-#define BCAST_SOCKET_T std::shared_ptr<BroadcastSocket>
-class BroadcastSocket {
+enum NetworkAccess {
+    RESTRICTED,
+    METERED,
+    FREE
+};
+
+#define NETWORK_T std::shared_ptr<Network>
+class Network {
 public:
-    virtual ~BroadcastSocket()= default;
+    NetworkType type = NetworkType::NATIVE;
+    NetworkAccess access = NetworkAccess::FREE;
 
-    void broadcast(std::string message) {
-        std::vector<uint8_t> msg_vec(message.begin(), message.end());
-        this->broadcast(msg_vec);
-    }
+    Network(NetworkType type, NetworkAccess access) : type(type), access(access) {}
+    ~Network() = default;
 
-    virtual void broadcast(std::vector<uint8_t> message)= 0;
-
-    virtual void send(std::string ip, unsigned short port, std::string message)= 0;
-
-    virtual int recv(std::vector<uint8_t> *msg, unsigned int timeout_ms)= 0;
+    virtual void send(std::vector<uint8_t> message)= 0;
+    virtual int recv(std::vector<uint8_t> *buffer, unsigned int timeout_ms)= 0;
 };
 
 class NetworkProvider {
 public:
-    ~NetworkProvider() {}
-    // UDP related things
-    virtual BCAST_SOCKET_T createBroadcastSocket(std::string multicastGroup, unsigned short port) = 0;
+    ~NetworkProvider() = default;
 
-    // TCP related things
-    virtual SOCKET_T openChannel(std::string ip) = 0;
+    virtual std::vector<NETWORK_T> getAvailableNetworks() = 0;
 };
 
 #ifdef UNIT_TESTING

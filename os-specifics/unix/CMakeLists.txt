@@ -1,6 +1,6 @@
 project(hoMesh_device_linux)
 
-add_library(${PROJECT_NAME} linux.hpp linux.cpp)
+add_library(${PROJECT_NAME} unix.hpp unix.cpp)
 
 find_package(Boost)
 IF (Boost_FOUND)

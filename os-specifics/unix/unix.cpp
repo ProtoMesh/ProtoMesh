@@ -1,10 +1,9 @@
 #include <fstream>
-#include "linux.hpp"
-#include "const.hpp"
+#include "unix.hpp"
 
 #define RECV_POOLING_INTERVAL 150000 // 150ms
 
-LinuxBroadcastSocket::LinuxBroadcastSocket(std::string multicastGroup, unsigned short port) : service(), socket(service) {
+UnixNetwork::UnixNetwork(std::string multicastGroup, unsigned short port) : Network(NetworkType::WIRED, NetworkAccess::FREE), service(), socket(service) {
     boost::asio::ip::address address = boost::asio::ip::address::from_string(multicastGroup);
 
     // Open up the socket
@@ -26,7 +25,7 @@ LinuxBroadcastSocket::LinuxBroadcastSocket(std::string multicastGroup, unsigned 
     socket.set_option(ip::multicast::join_group(address));
 }
 
-int LinuxBroadcastSocket::recv(std::vector<uint8_t> *buffer, unsigned int timeout_ms) {
+int UnixNetwork::recv(std::vector<uint8_t> *buffer, unsigned int timeout_ms) {
     boost::asio::ip::udp::endpoint sender;
 //    std::vector<char> buffer;
     std::size_t bytes_readable = 0;
@@ -54,19 +53,11 @@ int LinuxBroadcastSocket::recv(std::vector<uint8_t> *buffer, unsigned int timeou
     // Read available data.
     socket.receive_from(boost::asio::buffer((*buffer), bytes_readable), sender);
 
-//    std::string message(buffer.begin(), buffer.end());
-//    *msg = message;
     return RECV_OK;
 }
 
-void LinuxBroadcastSocket::broadcast(std::vector<uint8_t> message) {
+void UnixNetwork::send(std::vector<uint8_t> message) {
     socket.send_to(boost::asio::buffer(message), destination);
-}
-
-void LinuxBroadcastSocket::send(std::string ip, unsigned short port, std::string message) {
-    boost::asio::ip::address address = boost::asio::ip::address::from_string(ip);
-    udp::endpoint target(address, port);
-    socket.send_to(boost::asio::buffer(message), target);
 }
 
 std::string getStorageDirectory() {
@@ -78,7 +69,7 @@ std::string getStorageDirectory() {
     return home;
 }
 
-void LinuxStorage::set(string key, vector<uint8_t> value) {
+void UnixStorage::set(string key, vector<uint8_t> value) {
     ofstream file(getStorageDirectory() + '/' + key, ios::out | ios::binary);
     if (!file.is_open()) return;
 
@@ -87,7 +78,7 @@ void LinuxStorage::set(string key, vector<uint8_t> value) {
     file.close();
 }
 
-vector<uint8_t> LinuxStorage::get(string key) {
+vector<uint8_t> UnixStorage::get(string key) {
     // open the file:
     std::ifstream file(getStorageDirectory() + '/' + key, std::ios::binary);
 
@@ -119,7 +110,7 @@ vector<uint8_t> LinuxStorage::get(string key) {
 //    return line;
 }
 
-bool LinuxStorage::has(string key) {
+bool UnixStorage::has(string key) {
     string target(getStorageDirectory() + '/' + key);
 
     struct stat buffer;
