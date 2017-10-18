@@ -1,8 +1,15 @@
 namespace hoMesh;
 
-struct UUID {
+enum UUIDType : byte {
+    Generic = 0,
+    Device,
+    Endpoint
+}
+
+table UUID {
     a: uint;
     b: uint;
     c: uint;
     d: uint;
+    type: UUIDType;
 }

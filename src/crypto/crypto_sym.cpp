@@ -63,6 +63,26 @@ namespace Crypto {
 
 #ifdef UNIT_TESTING
     SCENARIO("AES Cryptography", "[crypto][sym][aes]") {
+        GIVEN("A sequence of bytes and an IV") {
+            vector<uint8_t> input = {72, 195, 164, 115, 99, 104, 101, 110};
+            vector<uint8_t> iv; for (uint8_t i = 0; i < IV_SIZE - 50; ++i) iv.push_back(i);
+            vector<uint8_t> key; for (uint8_t i = 0; i < IV_SIZE; ++i) iv.push_back(i);
 
+            vector<uint8_t> ciphertext = Crypto::sym::encrypt(input, key, iv).expect("Failed to encrypt input."); // TODO Test doesn't fail where it shouldA
+
+            WHEN("it is decrypted using the correct key") {
+                vector<uint8_t> output = Crypto::sym::decrypt(ciphertext, key);
+                THEN("the output and the input should match") {
+                    REQUIRE(output == input);
+                }
+            }
+
+            WHEN("it is decrypted using the wrong key") {
+                vector<uint8_t> output = Crypto::sym::decrypt(ciphertext, iv);
+                THEN("it shouldn't match the input") {
+                    REQUIRE_FALSE(output == input);
+                }
+            }
+        }
     }
 #endif //UNIT_TESTING

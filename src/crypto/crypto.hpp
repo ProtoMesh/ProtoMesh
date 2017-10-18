@@ -53,12 +53,21 @@ extern const struct uECC_Curve_t* ECC_CURVE;
 
 /// Define the cryptography namespace
 namespace Crypto {
+    enum UUIDType : unsigned int {
+        Generic=0,
+        Device,
+        Endpoint
+    };
     class UUID {
     public:
         uint32_t a=0, b=0, c=0, d=0;
+        UUIDType type = UUIDType::Generic;
+
+        void generateRandom();
 
         static UUID Empty() { return {0, 0, 0, 0}; }
-        UUID(uint32_t a, uint32_t b, uint32_t c, uint32_t d) : a(a), b(b), c(c), d(d) {};
+        UUID(uint32_t a, uint32_t b, uint32_t c, uint32_t d, UUIDType type = UUIDType::Generic) : a(a), b(b), c(c), d(d), type(type) {};
+        UUID(UUIDType type);
         UUID();
         explicit UUID(const hoMesh::UUID* id);
 
@@ -66,11 +75,10 @@ namespace Crypto {
 
         explicit operator string() const;
         inline tuple<uint32_t, uint32_t, uint32_t, uint32_t> tie() const { return std::tie(a, b, c, d); }
-        inline bool operator==(const UUID &other) { return this->tie() == other.tie(); }
-        inline bool operator!=(const UUID &other) { return this->tie() != other.tie(); }
-        inline bool operator>(const UUID &other) { return this->tie() > other.tie(); }
-        inline bool operator<(const UUID &other) { return this->tie() < other.tie(); }
-        inline bool operator<(const UUID &other) const { return this->tie() < other.tie(); }
+        inline bool operator==(const UUID &other) const { return this->tie() == other.tie() && this->type == other.type; }
+        inline bool operator!=(const UUID &other) const { return this->type != other.type || (this->tie() != other.tie() && this->type == other.type); }
+//        inline bool operator>(const UUID &other) const { return this->tie() > other.tie(); }
+//        inline bool operator<(const UUID &other) const { return this->tie() < other.tie(); }
     };
     inline std::ostream& operator<< (std::ostream &out, const UUID &uid) { out << string(uid); return out; }
 

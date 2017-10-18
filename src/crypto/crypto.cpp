@@ -7,7 +7,7 @@
 #endif
 
 namespace Crypto {
-    UUID::UUID()  {
+    void UUID::generateRandom() {
         random_device rd;
         default_random_engine generator(rd());
         uniform_int_distribution<uint32_t> distribution(0, numeric_limits<uint32_t>::max());
@@ -18,15 +18,27 @@ namespace Crypto {
         d = distribution(generator);
     }
 
+    UUID::UUID()  {
+        this->generateRandom();
+    }
+
+    UUID::UUID(UUIDType type) {
+        this->generateRandom();
+        this->type = type;
+    }
+
     UUID::UUID(const hoMesh::UUID *id) {
         a = (uint32_t) id->a();
         b = (uint32_t) id->b();
         c = (uint32_t) id->c();
         d = (uint32_t) id->d();
+        type = (UUIDType) id->type();
     }
 
     vector<uint8_t> UUID::toVector() const {
         vector<uint8_t> vec;
+
+        vec.push_back((uint8_t) this->type);
 
         for (uint32_t v : {this->a, this->b, this->c, this->d}) {
             vec.push_back((uint8_t) (v & 0x000000ff));
@@ -42,6 +54,7 @@ namespace Crypto {
         stringstream ss;
         ss << hex << nouppercase << setfill('0');
 
+        ss << (uint8_t) type << '-';
         ss << setw(8) << (a) << '-';
         ss << setw(4) << (b >> 16) << '-';
         ss << setw(4) << (b & 0xFFFF) << '-';
@@ -54,22 +67,34 @@ namespace Crypto {
 
 #ifdef UNIT_TESTING
     SCENARIO("UUID Creation", "[crypto][uuid]") {
-        GIVEN("A uuid version 4") {
-//            string uuid(Crypto::generateUUID());
-//
-//            CAPTURE(uuid);
-//
-//            THEN("it should be 36 characters long") {
-//                REQUIRE( uuid.size() == 36 );
-//            }
-//            AND_THEN("it should consist of 5 blocks") {
-//                int i = 0;
-//                for (char c : uuid) if (c == '-') i++;
-//                REQUIRE( i == 4 );
-//            }
+        GIVEN("Two UUIDs of the same type") {
+            UUID uuid1;
+            UUID uuid2;
+
+            THEN("they may not be equal") {
+                REQUIRE(uuid1 != uuid2);
+                REQUIRE_FALSE(uuid1 == uuid2);
+            }
+
+            THEN("their string representations may not be equal") {
+                REQUIRE(string(uuid1) != string(uuid2));
+            }
+        }
+
+        GIVEN("Two equal UUIDs with differing types") {
+            UUID uuid1(UUIDType::Device);
+            UUID uuid2(uuid1.a, uuid1.b, uuid1.c, uuid1.d, UUIDType::Endpoint);
+
+            THEN("they may not be equal") {
+                REQUIRE(uuid1 != uuid2);
+                REQUIRE_FALSE(uuid1 == uuid2);
+            }
+
+            THEN("their string representations may not be equal") {
+                REQUIRE(string(uuid1) != string(uuid2));
+            }
         }
     }
-
 #endif
 
     namespace hash {
