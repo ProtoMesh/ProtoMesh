@@ -1,0 +1,59 @@
+include "../crypto/uuid.fbs";
+include "../crypto/asym.fbs";
+
+namespace hoMesh.network;
+
+// ---- Communication workflow ----
+// 1. The origin checks whether or not the target is within its zone.
+//    TRUE -> It directly sends a MessageDatagram to the target - Skip to 3.
+// FALSE:
+// 2. The origin bordercasts a RouteDiscoveryDatagram which propagates through the network until either:
+//      A. Its route exceeds the maximum route length and gets discarded
+//      B. It reaches the target zone where it is directly dispatched to the destination
+// 3. The destination generates a shared secret using the public key in the origin field of the DiscoveryDatagram.
+// 4. A MessageDatagram is dispatched containing the route it should take as determined
+//      by the DiscoveryDatagram and an acknowledgement that is signed
+//      and encrypted using the previously calculated secret.
+// 5. Once the MessageDatagram is received by the origin it stores the reversed route and regular communication begins.
+
+
+
+// ***
+// * Route discovery datagram.
+// * This particular type of message is used to discover a route between two network participants.
+// * Rate limiting applies to this type of datagram in order to prevent network flooding and potential cycles.
+// ***
+table RouteDiscoveryDatagram {
+    // ***
+    // * Nodes the datagram has already covered.
+    // * When the message gets relayed all nodes it will be sent to are added to this list prior to execution.
+    // * Upon bordercasting these targets are skipped since they received it already.
+    // * This ultimately prevents unnecessary retransmissions.
+    // ***
+    coveredNodes: [hoMesh.crypto.UUID];
+
+    // ***
+    // * UUID of the origin and the destination.
+    // * Used to determine where the datagram should go.
+    // ***
+    origin: hoMesh.crypto.PublicKey;
+    destination: hoMesh.crypto.UUID;
+
+    // ***
+    // * List of nodes this particular datagram passed through.
+    // * Upon reaching its target zone this will be used to establish communication with the origin.
+    // ***
+    route: [hoMesh.crypto.UUID];
+
+    // ***
+    // * Unix timestamp
+    // * Used to determine the travel time this route takes.
+    // * Will be used to determine a timeout value for this route.
+    // ***
+    sentTimestamp: long;
+
+    // TODO Add a way to determine which network types this should propagate through
+}
+
+file_identifier "RDID";
+root_type RouteDiscoveryDatagram;

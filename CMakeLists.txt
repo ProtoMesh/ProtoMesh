@@ -45,7 +45,7 @@ set(HoMesh_SOURCE_FILES
         src/crypto/crypto_sym.cpp
         src/crypto/crypto_asym.cpp
         src/Logger/Logger.cpp
-        src/Logger/Logger.hpp)
+        src/Logger/Logger.hpp src/routing/MessageRouter.cpp src/routing/MessageRouter.hpp src/routing/Route.cpp src/routing/Route.hpp src/helpers/SafeQueue.hpp)
 
 # Add the hoMesh library target and its dependency on the flatbuffers
 add_library(hoMesh ${HoMesh_SOURCE_FILES})

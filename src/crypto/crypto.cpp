@@ -27,7 +27,7 @@ namespace Crypto {
         this->type = type;
     }
 
-    UUID::UUID(const hoMesh::UUID *id) {
+    UUID::UUID(const hoMesh::crypto::UUID* id) {
         a = (uint32_t) id->a();
         b = (uint32_t) id->b();
         c = (uint32_t) id->c();

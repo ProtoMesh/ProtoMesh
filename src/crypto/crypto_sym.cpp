@@ -15,7 +15,7 @@ namespace Crypto {
             iv.resize(IV_SIZE);
 
             /// Pad the text using zeros and write the padding size in the last byte
-            uint8_t paddingSize = static_cast<uint8_t>(text.size() % 16 == 0 ? 0 : 16 - (text.size() % 16));
+            auto paddingSize = static_cast<uint8_t>(text.size() % 16 == 0 ? 0 : 16 - (text.size() % 16));
             if (paddingSize) {
                 for (int i = 0; i < (paddingSize - 1); ++i) text.push_back(0);
                 text.push_back(paddingSize);
@@ -63,12 +63,24 @@ namespace Crypto {
 
 #ifdef UNIT_TESTING
     SCENARIO("AES Cryptography", "[crypto][sym][aes]") {
-        GIVEN("A sequence of bytes and an IV") {
-            vector<uint8_t> input = {72, 195, 164, 115, 99, 104, 101, 110};
-            vector<uint8_t> iv; for (uint8_t i = 0; i < IV_SIZE - 50; ++i) iv.push_back(i);
-            vector<uint8_t> key; for (uint8_t i = 0; i < IV_SIZE; ++i) iv.push_back(i);
+        GIVEN("An IV that is too short") {
+            WHEN("it is attempted to encrypt a value") {
+                THEN("it should fail") {
+                    vector<uint8_t> input = {72, 195, 164, 115, 99, 104, 101, 110};
+                    vector<uint8_t> iv; for (uint8_t i = 0; i < IV_SIZE/2; ++i) iv.push_back(i);
+                    vector<uint8_t> key; for (uint8_t i = 0; i < IV_SIZE; ++i) key.push_back(i);
 
-            vector<uint8_t> ciphertext = Crypto::sym::encrypt(input, key, iv).expect("Failed to encrypt input."); // TODO Test doesn't fail where it shouldA
+                    REQUIRE(Crypto::sym::encrypt(input, key, iv).isErr());
+                }
+            }
+        }
+
+        GIVEN("A sequence of bytes and an IV as well as a key") {
+            vector<uint8_t> input = {72, 195, 164, 115, 99, 104, 101, 110};
+            vector<uint8_t> iv; for (uint8_t i = 0; i < IV_SIZE; ++i) iv.push_back(i);
+            vector<uint8_t> key; for (uint8_t i = 0; i < IV_SIZE; ++i) key.push_back(static_cast<uint8_t>(i * 2));
+
+            vector<uint8_t> ciphertext = Crypto::sym::encrypt(input, key, iv).unwrap();
 
             WHEN("it is decrypted using the correct key") {
                 vector<uint8_t> output = Crypto::sym::decrypt(ciphertext, key);

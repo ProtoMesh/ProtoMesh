@@ -18,12 +18,16 @@ int main() {
     Logger::setOutputStream(&std::cout);
     Logger::setOutputWidth(size.ws_col ? size.ws_col : 100);
     Logger::setTimeProvider(make_shared<UnixRelativeTimeProvider>());
-    Logger::setLogLevel(Info);
+    Logger::setLogLevel(Debug);
 
     /// Print the version
     Logger(Custom, "    HoMesh α") << "v0.0.1-6afc6d" << endl;
 
-    while (!interrupted) {};
+    Logger(Info) << "Creating UnixNetworkProvider" << endl;
+    NETWORK_PROVIDER_T net = make_shared<UnixNetworkProvider>();
+    std::vector<NETWORK_T> networks = net->getAvailableNetworks();
+
+//    while (!interrupted) {};
 
     cout << endl;
 

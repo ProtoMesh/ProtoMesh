@@ -35,6 +35,7 @@ public:
     virtual int recv(std::vector<uint8_t> *buffer, unsigned int timeout_ms)= 0;
 };
 
+#define NETWORK_PROVIDER_T std::shared_ptr<NetworkProvider>
 class NetworkProvider {
 public:
     ~NetworkProvider() = default;

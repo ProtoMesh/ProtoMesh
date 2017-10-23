@@ -1,4 +1,4 @@
-namespace hoMesh;
+namespace hoMesh.crypto;
 
 enum UUIDType : byte {
     Generic = 0,

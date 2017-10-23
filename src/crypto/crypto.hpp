@@ -11,8 +11,8 @@
 #include <vector>
 #include <algorithm>
 #include <result.h>
-#include <buffers/crypto_generated.h>
-#include <buffers/uuid_generated.h>
+#include <buffers/crypto/asym_generated.h>
+#include <buffers/crypto/uuid_generated.h>
 extern "C" {
     /// Implemented @ lib/AES/aes.c
     void AES_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv);
@@ -42,11 +42,9 @@ using namespace std;
 /// Defining cryptography types
 #define COMPRESSED_PUBLIC_KEY_T array<uint8_t, COMPRESSED_PUB_KEY_SIZE>
 #define PRIVATE_KEY_T array<uint8_t, PRIV_KEY_SIZE>
-#define NETWORK_KEY_T COMPRESSED_PUBLIC_KEY_T
-#define NETWORK_KEY_SIZE COMPRESSED_PUB_KEY_SIZE
 #define SIGNATURE_T array<uint8_t, PUB_KEY_SIZE>
-#define HASH vector<uint8_t>
 #define SHARED_KEY_T vector<uint8_t>
+#define HASH vector<uint8_t>
 
 /// Defining the elliptic curve to use
 extern const struct uECC_Curve_t* ECC_CURVE;
@@ -69,7 +67,7 @@ namespace Crypto {
         UUID(uint32_t a, uint32_t b, uint32_t c, uint32_t d, UUIDType type = UUIDType::Generic) : a(a), b(b), c(c), d(d), type(type) {};
         UUID(UUIDType type);
         UUID();
-        explicit UUID(const hoMesh::UUID* id);
+        explicit UUID(const hoMesh::crypto::UUID* id);
 
         vector<uint8_t> toVector() const;
 
