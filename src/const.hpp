@@ -1,5 +1,5 @@
-#ifndef HoMesh_CONST_HPP
-#define HoMesh_CONST_HPP
+#ifndef PROTOMESH_CONST_HPP
+#define PROTOMESH_CONST_HPP
 
 /// Networking
 #define MULTICAST_NETWORK "235.17.10.20"
@@ -10,4 +10,4 @@
 #define RECV_OK     0
 #define RECV_ERR    1
 
-#endif //HoMesh_CONST_HPP
+#endif //PROTOMESH_CONST_HPP

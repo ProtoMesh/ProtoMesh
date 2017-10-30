@@ -1,5 +1,5 @@
-#ifndef HoMesh_LOGGER_HPP
-#define HoMesh_LOGGER_HPP
+#ifndef PROTOMESH_LOGGER_HPP
+#define PROTOMESH_LOGGER_HPP
 
 #include <string>
 #include <memory>
@@ -77,4 +77,4 @@ public:
 #define custom(prefix, msg) { Logger::log(LogLevel::Custom, msg, __CONTEXT__, prefix); }
 
 
-#endif //HoMesh_LOGGER_HPP
+#endif //PROTOMESH_LOGGER_HPP

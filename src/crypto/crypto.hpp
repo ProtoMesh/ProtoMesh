@@ -1,5 +1,5 @@
-#ifndef HoMesh_CRYPTO_HPP
-#define HoMesh_CRYPTO_HPP
+#ifndef PROTOMESH_CRYPTO_HPP
+#define PROTOMESH_CRYPTO_HPP
 
 #define CBC 1
 #define EBC 0
@@ -67,7 +67,7 @@ namespace Crypto {
         UUID(uint32_t a, uint32_t b, uint32_t c, uint32_t d, UUIDType type = UUIDType::Generic) : a(a), b(b), c(c), d(d), type(type) {};
         UUID(UUIDType type);
         UUID();
-        explicit UUID(const hoMesh::crypto::UUID* id);
+        explicit UUID(const protoMesh::crypto::UUID* id);
 
         vector<uint8_t> toVector() const;
 
@@ -127,7 +127,7 @@ namespace Crypto {
             COMPRESSED_PUBLIC_KEY_T getCompressed();
             PUB_HASH_T getHash();
 
-            flatbuffers::Offset<hoMesh::crypto::PublicKey> toBuffer(flatbuffers::FlatBufferBuilder* builder);
+            flatbuffers::Offset<protoMesh::crypto::PublicKey> toBuffer(flatbuffers::FlatBufferBuilder* builder);
         };
 
         struct KeyPair {
@@ -157,4 +157,4 @@ namespace Crypto {
 }
 
 
-#endif //HoMesh_CRYPTO_HPP
+#endif //PROTOMESH_CRYPTO_HPP

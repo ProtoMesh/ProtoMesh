@@ -21,7 +21,7 @@ int main() {
     Logger::setLogLevel(Debug);
 
     /// Print the version
-    Logger(Custom, "    HoMesh α") << "v0.0.1-6afc6d" << endl;
+    Logger(Custom, "    ProtoMesh α") << "v0.0.1-6afc6d" << endl;
 
     Logger(Info) << "Creating UnixNetworkProvider" << endl;
     NETWORK_PROVIDER_T net = make_shared<UnixNetworkProvider>();

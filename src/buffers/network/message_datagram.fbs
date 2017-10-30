@@ -1,7 +1,7 @@
 include "../crypto/uuid.fbs";
 include "../crypto/asym.fbs";
 
-namespace hoMesh.network;
+namespace protoMesh.network;
 
 // ***
 // * Message datagram.
@@ -12,7 +12,7 @@ table MessageDatagram {
     // * List of nodes.
     // * All nodes in order that this datagram should traverse on its path to the destination.
     // ***
-    route: [hoMesh.crypto.UUID];
+    route: [protoMesh.crypto.UUID];
 
     // TODO Add a way to determine which network types this should use at specific hops
 

@@ -2,8 +2,8 @@
 // Created by Til Blechschmidt on 22.10.17.
 //
 
-#ifndef HOMESH_SAFEQUEUE_HPP
-#define HOMESH_SAFEQUEUE_HPP
+#ifndef PROTOMESH_SAFEQUEUE_HPP
+#define PROTOMESH_SAFEQUEUE_HPP
 
 
 #include <queue>
@@ -51,4 +51,4 @@ private:
 };
 
 
-#endif //HOMESH_SAFEQUEUE_HPP
+#endif //PROTOMESH_SAFEQUEUE_HPP

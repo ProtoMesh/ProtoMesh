@@ -1,5 +1,5 @@
-#ifndef HoMesh_STORAGE_HPP
-#define HoMesh_STORAGE_HPP
+#ifndef PROTOMESH_STORAGE_HPP
+#define PROTOMESH_STORAGE_HPP
 
 #include <string>
 #include <vector>
@@ -32,4 +32,4 @@ public:
     };
 #endif
 
-#endif //HoMesh_STORAGE_HPP
+#endif //PROTOMESH_STORAGE_HPP

@@ -1,7 +1,7 @@
 include "../crypto/uuid.fbs";
 include "../crypto/asym.fbs";
 
-namespace hoMesh.network;
+namespace protoMesh.network;
 
 // ---- Communication workflow ----
 // 1. The origin checks whether or not the target is within its zone.
@@ -30,20 +30,20 @@ table RouteDiscoveryDatagram {
     // * Upon bordercasting these targets are skipped since they received it already.
     // * This ultimately prevents unnecessary retransmissions.
     // ***
-    coveredNodes: [hoMesh.crypto.UUID];
+    coveredNodes: [protoMesh.crypto.UUID];
 
     // ***
     // * UUID of the origin and the destination.
     // * Used to determine where the datagram should go.
     // ***
-    origin: hoMesh.crypto.PublicKey;
-    destination: hoMesh.crypto.UUID;
+    origin: protoMesh.crypto.PublicKey;
+    destination: protoMesh.crypto.UUID;
 
     // ***
     // * List of nodes this particular datagram passed through.
     // * Upon reaching its target zone this will be used to establish communication with the origin.
     // ***
-    route: [hoMesh.crypto.UUID];
+    route: [protoMesh.crypto.UUID];
 
     // ***
     // * Unix timestamp

@@ -1,5 +1,5 @@
-#ifndef HoMesh_LIBRARY_H
-#define HoMesh_LIBRARY_H
+#ifndef PROTOMESH_LIBRARY_H
+#define PROTOMESH_LIBRARY_H
 
 #include <string>
 #include <memory>

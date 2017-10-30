@@ -69,10 +69,10 @@ namespace Crypto {
             return hash;
         }
 
-        flatbuffers::Offset<hoMesh::crypto::PublicKey> PublicKey::toBuffer(flatbuffers::FlatBufferBuilder* builder) {
+        flatbuffers::Offset<protoMesh::crypto::PublicKey> PublicKey::toBuffer(flatbuffers::FlatBufferBuilder* builder) {
             COMPRESSED_PUBLIC_KEY_T compressedKey(this->getCompressed());
             auto pubKeyVec = builder->CreateVector(compressedKey.begin(), compressedKey.size());
-            return hoMesh::crypto::CreatePublicKey(*builder, pubKeyVec);
+            return protoMesh::crypto::CreatePublicKey(*builder, pubKeyVec);
         }
 
         SIGNATURE_T sign(vector<uint8_t> text, PRIVATE_KEY_T privKey) {

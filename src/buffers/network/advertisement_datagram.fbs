@@ -1,7 +1,7 @@
 include "../crypto/uuid.fbs";
 include "../crypto/asym.fbs";
 
-namespace hoMesh.network;
+namespace protoMesh.network;
 
 // ***
 // * Datagram to advertise presence within a zone.
@@ -11,15 +11,15 @@ table AdvertisementDatagram {
         // * Identification of a device
         // * Consisting of the UUID and the public key of the advertiser.
         // ***
-        uuid: hoMesh.crypto.UUID;
-        pubKey: hoMesh.crypto.PublicKey;
+        uuid: protoMesh.crypto.UUID;
+        pubKey: protoMesh.crypto.PublicKey;
 
         // ***
         // * List of nodes this particular datagram passed through.
         // * Utilized to build a routing table for the local zone.
         // * Datagram is discarded (after storing the route) if the list exceeds the zone size.
         // ***
-        route: [hoMesh.crypto.UUID];
+        route: [protoMesh.crypto.UUID];
 
         // ***
         // * Signature

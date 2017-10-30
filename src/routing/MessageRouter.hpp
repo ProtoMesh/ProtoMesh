@@ -2,8 +2,8 @@
 // Created by Til Blechschmidt on 22.10.17.
 //
 
-#ifndef HOMESH_MESSAGEROUTER_HPP
-#define HOMESH_MESSAGEROUTER_HPP
+#ifndef PROTOMESH_MESSAGEROUTER_HPP
+#define PROTOMESH_MESSAGEROUTER_HPP
 
 #include <crypto/crypto.hpp>
 #include <map>
@@ -11,7 +11,7 @@
 #include "Route.hpp"
 
 using namespace std;
-using namespace hoMesh::network;
+using namespace protoMesh::network;
 
 // TODO Add documentation for routes going stale and notifying all parties using the route that it went stale.
 
@@ -35,4 +35,4 @@ public:
 };
 
 
-#endif //HOMESH_MESSAGEROUTER_HPP
+#endif //PROTOMESH_MESSAGEROUTER_HPP

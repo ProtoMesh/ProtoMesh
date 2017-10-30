@@ -1,5 +1,5 @@
-#ifndef HoMesh_LINUX_HPP
-#define HoMesh_LINUX_HPP
+#ifndef PROTOMESH_LINUX_HPP
+#define PROTOMESH_LINUX_HPP
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -13,7 +13,7 @@
 #include "api/storage.hpp"
 #include "api/time.hpp"
 
-#define STORAGE_PREFIX "/.config/hoMesh"
+#define STORAGE_PREFIX "/.config/protoMesh"
 
 using boost::asio::ip::udp;
 
@@ -57,4 +57,4 @@ public:
     }
 };
 
-#endif //HoMesh_LINUX_HPP
+#endif //PROTOMESH_LINUX_HPP

@@ -2,8 +2,8 @@
 // Created by Til Blechschmidt on 22.10.17.
 //
 
-#ifndef HOMESH_ROUTE_HPP
-#define HOMESH_ROUTE_HPP
+#ifndef PROTOMESH_ROUTE_HPP
+#define PROTOMESH_ROUTE_HPP
 
 
 #include <crypto/crypto.hpp>
@@ -15,4 +15,4 @@ class Route {
 };
 
 
-#endif //HOMESH_ROUTE_HPP
+#endif //PROTOMESH_ROUTE_HPP

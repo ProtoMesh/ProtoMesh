@@ -2,8 +2,8 @@
 // Created by themegatb on 5/28/17.
 //
 
-#ifndef HoMesh_TIME_HPP
-#define HoMesh_TIME_HPP
+#ifndef PROTOMESH_TIME_HPP
+#define PROTOMESH_TIME_HPP
 
 #define REL_TIME_PROV_T std::shared_ptr<RelativeTimeProvider>
 
@@ -20,4 +20,4 @@ public:
 };
 #endif
 
-#endif //HoMesh_TIME_HPP
+#endif //PROTOMESH_TIME_HPP

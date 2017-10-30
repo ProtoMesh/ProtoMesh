@@ -1,4 +1,4 @@
-namespace hoMesh.crypto;
+namespace protoMesh.crypto;
 
 table PublicKey {
     compressed: [ubyte] (required);
