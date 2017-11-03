@@ -1,40 +1,40 @@
-# Function to generate the filename for the resulting header
-function(get_compiled_fbs_filename SRC_FBS VAR)
-    string(REGEX REPLACE "\\.fbs$" "_generated.h" COMPILED_NAME ${SRC_FBS})
-    set(${VAR} ${COMPILED_NAME} PARENT_SCOPE)
-endfunction()
-# Function to compile a flatbuffer scheme into a c++ header in-place
-function(compile_flatbuffers_schema SRC_FBS)
-    get_filename_component(SRC_FBS_DIR ${SRC_FBS} PATH)
-    get_compiled_fbs_filename(${SRC_FBS} GEN_HEADER)
-    add_custom_command(
-            OUTPUT ${GEN_HEADER}
-            COMMAND "${FLATBUFFERS_FLATC_EXECUTABLE}" -c --no-includes --gen-mutable
-            --gen-object-api -o "${SRC_FBS_DIR}"
-            -I "${FLATBUFFERS_INCLUDE_DIR}"
-            "${SRC_FBS}"
-            DEPENDS flatc ${SRC_FBS}
-    )
-endfunction()
-
 # Set the location of flatc and the buffers
-set(FLATBUFFERS_FLATC_EXECUTABLE lib/flatbuffers/flatc)
-set(FLATBUFFERS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/buffers)
+set(FLATBUFFERS_FLATC_EXECUTABLE ${CMAKE_BINARY_DIR}/lib/flatbuffers/flatc)
+set(FLATBUFFERS_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/modules)
 
 # Include flatbuffer CMakeLists.txt for compilation of flatc and include the headers directory
-add_subdirectory(lib/flatbuffers)
-include_directories(lib/flatbuffers/include)
+add_subdirectory(${CMAKE_SOURCE_DIR}/lib/flatbuffers)
+include_directories(${CMAKE_BINARY_DIR}/lib/flatbuffers/include)
 
-# Search for .fbs files recursively in FLATBUFFERS_DIR
-file(GLOB_RECURSE BUFFERS "${FLATBUFFERS_DIR}/*.fbs")
-# Iterate source buffers
-foreach(SRC_FBS ${BUFFERS})
-    # Compile buffers
-    compile_flatbuffers_schema(${SRC_FBS})
-    # Add resulting headers to the list
-    get_compiled_fbs_filename(${SRC_FBS} HEADER_NAME)
-    set(FBS_HEADERS ${FBS_HEADERS} ${HEADER_NAME})
-endforeach()
+function(create_flatbuffer_target TARGET_NAME FBS_DIR)
+    # Variables
+    set(INPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${FBS_DIR})
 
-# Create a custom target for the headers
-add_custom_target(flatbuffer_headers DEPENDS ${FBS_HEADERS})
+    # Collect all .fbs files
+    file(GLOB_RECURSE BUFFERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${INPUT_DIR}/*.fbs")
+
+    # Iterate all flatbuffers
+    foreach(FBS_PATH ${BUFFERS})
+        # Variables
+        set(INPUT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${FBS_PATH})
+        string(REGEX REPLACE "\\.fbs$" "_generated.h" OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/${FBS_PATH})
+        get_filename_component(FILE_OUTPUT_DIR ${OUTPUT_FILE} DIRECTORY)
+
+        # Compile the buffer
+        add_custom_command(
+                OUTPUT ${OUTPUT_FILE}
+                COMMAND "${FLATBUFFERS_FLATC_EXECUTABLE}"
+                -c --no-includes --gen-mutable --gen-object-api
+                -o "${FILE_OUTPUT_DIR}"
+                -I "${FLATBUFFERS_INCLUDE_DIR}"
+                "${INPUT_FILE}"
+                DEPENDS flatc ${INPUT_FILE}
+        )
+
+        # Add the output to the list of buffers
+        set(FBS_HEADERS ${FBS_HEADERS} ${OUTPUT_FILE})
+    endforeach()
+
+    # Create the custom target for the headers
+    add_custom_target(${TARGET_NAME} DEPENDS ${FBS_HEADERS})
+endfunction()
