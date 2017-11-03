@@ -2,7 +2,8 @@ project(protoMesh::communication)
 
 # Define the source files for this module
 set(COMMUNICATION_SOURCES
-        ${PROJECT_SOURCE_DIR}/transmission.cpp)
+  ${PROJECT_SOURCE_DIR}/transmission.cpp
+  ${PROJECT_SOURCE_DIR}/routing.cpp)
 
 # Add test files
 set(PROTOMESH_TEST_FILES
