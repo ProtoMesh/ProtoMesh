@@ -1,0 +1,9 @@
+namespace protoMesh.cryptography;
+
+table UUID {
+    a: uint;
+    b: uint;
+    c: uint;
+    d: uint;
+}
+

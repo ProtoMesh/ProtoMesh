@@ -1,0 +1,38 @@
+include "../../cryptography/uuid.fbs";
+include "../../cryptography/asymmetric.fbs";
+
+namespace protoMesh.communication.iarp;
+
+table AdvertisementDatagram {
+    // ***
+    // * Identification of a device
+    // * Consisting of the UUID and the public key of the advertiser.
+    // ***
+    uuid: protoMesh.cryptography.UUID;
+    pubKey: protoMesh.cryptography.PublicKey;
+
+    // ***
+    // * List of nodes this particular datagram passed through.
+    // * Utilized to build a routing table for the local zone.
+    // * Datagram is discarded if the list exceeds the zone size.
+    // ***
+    route: [protoMesh.cryptography.UUID];
+
+    // ***
+    // * Signature
+    // * Created by calculating the SHA512 hashes of:
+    // * - uuid
+    // * - public key
+    // * and applying SHA512 on the concatenated hashes which then gets signed.
+    // ***
+    signature: [ubyte];
+
+    // ***
+    // * Advertising interval
+    // * Used to detect stale routes.
+    // ***
+    interval: uint;
+}
+
+file_identifier "ADVD";
+root_type AdvertisementDatagram;

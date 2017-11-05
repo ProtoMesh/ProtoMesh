@@ -1,0 +1,33 @@
+include "../cryptography/uuid.fbs";
+
+namespace protoMesh.communication;
+
+table MessageDatagram {
+    // ***
+    // * List of nodes
+    // * Path this datagram should traverse.
+    // * Contains origin at the beginning and destination at the end.
+    // ***
+    route: [protoMesh.cryptography.UUID];
+
+    // ***
+    // * Payload data
+    // * To be delivered to the destination.
+    // * Encrypted with the shared secret between the two involved parties.
+    // * Non-encrypted payloads get rejected.
+    // ***
+    payload: [ubyte];
+
+    // ***
+    // * Signature
+    // * Created by calculating the SHA512 hashes of:
+    // * - route list
+    // * - encrypted payload
+    // * - anonymity level
+    // * and applying SHA512 on the concatenated hashes which then gets signed.
+    // ***
+    signature: [ubyte];
+}
+
+file_identifier "MSGD";
+root_type MessageDatagram;

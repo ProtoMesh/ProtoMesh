@@ -1,0 +1,20 @@
+include "../cryptography/uuid.fbs";
+
+namespace protoMesh.communication;
+
+table DeliveryFailureDatagram {
+    // ***
+    // * List of nodes
+    // * Path this datagram should traverse.
+    // * Contains origin at the beginning and destination at the end.
+    // ***
+    route: [protoMesh.cryptography.UUID];
+
+    // ***
+    // * ID of the target to which delivery failed
+    // ***
+    originalRecipient: protoMesh.cryptography.UUID;
+}
+
+file_identifier "DLFD";
+root_type DeliveryFailureDatagram;

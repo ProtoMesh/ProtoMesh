@@ -1,0 +1,36 @@
+include "../../cryptography/uuid.fbs";
+include "../../cryptography/asymmetric.fbs";
+
+namespace protoMesh.communication.ierp;
+
+table RouteDiscoveryDatagram {
+    // ***
+    // * Nodes the datagram has already covered.
+    // * Upon relaying all target nodes are added to this list prior to dispatch.
+    // * During dispatch these targets are skipped since they received it already.
+    // ***
+    coveredNodes: [protoMesh.cryptography.UUID];
+
+    // ***
+    // * Identification of origin/destination
+    // * Used to determine where the datagram should go.
+    // ***
+    origin: protoMesh.cryptography.PublicKey;
+    destination: protoMesh.cryptography.UUID;
+
+    // ***
+    // * List of nodes traversed
+    // * Keeps track of the route to be used.
+    // ***
+    route: [protoMesh.cryptography.UUID];
+
+    // ***
+    // * Unix timestamp
+    // * Used to calculate the travel time this route takes.
+    // * Utilized to determine a timeout value for this route.
+    // ***
+    sentTimestamp: long;
+}
+
+file_identifier "RDID";
+root_type RouteDiscoveryDatagram;

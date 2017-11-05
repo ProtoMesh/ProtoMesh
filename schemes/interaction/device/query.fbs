@@ -1,0 +1,13 @@
+include "../../cryptography/uuid.fbs";
+include "../../cryptography/asymmetric.fbs";
+
+namespace protoMesh.device;
+
+table DeviceQuery {
+	user: protoMesh.cryptography.PublicKey;
+	target: protoMesh.cryptography.UUID;
+	signature: protoMesh.cryptography.Signature;
+}
+
+file_identifier "DEVQ";
+root_type DeviceQuery;

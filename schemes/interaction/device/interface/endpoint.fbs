@@ -1,0 +1,13 @@
+namespace protoMesh.interaction.device.interface;
+
+enum EndpointTypeID : long {
+    Unknown = 0,
+	Color = 1,
+	Temperature = 2,
+	Authorization = 3
+}
+
+table Endpoint {
+	version: uint;
+	type: EndpointTypeID;
+}

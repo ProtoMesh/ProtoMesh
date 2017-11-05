@@ -1,0 +1,10 @@
+namespace protoMesh.cryptography;
+
+table PublicKey {
+    compressed: [ubyte] (required);
+}
+
+table Signature {
+    data: [ubyte] (required);
+    used_key: [ubyte] (required); // TODO Replace with PublicKey.hash
+}

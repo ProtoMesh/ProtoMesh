@@ -18,6 +18,7 @@ set(PROTOMESH_TEST_DEPS)
 
 # Include project modules
 add_subdirectory(modules/communication)
+add_subdirectory(schemes)
 
 
 # Define targets

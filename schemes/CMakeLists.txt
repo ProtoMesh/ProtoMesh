@@ -1,0 +1,6 @@
+create_flatbuffer_target(schemes_communication communication)
+create_flatbuffer_target(schemes_cryptography cryptography)
+create_flatbuffer_target(schemes_interaction interaction)
+
+add_custom_target(schemes)
+add_dependencies(schemes schemes_communication schemes_cryptography schemes_interaction)
