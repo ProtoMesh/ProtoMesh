@@ -9,20 +9,20 @@ table RouteDiscoveryDatagram {
     // * Upon relaying all target nodes are added to this list prior to dispatch.
     // * During dispatch these targets are skipped since they received it already.
     // ***
-    coveredNodes: [protoMesh.cryptography.UUID];
+    coveredNodes: [cryptography.UUID];
 
     // ***
     // * Identification of origin/destination
     // * Used to determine where the datagram should go.
     // ***
-    origin: protoMesh.cryptography.PublicKey;
-    destination: protoMesh.cryptography.UUID;
+    origin: cryptography.PublicKey;
+    destination: cryptography.UUID;
 
     // ***
     // * List of nodes traversed
     // * Keeps track of the route to be used.
     // ***
-    route: [protoMesh.cryptography.UUID];
+    route: [cryptography.UUID];
 
     // ***
     // * Unix timestamp

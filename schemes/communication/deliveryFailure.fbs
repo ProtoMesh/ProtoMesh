@@ -8,12 +8,12 @@ table DeliveryFailureDatagram {
     // * Path this datagram should traverse.
     // * Contains origin at the beginning and destination at the end.
     // ***
-    route: [protoMesh.cryptography.UUID];
+    route: [cryptography.UUID];
 
     // ***
     // * ID of the target to which delivery failed
     // ***
-    originalRecipient: protoMesh.cryptography.UUID;
+    originalRecipient: cryptography.UUID;
 }
 
 file_identifier "DLFD";

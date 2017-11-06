@@ -9,18 +9,18 @@ table DeviceQuery {
     // * Might be equal to the requesting device.
     // * Used when a authenticated user is requesting through a device.
     // ***
-    user: PublicKey;
+    user: cryptography.PublicKey;
 
     // ***
     // * Device to be requested
     // ***
-    target: UUID;
+    target: cryptography.UUID;
 
     // ***
     // * Proof of authenticity
     // * Used to make sure the user is who he pretends to be.
     // ***
-    signature: Signature;
+    signature: cryptography.Signature;
 }
 
 file_identifier "DEVQ";

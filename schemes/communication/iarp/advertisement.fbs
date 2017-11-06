@@ -8,15 +8,15 @@ table AdvertisementDatagram {
     // * Identification of a device
     // * Consisting of the UUID and the public key of the advertiser.
     // ***
-    uuid: protoMesh.cryptography.UUID;
-    pubKey: protoMesh.cryptography.PublicKey;
+    uuid: cryptography.UUID;
+    pubKey: cryptography.PublicKey;
 
     // ***
     // * List of nodes this particular datagram passed through.
     // * Utilized to build a routing table for the local zone.
     // * Datagram is discarded if the list exceeds the zone size.
     // ***
-    route: [protoMesh.cryptography.UUID];
+    route: [cryptography.UUID];
 
     // ***
     // * Signature

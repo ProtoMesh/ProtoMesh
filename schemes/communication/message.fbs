@@ -8,7 +8,7 @@ table MessageDatagram {
     // * Path this datagram should traverse.
     // * Contains origin at the beginning and destination at the end.
     // ***
-    route: [protoMesh.cryptography.UUID];
+    route: [cryptography.UUID];
 
     // ***
     // * Payload data
