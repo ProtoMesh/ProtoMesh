@@ -2,8 +2,12 @@ include "./interface/endpoint.fbs";
 
 namespace protoMesh.interaction.device;
 
-table Device { // TODO encrypt with shared secret of querying user
-	endpoints: [interface.Endpoint];
+table Device {
+    // ***
+    // * List of endpoints
+    // * Reduced to querying users permitted ones.
+    // ***
+	interface: [interface.Endpoint];
 }
 
 file_identifier "DEVI";

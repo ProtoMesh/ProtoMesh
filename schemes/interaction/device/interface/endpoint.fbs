@@ -1,5 +1,9 @@
 namespace protoMesh.interaction.device.interface;
 
+// ***
+// * Magic numbers for endpoint types
+// * Meaning is defined in online database.
+// ***
 enum EndpointTypeID : long {
     Unknown = 0,
 	Color = 1,
@@ -8,6 +12,16 @@ enum EndpointTypeID : long {
 }
 
 table Endpoint {
+    // ***
+    // * Version number of the interface
+    // * Increments when the available functions are altered.
+    // ***
 	version: uint;
+
+	// ***
+	// * Type identifier
+	// * Uniquely identifies the endpoints type.
+	// * Implicitly defines the available functions.
+	// ***
 	type: EndpointTypeID;
 }

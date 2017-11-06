@@ -4,9 +4,23 @@ include "../../cryptography/asymmetric.fbs";
 namespace protoMesh.device;
 
 table DeviceQuery {
-	user: protoMesh.cryptography.PublicKey;
-	target: protoMesh.cryptography.UUID;
-	signature: protoMesh.cryptography.Signature;
+    // ***
+    // * Requesting user
+    // * Might be equal to the requesting device.
+    // * Used when a authenticated user is requesting through a device.
+    // ***
+    user: PublicKey;
+
+    // ***
+    // * Device to be requested
+    // ***
+    target: UUID;
+
+    // ***
+    // * Proof of authenticity
+    // * Used to make sure the user is who he pretends to be.
+    // ***
+    signature: Signature;
 }
 
 file_identifier "DEVQ";
