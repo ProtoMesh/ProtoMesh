@@ -1,4 +1,4 @@
-namespace protoMesh.interaction.device.interface;
+namespace ProtoMesh.scheme.interaction.device.interface;
 
 // ***
 // * Magic numbers for endpoint types

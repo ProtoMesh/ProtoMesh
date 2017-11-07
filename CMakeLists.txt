@@ -16,8 +16,27 @@ include_directories(lib/catch/single_include)
 set(PROTOMESH_TEST_FILES ${CMAKE_SOURCE_DIR}/modules/testing/test.cpp)
 set(PROTOMESH_TEST_DEPS)
 
+# Add micro-ecc and its sources
+include_directories(lib/micro-ecc)
+set(ECC_SOURCES
+        ${CMAKE_SOURCE_DIR}/lib/micro-ecc/uECC.h
+        ${CMAKE_SOURCE_DIR}/lib/micro-ecc/uECC.c
+        ${CMAKE_SOURCE_DIR}/lib/micro-ecc/uECC_vli.h
+        ${CMAKE_SOURCE_DIR}/lib/micro-ecc/types.h)
+
+# Add result source
+include_directories(lib/result)
+set(RESULT_SOURCES
+        ${CMAKE_SOURCE_DIR}/lib/result/result.h)
+
 # Include project modules
-add_subdirectory(modules/communication)
+set(PROTOMESH_MODULES communication cryptography)
+foreach(MODULE ${PROTOMESH_MODULES})
+    add_subdirectory(modules/${MODULE})
+    include_directories(modules/${MODULE})
+endforeach()
+
+# Include the schemes
 add_subdirectory(schemes)
 
 

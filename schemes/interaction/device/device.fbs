@@ -1,6 +1,6 @@
 include "./interface/endpoint.fbs";
 
-namespace protoMesh.interaction.device;
+namespace ProtoMesh.scheme.interaction.device;
 
 table Device {
     // ***

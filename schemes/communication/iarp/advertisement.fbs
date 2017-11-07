@@ -1,7 +1,7 @@
 include "../../cryptography/uuid.fbs";
 include "../../cryptography/asymmetric.fbs";
 
-namespace protoMesh.communication.iarp;
+namespace ProtoMesh.scheme.communication.iarp;
 
 table AdvertisementDatagram {
     // ***

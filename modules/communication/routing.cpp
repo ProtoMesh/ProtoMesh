@@ -4,16 +4,27 @@
 
 #include "routing.hpp"
 
+namespace ProtoMesh::communication::Routing {
+
 #ifdef UNIT_TESTING
-SCENARIO("Two nodes within the same zone should communicate") {
 
-    GIVEN("A network stub and two devices") {
-        NETWORK_T stub = make_shared<Transmission::NetworkStub>();
+    SCENARIO("Two nodes within the same zone should communicate") {
 
-        WHEN("one node sends an advertisement") {
-//            stub->send(IARP::Advertisement().serialize());
+        GIVEN("A routing table and a advertisement byte stream") {
+//        NETWORK_T stub = make_shared<Transmission::NetworkStub>();
+            cryptography::UUID uuid;
+            Routing::IARP::Advertisement adv(uuid);
+            Routing::IARP::RoutingTable table;
+
+            WHEN("the advertisement is added to the routing table") {
+                table.processAdvertisement(adv.serialize());
+                THEN("a route to the advertiser should be available") {
+//                    table.getRouteTo(uuid);
+                }
+            }
         }
     }
-}
 
 #endif // UNIT_TESTING
+
+}

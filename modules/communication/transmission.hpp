@@ -5,14 +5,14 @@
 
 using namespace std;
 
-namespace ProtoMesh::Communication::Transmission {
+namespace ProtoMesh::communication::transmission {
     enum class ReceiveResult {
         OK,
         NoData,
         Timeout
     };
 
-    #define NETWORK_T shared_ptr<ProtoMesh::Communication::Transmission::Network>
+    #define NETWORK_T shared_ptr<ProtoMesh::communication::transmission::Network>
     class Network {
     public:
         Network() = default;

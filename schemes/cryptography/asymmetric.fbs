@@ -1,4 +1,4 @@
-namespace protoMesh.cryptography;
+namespace ProtoMesh.scheme.cryptography;
 
 table PublicKey {
     compressed: [ubyte] (required);

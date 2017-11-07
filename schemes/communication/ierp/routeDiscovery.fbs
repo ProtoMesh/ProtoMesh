@@ -1,7 +1,7 @@
 include "../../cryptography/uuid.fbs";
 include "../../cryptography/asymmetric.fbs";
 
-namespace protoMesh.communication.ierp;
+namespace ProtoMesh.scheme.communication.ierp;
 
 table RouteDiscoveryDatagram {
     // ***

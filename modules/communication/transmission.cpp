@@ -4,7 +4,7 @@
 
 #include "transmission.hpp"
 
-namespace ProtoMesh::Communication::Transmission {
+namespace ProtoMesh::communication::transmission {
 
 #ifdef UNIT_TESTING
     SCENARIO("A network stub is required for unit testing", "[module][communication][transmission][stub]") {

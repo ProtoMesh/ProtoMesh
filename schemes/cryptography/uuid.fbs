@@ -1,6 +1,6 @@
-namespace protoMesh.cryptography;
+namespace ProtoMesh.scheme.cryptography;
 
-table UUID {
+struct UUID {
     a: uint;
     b: uint;
     c: uint;

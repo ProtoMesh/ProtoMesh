@@ -1,6 +1,6 @@
 include "../cryptography/uuid.fbs";
 
-namespace protoMesh.communication;
+namespace ProtoMesh.scheme.communication;
 
 table MessageDatagram {
     // ***
