@@ -7,3 +7,6 @@ cmake-build-debug
 
 # Old files
 old/
+
+# macOS junk
+.DS_Store
