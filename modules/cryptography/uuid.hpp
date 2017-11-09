@@ -1,7 +1,3 @@
-//
-// Created by Til Blechschmidt on 06.11.17.
-//
-
 #ifndef PROTOMESH_UUID_HPP
 #define PROTOMESH_UUID_HPP
 
@@ -15,6 +11,7 @@
 #include <iostream>
 
 #include "cryptography/uuid_generated.h"
+#include "hash.hpp"
 
 using namespace std;
 
@@ -47,6 +44,8 @@ namespace ProtoMesh::cryptography {
     }
 
 }
+
+MAKE_HASHABLE(ProtoMesh::cryptography::UUID, t.a, t.b, t.c, t.d)
 
 
 #endif //PROTOMESH_UUID_HPP

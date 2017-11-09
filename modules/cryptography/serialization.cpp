@@ -26,7 +26,8 @@ namespace ProtoMesh::cryptography::serialization {
         return bytes;
     }
 #ifdef UNIT_TESTING
-    SCENARIO("uint8_t <=> string conversion", "[module][cryptography][serialization]") {
+
+    SCENARIO("uint8_t <=> string conversion", "[unit_test][module][cryptography][serialization]") {
         GIVEN("An array of uint8_t's") {
             vector<uint8_t> arr = {200, 101, 230, 29, 49, 185, 102, 57, 69, 5, 9, 111};
 

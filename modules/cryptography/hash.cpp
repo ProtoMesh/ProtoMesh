@@ -17,7 +17,8 @@ namespace ProtoMesh::cryptography::hash {
     }
 
 #ifdef UNIT_TESTING
-    SCENARIO("SHA512 creation", "[module][cryptography][hash][sha512]") {
+
+    SCENARIO("SHA512 creation", "[unit_test][module][cryptography][hash][sha512]") {
         GIVEN("An SHA512 hash of a message") {
             vector<uint8_t> msg = {115, 111, 109, 101, 83, 116, 114, 105, 110, 103};
             string validHash("bc911c34051d0523314a9c121d06d4907fc4a91ed73312c9a87d6f5ac969095de7a7c88d43cea88ced5888df1d0d01d8a2f13a0313fed05362626260e009dd51");

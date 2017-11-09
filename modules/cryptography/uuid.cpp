@@ -47,7 +47,8 @@ namespace ProtoMesh::cryptography {
     }
 
 #ifdef UNIT_TESTING
-    SCENARIO("UUID Creation", "[module][cryptography][uuid]") {
+
+    SCENARIO("UUID Creation", "[unit_test][module][cryptography][uuid]") {
         GIVEN("Two distinct UUIDs") {
             UUID uuid1;
             UUID uuid2;

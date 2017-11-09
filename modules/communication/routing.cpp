@@ -74,10 +74,30 @@ namespace ProtoMesh::communication::Routing {
         this->route.push_back(uuid);
     }
 
+    Result<vector<cryptography::UUID>, IARP::RouteDiscoveryError>
+    IARP::RoutingTable::getRouteTo(cryptography::UUID uuid) {
+        if (routes.find(uuid) != routes.end())
+            return Ok(routes.at(uuid).route);
+        else
+            return Err(RouteDiscoveryError::NO_ROUTE_AVAILABLE);
+    }
+
+    void IARP::RoutingTable::processAdvertisement(IARP::Advertisement adv) {
+        /// Check if we already have a route for this target
+        if (routes.find(adv.uuid) != routes.end()) {
+            // Possibly add the new route entry
+        }
+
+        /// Insert the route
+        // TODO Replace this with the real thing
+        long currentTime = 0;
+        routes.insert({adv.uuid, RoutingTableEntry(adv, currentTime)});
+    }
+
 #ifdef UNIT_TESTING
 
     SCENARIO("Two nodes within the same zone should communicate",
-             "[module][communication][routing][iarp][advertisement]") {
+             "[unit_test][module][communication][routing][iarp][advertisement]") {
 
         GIVEN("An advertisement") {
             cryptography::UUID uuid;
@@ -126,13 +146,14 @@ namespace ProtoMesh::communication::Routing {
             adv.addHop(hop1);
             adv.addHop(hop2);
 
-//            WHEN("the advertisement is added to the routing table") {
-//                table.processAdvertisement(adv.serialize());
-//                THEN("a route to the advertiser should be available") {
-////                    table.getRouteTo(uuid);
-//                    REQUIRE(false);
-//                }
-//            }
+            WHEN("the advertisement is added to the routing table") {
+                table.processAdvertisement(adv);
+                THEN("a route to the advertiser should be available") {
+                    vector<cryptography::UUID> route = table.getRouteTo(uuid).unwrap();
+                    vector<cryptography::UUID> expectedRoute({hop2, hop1});
+                    REQUIRE(route == expectedRoute);
+                }
+            }
         }
     }
 

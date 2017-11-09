@@ -103,7 +103,8 @@ namespace ProtoMesh::cryptography::asymmetric {
     }
 
 #ifdef UNIT_TESTING
-    SCENARIO("Elliptic curve cryptography", "[module][cryptography][asymmetric]") {
+
+    SCENARIO("Elliptic curve cryptography", "[unit_test][module][cryptography][asymmetric]") {
         THEN("the key sizes should be valid") {
             REQUIRE(verifyKeySize());
         }

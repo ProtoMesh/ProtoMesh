@@ -7,7 +7,8 @@
 namespace ProtoMesh::communication::transmission {
 
 #ifdef UNIT_TESTING
-    SCENARIO("A network stub is required for unit testing", "[module][communication][transmission][stub]") {
+
+    SCENARIO("A network stub is required for unit testing", "[unit_test][module][communication][transmission][stub]") {
         GIVEN("A network instance and a message") {
             NETWORK_T stub = make_shared<NetworkStub>();
             vector<uint8_t> msg = {1, 2, 3, 4, 5};
