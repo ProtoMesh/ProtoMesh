@@ -12,4 +12,7 @@ set(PROTOMESH_TEST_FILES
         PARENT_SCOPE)
 
 # Add the required schemes as test dependencies
-set(PROTOMESH_TEST_DEPS schemes_communication PARENT_SCOPE)
+set(PROTOMESH_TEST_DEPS
+        ${PROTOMESH_TEST_DEPS}
+        schemes_communication
+        PARENT_SCOPE)

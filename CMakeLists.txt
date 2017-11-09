@@ -29,15 +29,15 @@ include_directories(lib/result)
 set(RESULT_SOURCES
         ${CMAKE_SOURCE_DIR}/lib/result/result.h)
 
+# Include the schemes
+add_subdirectory(schemes)
+
 # Include project modules
 set(PROTOMESH_MODULES communication cryptography)
 foreach(MODULE ${PROTOMESH_MODULES})
     add_subdirectory(modules/${MODULE})
     include_directories(modules/${MODULE})
 endforeach()
-
-# Include the schemes
-add_subdirectory(schemes)
 
 
 # Define targets

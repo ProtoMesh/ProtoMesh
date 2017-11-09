@@ -63,11 +63,14 @@ namespace ProtoMesh::cryptography::asymmetric {
         explicit PublicKey(uint8_t* publicKey);
         explicit PublicKey(string publicKey); // takes a hex representation of a compressed pub key
 
-        string getCompressedString();
-        COMPRESSED_PUBLIC_KEY_T getCompressed();
-        PUB_HASH_T getHash();
+        string getCompressedString() const;
 
-        flatbuffers::Offset<ProtoMesh::scheme::cryptography::PublicKey> toBuffer(flatbuffers::FlatBufferBuilder* builder);
+        COMPRESSED_PUBLIC_KEY_T getCompressed() const;
+
+        PUB_HASH_T getHash() const;
+
+        flatbuffers::Offset<ProtoMesh::scheme::cryptography::PublicKey>
+        toBuffer(flatbuffers::FlatBufferBuilder *builder) const;
     };
 
     struct KeyPair {

@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 
 #include "cryptography/uuid_generated.h"
 

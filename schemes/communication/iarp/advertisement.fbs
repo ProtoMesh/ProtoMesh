@@ -18,20 +18,14 @@ table AdvertisementDatagram {
     // ***
     route: [cryptography.UUID];
 
-    // ***
-    // * Signature
-    // * Created by calculating the SHA512 hashes of:
-    // * - uuid
-    // * - public key
-    // * and applying SHA512 on the concatenated hashes which then gets signed.
-    // ***
-    signature: [ubyte];
+    // TODO Add protection against replay DoS attack
 
     // ***
     // * Advertising interval
     // * Used to detect stale routes.
+    // * Defaults to ten seconds
     // ***
-    interval: uint;
+    interval: uint = 10000;
 }
 
 file_identifier "ADVD";

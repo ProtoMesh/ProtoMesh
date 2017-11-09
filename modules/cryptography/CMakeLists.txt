@@ -21,4 +21,7 @@ set(PROTOMESH_TEST_FILES
         PARENT_SCOPE)
 
 # Add the required schemes as test dependencies
-set(PROTOMESH_TEST_DEPS schemes_cryptography PARENT_SCOPE)
+set(PROTOMESH_TEST_DEPS
+        ${PROTOMESH_TEST_DEPS}
+        schemes_cryptography
+        PARENT_SCOPE)

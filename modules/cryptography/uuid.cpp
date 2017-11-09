@@ -62,7 +62,7 @@ namespace ProtoMesh::cryptography {
             }
 
             WHEN("one is converted into a flatbuffer") {
-                auto buffer = uuid1.toScheme();
+                scheme::cryptography::UUID buffer = uuid1.toScheme();
 
                 AND_WHEN("it is converted back into a UUID") {
                     UUID reconstructed_uuid(&buffer);

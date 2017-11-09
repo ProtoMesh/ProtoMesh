@@ -2,6 +2,7 @@
 #define PROTOMESH_TRANSMISSION_HPP
 
 #include <vector>
+#include <memory>
 
 using namespace std;
 

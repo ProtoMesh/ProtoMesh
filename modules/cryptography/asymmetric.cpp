@@ -42,7 +42,7 @@ namespace ProtoMesh::cryptography::asymmetric {
         return Ok(PublicKey(compressedKey));
     }
 
-    COMPRESSED_PUBLIC_KEY_T PublicKey::getCompressed() {
+    COMPRESSED_PUBLIC_KEY_T PublicKey::getCompressed() const {
         // Compress the public key
         uint8_t cpubKey[COMPRESSED_PUB_KEY_SIZE];
         uECC_compress(this->raw.data(), cpubKey, ECC_CURVE);
@@ -53,12 +53,12 @@ namespace ProtoMesh::cryptography::asymmetric {
         return compressedKey;
     }
 
-    string PublicKey::getCompressedString() {
+    string PublicKey::getCompressedString() const {
         COMPRESSED_PUBLIC_KEY_T compressedKey(this->getCompressed());
         return ProtoMesh::cryptography::serialization::uint8ArrToString(compressedKey.data(), COMPRESSED_PUB_KEY_SIZE);
     }
 
-    PUB_HASH_T PublicKey::getHash() {
+    PUB_HASH_T PublicKey::getHash() const {
         PUB_HASH_T hash;
         vector<uint8_t> data(this->raw.begin(), this->raw.end());
         string ssHash(ProtoMesh::cryptography::hash::sha512(data));
@@ -66,7 +66,8 @@ namespace ProtoMesh::cryptography::asymmetric {
         return hash;
     }
 
-    flatbuffers::Offset<ProtoMesh::scheme::cryptography::PublicKey> PublicKey::toBuffer(flatbuffers::FlatBufferBuilder* builder) {
+    flatbuffers::Offset<ProtoMesh::scheme::cryptography::PublicKey>
+    PublicKey::toBuffer(flatbuffers::FlatBufferBuilder *builder) const {
         COMPRESSED_PUBLIC_KEY_T compressedKey(this->getCompressed());
         auto pubKeyVec = builder->CreateVector(compressedKey.begin(), compressedKey.size());
         return ProtoMesh::scheme::cryptography::CreatePublicKey(*builder, pubKeyVec);
