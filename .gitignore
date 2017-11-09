@@ -4,3 +4,6 @@
 # Build directories
 build
 cmake-build-debug
+
+# Old files
+old/
