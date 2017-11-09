@@ -65,12 +65,12 @@ namespace ProtoMesh::communication::Routing {
         };
 
         class RoutingTable {
-            unordered_map<cryptography::UUID, RoutingTableEntry> routes;
+            unordered_map<cryptography::UUID, vector<RoutingTableEntry>> routes;
 
         public:
             Result<vector<cryptography::UUID>, RouteDiscoveryError> getRouteTo(cryptography::UUID uuid);
 
-            void processAdvertisement(Advertisement adv);;
+            void processAdvertisement(Advertisement adv);
         };
     }
 
