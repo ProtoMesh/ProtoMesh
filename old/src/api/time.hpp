@@ -14,9 +14,11 @@ public:
 
 #ifdef UNIT_TESTING
 class DummyRelativeTimeProvider : public RelativeTimeProvider {
-    long last = 0;
+    long time = 0;
 public:
-    inline long millis() { last += 1000; return last; };
+    inline long millis() { return this.time; };
+
+    inline void turnTheClockBy(long duration) { this.time += duration; }
 };
 #endif
 

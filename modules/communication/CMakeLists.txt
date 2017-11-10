@@ -7,7 +7,8 @@ set(COMMUNICATION_SOURCES
         ${PROJECT_SOURCE_DIR}/iarp/RoutingTable.cpp
         ${PROJECT_SOURCE_DIR}/iarp/RoutingTable.hpp
         ${PROJECT_SOURCE_DIR}/iarp/Advertisement.cpp
-        ${PROJECT_SOURCE_DIR}/iarp/Advertisement.hpp)
+        ${PROJECT_SOURCE_DIR}/iarp/Advertisement.hpp
+        ${PROJECT_SOURCE_DIR}/RelativeTimeProvider.hpp)
 
 # Add test files
 set(PROTOMESH_TEST_FILES
