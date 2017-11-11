@@ -1,5 +1,5 @@
 # Set the location of flatc and the buffers
-set(FLATBUFFERS_FLATC_EXECUTABLE ${CMAKE_BINARY_DIR}/lib/flatbuffers/flatc)
+set(FLATBUFFERS_FLATC_EXECUTABLE ${CMAKE_BINARY_DIR}/lib/flatbuffers/${CMAKE_CFG_INTDIR}/flatc)
 set(FLATBUFFERS_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/schemes)
 include_directories(${CMAKE_BINARY_DIR}/schemes)
 
