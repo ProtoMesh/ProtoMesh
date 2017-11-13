@@ -66,7 +66,7 @@ namespace ProtoMesh::communication::Routing {
 
 #ifdef UNIT_TESTING
 
-    SCENARIO("The best route between two devices should be discovered",
+    SCENARIO("The shortest route between two devices should be discovered",
              "[unit_test][module][communication][routing][iarp]") {
 
         GIVEN("A routing table and a advertisement") {
@@ -100,6 +100,27 @@ namespace ProtoMesh::communication::Routing {
 
                     THEN("the route should've gone stale and no route should be available") {
                         REQUIRE(table.getRouteTo(uuid).isErr());
+                    }
+                }
+
+                AND_WHEN("the time advances by 6000ms, the same advertisement is received again") {
+                    ((DummyRelativeTimeProvider *) timeProvider.get())->turnTheClockBy(6000);
+                    table.processAdvertisement(adv);
+
+                    AND_WHEN("the time advances by another 5000ms") {
+                        ((DummyRelativeTimeProvider *) timeProvider.get())->turnTheClockBy(5000);
+
+                        THEN("a route should be available") {
+                            REQUIRE(table.getRouteTo(uuid).isOk());
+                        }
+
+                    }
+
+                    AND_WHEN("the time advances by another 20000ms") {
+                        ((DummyRelativeTimeProvider *) timeProvider.get())->turnTheClockBy(20000);
+                        THEN("both routes should've gone stale") {
+                            REQUIRE(table.getRouteTo(uuid).isErr());
+                        }
                     }
                 }
 

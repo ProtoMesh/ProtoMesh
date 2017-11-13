@@ -32,7 +32,7 @@ namespace ProtoMesh::communication::Routing::IARP {
         REL_TIME_PROV_T timeProvider;
 
     public:
-        RoutingTable(REL_TIME_PROV_T timeProvider) : timeProvider(timeProvider) {};
+        explicit RoutingTable(REL_TIME_PROV_T timeProvider) : timeProvider(move(timeProvider)) {};
 
         Result<vector<cryptography::UUID>, RouteDiscoveryError> getRouteTo(cryptography::UUID uuid);
 
