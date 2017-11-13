@@ -62,6 +62,27 @@ namespace ProtoMesh::communication::Routing {
         /// Insert the route
         vector<RoutingTableEntry> availableRoutes({RoutingTableEntry(adv, currentTime)});
         routes.insert({adv.uuid, availableRoutes});
+
+        /// Store the nodeID as a bordercast node if it is zoneRadius hops away
+        /// Since the route in the advertisement does not contain the advertiser add one to the size
+        if (adv.route.size()+1 == zoneRadius) this->bordercastNodes.push_back(adv.uuid);
+    }
+
+    void IARP::RoutingTable::deleteStaleBordercastNodes() {
+        vector<size_t> staleNodes;
+        for (size_t i = 0; i < this->bordercastNodes.size(); ++i)
+            if (this->getRouteTo(this->bordercastNodes[i]).isErr())
+                staleNodes.push_back(i);
+
+        reverse(staleNodes.begin(), staleNodes.end());
+
+        for (auto staleNodeIndex : staleNodes)
+            this->bordercastNodes.erase(this->bordercastNodes.begin() + staleNodeIndex);
+    }
+
+    vector<cryptography::UUID> IARP::RoutingTable::getBordercastNodes() {
+        this->deleteStaleBordercastNodes();
+        return this->bordercastNodes;
     }
 
 #ifdef UNIT_TESTING
@@ -133,6 +154,60 @@ namespace ProtoMesh::communication::Routing {
                         vector<cryptography::UUID> route = table.getRouteTo(uuid).unwrap();
                         vector<cryptography::UUID> expectedRoute({hop2, hop1});
                         REQUIRE(route == expectedRoute);
+                    }
+                }
+            }
+        }
+    }
+
+    SCENARIO("The routing table should keep track of bordercast nodes",
+             "[unit_test][module][communication][routing][ierp]") {
+        GIVEN("Multiple advertisements with different route lenghts and a routing table") {
+            // Network topology (we are E):
+            //  A              B
+            //      C       D
+            //          E
+            //      F       G
+            //  H               I
+            cryptography::UUID a, b, c, d, f, g, h, i;
+            cryptography::asymmetric::KeyPair pair(cryptography::asymmetric::generateKeyPair());
+            Routing::IARP::Advertisement adv_a = IARP::Advertisement::build(a, pair);
+            Routing::IARP::Advertisement adv_b = IARP::Advertisement::build(b, pair);
+            Routing::IARP::Advertisement adv_c = IARP::Advertisement::build(c, pair);
+            Routing::IARP::Advertisement adv_d = IARP::Advertisement::build(d, pair);
+            Routing::IARP::Advertisement adv_f = IARP::Advertisement::build(f, pair);
+            Routing::IARP::Advertisement adv_g = IARP::Advertisement::build(g, pair);
+            Routing::IARP::Advertisement adv_h = IARP::Advertisement::build(h, pair);
+            Routing::IARP::Advertisement adv_i = IARP::Advertisement::build(i, pair);
+
+            adv_a.addHop(c);
+            adv_b.addHop(d);
+            adv_h.addHop(f);
+            adv_i.addHop(g);
+
+            REL_TIME_PROV_T timeProvider(new DummyRelativeTimeProvider(0));
+            Routing::IARP::RoutingTable table(timeProvider);
+
+            WHEN("the advertisements are added to the table") {
+                table.processAdvertisement(adv_a);
+                table.processAdvertisement(adv_b);
+                table.processAdvertisement(adv_c);
+                table.processAdvertisement(adv_d);
+                table.processAdvertisement(adv_f);
+                table.processAdvertisement(adv_g);
+                table.processAdvertisement(adv_h);
+                table.processAdvertisement(adv_i);
+
+                THEN("it should output the bordercast nodes for the default zone radius of 2") {
+                    vector<cryptography::UUID> bordercastNodes = table.getBordercastNodes();
+                    vector<cryptography::UUID> expectedNodes = {a, b, h, i};
+                    REQUIRE(bordercastNodes == expectedNodes);
+                }
+
+                AND_WHEN("the time advances by 20000ms") {
+                    ((DummyRelativeTimeProvider *) timeProvider.get())->turnTheClockBy(20000);
+                    THEN("add bordercast nodes should've been removed") {
+                        REQUIRE(table.getBordercastNodes().empty());
                     }
                 }
             }

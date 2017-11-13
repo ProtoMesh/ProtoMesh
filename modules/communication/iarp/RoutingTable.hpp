@@ -1,6 +1,7 @@
 #ifndef PROTOMESH_ROUTING_HPP
 #define PROTOMESH_ROUTING_HPP
 
+#include <vector>
 #include <utility>
 #include <unordered_map>
 #include <RelativeTimeProvider.hpp>
@@ -29,14 +30,20 @@ namespace ProtoMesh::communication::Routing::IARP {
 
     class RoutingTable {
         unordered_map<cryptography::UUID, vector<RoutingTableEntry>> routes;
+        vector<cryptography::UUID> bordercastNodes = {};
         REL_TIME_PROV_T timeProvider;
+        uint zoneRadius;
+
+        void deleteStaleBordercastNodes();
 
     public:
-        explicit RoutingTable(REL_TIME_PROV_T timeProvider) : timeProvider(move(timeProvider)) {};
+        explicit RoutingTable(REL_TIME_PROV_T timeProvider, uint zoneRadius = 2) : timeProvider(move(timeProvider)), zoneRadius(zoneRadius) {};
 
         Result<vector<cryptography::UUID>, RouteDiscoveryError> getRouteTo(cryptography::UUID uuid);
 
         void processAdvertisement(Advertisement adv);
+
+        vector<cryptography::UUID> getBordercastNodes();
     };
 
 }
