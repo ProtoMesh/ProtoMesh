@@ -2,7 +2,7 @@
 #include "catch.hpp"
 #endif
 
-#include "transmission.hpp"
+#include "TransmissionHandler.hpp"
 
 namespace ProtoMesh::communication::transmission {
 

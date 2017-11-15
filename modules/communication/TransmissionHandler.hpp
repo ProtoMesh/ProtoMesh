@@ -13,17 +13,19 @@ namespace ProtoMesh::communication::transmission {
         Timeout
     };
 
-    #define NETWORK_T shared_ptr<ProtoMesh::communication::transmission::Network>
-    class Network {
+#define NETWORK_T shared_ptr<ProtoMesh::communication::transmission::TransmissionHandler>
+
+    class TransmissionHandler {
     public:
-        Network() = default;
-        ~Network() = default;
+        TransmissionHandler() = default;
+
+        ~TransmissionHandler() = default;
 
         virtual void send(vector<uint8_t> message)= 0;
         virtual ReceiveResult recv(vector<uint8_t> *buffer, unsigned int timeout_ms)= 0;
     };
 
-    class NetworkStub : public Network {
+    class NetworkStub : public TransmissionHandler {
         vector<vector<uint8_t>> queue;
     public:
 

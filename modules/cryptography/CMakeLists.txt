@@ -1,6 +1,7 @@
-project(protoMesh::cryptography)
+project(module_cryptography)
 
-# Define the source files for this module
+# Define the source files and dependencies for this module
+set(CRYPTOGRAPHY_DEPENDENCIES schemes_cryptography)
 set(CRYPTOGRAPHY_SOURCES
         ${RESULT_SOURCES}
         ${ECC_SOURCES}
@@ -14,6 +15,10 @@ set(CRYPTOGRAPHY_SOURCES
         ${PROJECT_SOURCE_DIR}/hash.hpp
         ${PROJECT_SOURCE_DIR}/sha512.hpp)
 
+# Add library target
+add_library(${PROJECT_NAME} STATIC ${CRYPTOGRAPHY_SOURCES})
+add_dependencies(${PROJECT_NAME} ${CRYPTOGRAPHY_DEPENDENCIES})
+
 # Add test files
 set(PROTOMESH_TEST_FILES
         ${PROTOMESH_TEST_FILES}
@@ -23,5 +28,5 @@ set(PROTOMESH_TEST_FILES
 # Add the required schemes as test dependencies
 set(PROTOMESH_TEST_DEPS
         ${PROTOMESH_TEST_DEPS}
-        schemes_cryptography
+        ${CRYPTOGRAPHY_DEPENDENCIES}
         PARENT_SCOPE)
