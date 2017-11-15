@@ -13,7 +13,6 @@ namespace ProtoMesh::communication::Routing::IARP {
         using namespace scheme::communication::iarp;
         flatbuffers::FlatBufferBuilder builder;
 
-        PUB_HASH_T pubKeyHash = this->pubKey.getHash();
         auto pubKey = this->pubKey.toBuffer(&builder);
 
         scheme::cryptography::UUID uuid = this->uuid.toScheme();
@@ -32,9 +31,8 @@ namespace ProtoMesh::communication::Routing::IARP {
         /// Convert it to a byte array
         builder.Finish(advertisement, AdvertisementDatagramIdentifier());
         uint8_t *buf = builder.GetBufferPointer();
-        vector<uint8_t> request_vec(buf, buf + builder.GetSize());
 
-        return request_vec;
+        return {buf, buf + builder.GetSize()};
     }
 
     Result<Advertisement, Advertisement::AdvertisementDeserializationError>
@@ -107,7 +105,7 @@ namespace ProtoMesh::communication::Routing::IARP {
                     THEN("both advertisements should contain the same data") {
                         REQUIRE(deserializedAdvertisement.route == adv.route);
                         REQUIRE(deserializedAdvertisement.uuid == adv.uuid);
-                        REQUIRE(deserializedAdvertisement.pubKey.getHash() == adv.pubKey.getHash());
+                        REQUIRE(deserializedAdvertisement.pubKey == adv.pubKey);
                     }
                     THEN("both bytestreams should be equal") {
                         REQUIRE(reSerializedAdvertisement == serializedAdvertisement);

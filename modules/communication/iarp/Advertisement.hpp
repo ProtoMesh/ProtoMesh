@@ -3,7 +3,6 @@
 
 #include <utility>
 
-#include "transmission.hpp"
 #include "uuid.hpp"
 #include "asymmetric.hpp"
 
