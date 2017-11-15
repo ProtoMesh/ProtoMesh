@@ -71,6 +71,10 @@ namespace ProtoMesh::cryptography::asymmetric {
 
         flatbuffers::Offset<ProtoMesh::scheme::cryptography::PublicKey>
         toBuffer(flatbuffers::FlatBufferBuilder *builder) const;
+
+        bool operator==(const PublicKey &rhs) const { return this->getHash() == rhs.getHash(); }
+
+        bool operator!=(const PublicKey &rhs) const { return this->getHash() != rhs.getHash(); }
     };
 
     struct KeyPair {

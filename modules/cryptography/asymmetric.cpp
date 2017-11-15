@@ -109,6 +109,19 @@ namespace ProtoMesh::cryptography::asymmetric {
             REQUIRE(verifyKeySize());
         }
 
+        GIVEN("two equal public keys") {
+            KeyPair pair(generateKeyPair());
+            PublicKey pub1(pair.pub.getCompressedString());
+            PublicKey pub2(pair.pub.getCompressedString());
+
+            THEN("both may be equal") {
+                REQUIRE(pub1 == pub2);
+            }
+            THEN("both may not be not equal") {
+                REQUIRE_FALSE(pub1 != pub2);
+            }
+        }
+
         GIVEN("two KeyPairs") {
             KeyPair pair(generateKeyPair());
             KeyPair pair2(generateKeyPair());
