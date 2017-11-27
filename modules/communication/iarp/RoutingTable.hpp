@@ -43,6 +43,7 @@ namespace ProtoMesh::communication::Routing::IARP {
 
         void processAdvertisement(Advertisement adv);
 
+        vector<cryptography::UUID> getBordercastNodes(vector<cryptography::UUID> nodesToExclude);
         vector<cryptography::UUID> getBordercastNodes();
     };
 

@@ -80,9 +80,26 @@ namespace ProtoMesh::communication::Routing {
             this->bordercastNodes.erase(this->bordercastNodes.begin() + staleNodeIndex);
     }
 
-    vector<cryptography::UUID> IARP::RoutingTable::getBordercastNodes() {
+    vector<cryptography::UUID> IARP::RoutingTable::getBordercastNodes(vector<cryptography::UUID> nodesToExclude) {
         this->deleteStaleBordercastNodes();
-        return this->bordercastNodes;
+
+        vector<cryptography::UUID> resultingNodes;
+
+        for (auto bordercastNode : this->bordercastNodes) {
+            for (auto excludedNode : nodesToExclude) {
+                if (bordercastNode == excludedNode) goto outerLoop;
+            }
+
+            resultingNodes.push_back(bordercastNode);
+
+            outerLoop:;
+        }
+
+        return resultingNodes;
+    }
+
+    vector<cryptography::UUID> IARP::RoutingTable::getBordercastNodes() {
+        return this->getBordercastNodes({});
     }
 
 #ifdef UNIT_TESTING
@@ -162,7 +179,7 @@ namespace ProtoMesh::communication::Routing {
 
     SCENARIO("The routing table should keep track of bordercast nodes",
              "[unit_test][module][communication][routing][ierp]") {
-        GIVEN("Multiple advertisements with different route lenghts and a routing table") {
+        GIVEN("Multiple advertisements with different route lengths and a routing table") {
             // Network topology (we are E):
             //  A              B
             //      C       D
@@ -202,6 +219,16 @@ namespace ProtoMesh::communication::Routing {
                     vector<cryptography::UUID> bordercastNodes = table.getBordercastNodes();
                     vector<cryptography::UUID> expectedNodes = {a, b, h, i};
                     REQUIRE(bordercastNodes == expectedNodes);
+                }
+
+                GIVEN("a list of covered nodes consisting of a, b") {
+                    vector<cryptography::UUID> coveredNodes = {a, b};
+
+                    THEN("the list of bordercast nodes should contain neither a or b") {
+                        vector<cryptography::UUID> bordercastNodes = table.getBordercastNodes(coveredNodes);
+                        vector<cryptography::UUID> expectedNodes = {h, i};
+                        REQUIRE(bordercastNodes == expectedNodes);
+                    }
                 }
 
                 AND_WHEN("the time advances by 20000ms") {
