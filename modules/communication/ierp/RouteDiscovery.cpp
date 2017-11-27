@@ -12,6 +12,10 @@ namespace ProtoMesh::communication::Routing::IERP {
         this->coveredNodes.insert(this->coveredNodes.end(), nodes.begin(), nodes.end());
     }
 
+    void RouteDiscovery::addHop(cryptography::UUID hop) {
+        this->route.push_back(hop);
+    }
+
     vector<uint8_t> RouteDiscovery::serialize() const {
 
         using namespace scheme::communication::ierp;
@@ -94,6 +98,14 @@ namespace ProtoMesh::communication::Routing::IERP {
             cryptography::asymmetric::KeyPair keys(cryptography::asymmetric::generateKeyPair());
             REL_TIME_PROV_T timeProvider(new DummyRelativeTimeProvider(0));
             RouteDiscovery rd = RouteDiscovery::discover(destination, keys.pub, cryptography::UUID(), 0);
+
+            WHEN("a hop is added to the route") {
+                rd.addHop(cryptography::UUID());
+
+                THEN("the route should have a length of one") {
+                    REQUIRE(rd.route.size() == 2);
+                }
+            }
 
             WHEN("it is serialized") {
                 vector<uint8_t> serializedRouteDiscovery = rd.serialize();

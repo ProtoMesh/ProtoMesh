@@ -33,6 +33,7 @@ namespace ProtoMesh::communication::Routing::IERP {
                 : coveredNodes(std::move(coveredNodes)), origin(origin), destination(destination),
                   route(std::move(route)), sentTimestamp(sentTimestamp) {}
 
+        void addHop(cryptography::UUID hop);
         void addCoveredNodes(const vector<cryptography::UUID> &nodes);
 
         vector<uint8_t> serialize() const;
