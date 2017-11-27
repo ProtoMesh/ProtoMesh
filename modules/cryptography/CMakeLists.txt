@@ -5,10 +5,13 @@ set(CRYPTOGRAPHY_DEPENDENCIES schemes_cryptography)
 set(CRYPTOGRAPHY_SOURCES
         ${RESULT_SOURCES}
         ${ECC_SOURCES}
+        ${AES_SOURCES}
         ${PROJECT_SOURCE_DIR}/uuid.cpp
         ${PROJECT_SOURCE_DIR}/uuid.hpp
         ${PROJECT_SOURCE_DIR}/asymmetric.cpp
         ${PROJECT_SOURCE_DIR}/asymmetric.hpp
+        ${PROJECT_SOURCE_DIR}/symmetric.cpp
+        ${PROJECT_SOURCE_DIR}/symmetric.hpp
         ${PROJECT_SOURCE_DIR}/serialization.cpp
         ${PROJECT_SOURCE_DIR}/serialization.hpp
         ${PROJECT_SOURCE_DIR}/hash.cpp

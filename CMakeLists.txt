@@ -16,7 +16,7 @@ include_directories(lib/catch/single_include)
 set(PROTOMESH_TEST_FILES ${CMAKE_SOURCE_DIR}/modules/testing/test.cpp)
 set(PROTOMESH_TEST_DEPS)
 
-# Add micro-ecc and its sources
+# Add micro-ecc sources
 include_directories(lib/micro-ecc)
 set(ECC_SOURCES
         ${CMAKE_SOURCE_DIR}/lib/micro-ecc/uECC.h
@@ -28,6 +28,12 @@ set(ECC_SOURCES
 include_directories(lib/result)
 set(RESULT_SOURCES
         ${CMAKE_SOURCE_DIR}/lib/result/result.h)
+
+# Add AES-256 sources
+include_directories(lib/AES)
+set(AES_SOURCES
+        ${CMAKE_SOURCE_DIR}/lib/AES/aes.h
+        ${CMAKE_SOURCE_DIR}/lib/AES/aes.c)
 
 # Include the schemes
 add_subdirectory(schemes)
