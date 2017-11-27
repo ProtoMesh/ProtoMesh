@@ -6,6 +6,8 @@
 
 #include "symmetric.hpp"
 
+#include <utility>
+
 namespace ProtoMesh::cryptography::symmetric {
 
     Result<vector<uint8_t>, AESError> encrypt(vector<uint8_t> text, vector<uint8_t> key, vector<uint8_t> iv) {
@@ -34,6 +36,21 @@ namespace ProtoMesh::cryptography::symmetric {
         return Ok(buffer);
     }
 
+    Result<vector<uint8_t>, AESError> encrypt(vector<uint8_t> text, vector<uint8_t> key) {
+        /// First create an instance of an engine.
+        random_device rnd_device;
+        /// Specify the engine and distribution.
+        mt19937 mersenne_engine(rnd_device());
+        uniform_int_distribution<unsigned int> dist(0, 255);
+        auto gen = std::bind(dist, mersenne_engine);
+
+        /// Generate a random IV
+        vector<uint8_t> iv(IV_SIZE);
+        generate(iv.begin(), iv.end(), gen);
+
+        return encrypt(std::move(text), std::move(key), iv);
+    }
+
     vector<uint8_t> decrypt(vector<uint8_t> ciphertext, vector<uint8_t> key) {
         /// Extract the IV from the end of the ciphertext and truncate the ciphertext
         vector<uint8_t> iv(ciphertext.end() - IV_SIZE, ciphertext.end());
@@ -60,6 +77,7 @@ namespace ProtoMesh::cryptography::symmetric {
     }
 
 #ifdef UNIT_TESTING
+
     SCENARIO("AES Cryptography", "[unit_test][module][cryptography][symmetric]") {
         GIVEN("An IV that is too short") {
             WHEN("it is attempted to encrypt a value") {
@@ -78,19 +96,30 @@ namespace ProtoMesh::cryptography::symmetric {
             vector<uint8_t> iv; for (uint8_t i = 0; i < IV_SIZE; ++i) iv.push_back(i);
             vector<uint8_t> key; for (uint8_t i = 0; i < IV_SIZE; ++i) key.push_back(static_cast<uint8_t>(i * 2));
 
-            vector<uint8_t> ciphertext = encrypt(input, key, iv).unwrap();
+            WHEN("it is encrypted providing the IV") {
+                vector<uint8_t> ciphertext = encrypt(input, key, iv).unwrap();
 
-            WHEN("it is decrypted using the correct key") {
-                vector<uint8_t> output = decrypt(ciphertext, key);
-                THEN("the output and the input should match") {
-                    REQUIRE(output == input);
+                AND_WHEN("it is decrypted using the correct key") {
+                    vector<uint8_t> output = decrypt(ciphertext, key);
+                    THEN("the output and the input should match") {
+                        REQUIRE(output == input);
+                    }
+                }
+
+                AND_WHEN("it is decrypted using the wrong key") {
+                    vector<uint8_t> output = decrypt(ciphertext, iv);
+                    THEN("it shouldn't match the input") {
+                        REQUIRE_FALSE(output == input);
+                    }
                 }
             }
 
-            WHEN("it is decrypted using the wrong key") {
-                vector<uint8_t> output = decrypt(ciphertext, iv);
-                THEN("it shouldn't match the input") {
-                    REQUIRE_FALSE(output == input);
+            WHEN("it is encrypted twice without providing the IV") {
+                vector<uint8_t> ciphertext1 = encrypt(input, key).unwrap();
+                vector<uint8_t> ciphertext2 = encrypt(input, key).unwrap();
+
+                THEN("both ciphertexts may not be equal") {
+                    REQUIRE(ciphertext1 != ciphertext2);
                 }
             }
         }

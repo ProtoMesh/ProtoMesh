@@ -2,6 +2,7 @@
 #define PROTOMESH_SYMMETRIC_HPP
 
 #include <vector>
+#include <random>
 
 using namespace std;
 
@@ -24,6 +25,7 @@ namespace ProtoMesh::cryptography::symmetric {
     };
 
     Result<vector<uint8_t>, AESError> encrypt(vector<uint8_t> text, vector<uint8_t> key, vector<uint8_t> iv);
+    Result<vector<uint8_t>, AESError> encrypt(vector<uint8_t> text, vector<uint8_t> key);
     vector<uint8_t> decrypt(vector<uint8_t> ciphertext, vector<uint8_t> key);
 };
 
