@@ -1,0 +1,21 @@
+include "../../cryptography/uuid.fbs";
+include "../../cryptography/asymmetric.fbs";
+
+namespace ProtoMesh.scheme.communication.ierp;
+
+table RouteDiscoveryAcknowledgementDatagram {
+    // ***
+    // * Discovered route
+    // * Ordered in reverse to traversal of this datagram
+    // ***
+    route: [cryptography.UUID];
+
+    // ***
+    // * Target key
+    // * Key of the destination from the RouteDiscoveryDatagram
+    // ***
+    targetKey: cryptography.PublicKey;
+}
+
+file_identifier "RDAD";
+root_type RouteDiscoveryAcknowledgementDatagram;
