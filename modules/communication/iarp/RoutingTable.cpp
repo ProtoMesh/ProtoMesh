@@ -6,10 +6,10 @@
 
 #include "RoutingTable.hpp"
 
-namespace ProtoMesh::communication::Routing {
+namespace ProtoMesh::communication::Routing::IARP {
 
-    Result<vector<cryptography::UUID>, IARP::RouteDiscoveryError>
-    IARP::RoutingTable::getRouteTo(cryptography::UUID uuid) {
+    Result<RoutingTableEntry, RouteDiscoveryError>
+    RoutingTable::getRouteTo(cryptography::UUID uuid) {
         if (routes.find(uuid) != routes.end()) {
             vector<RoutingTableEntry> &availableRoutes = routes.at(uuid);
 
@@ -44,12 +44,12 @@ namespace ProtoMesh::communication::Routing {
                     availableRoutes.erase(availableRoutes.begin() + staleRoute);
             }
 
-            return Ok(availableRoutes[routeIndex].route);
+            return Ok(availableRoutes[routeIndex]);
         } else
             return Err(RouteDiscoveryError::NO_ROUTE_AVAILABLE);
     }
 
-    void IARP::RoutingTable::processAdvertisement(IARP::Advertisement adv) {
+    void RoutingTable::processAdvertisement(Advertisement adv) {
         long currentTime = this->timeProvider->millis();
 
         /// Check if we already have a route for this target
@@ -68,7 +68,7 @@ namespace ProtoMesh::communication::Routing {
         if (adv.route.size()+1 == zoneRadius) this->bordercastNodes.push_back(adv.uuid);
     }
 
-    void IARP::RoutingTable::deleteStaleBordercastNodes() {
+    void RoutingTable::deleteStaleBordercastNodes() {
         vector<size_t> staleNodes;
         for (size_t i = 0; i < this->bordercastNodes.size(); ++i)
             if (this->getRouteTo(this->bordercastNodes[i]).isErr())
@@ -80,7 +80,7 @@ namespace ProtoMesh::communication::Routing {
             this->bordercastNodes.erase(this->bordercastNodes.begin() + staleNodeIndex);
     }
 
-    vector<cryptography::UUID> IARP::RoutingTable::getBordercastNodes(vector<cryptography::UUID> nodesToExclude) {
+    vector<cryptography::UUID> RoutingTable::getBordercastNodes(vector<cryptography::UUID> nodesToExclude) {
         this->deleteStaleBordercastNodes();
 
         vector<cryptography::UUID> resultingNodes;
@@ -98,7 +98,7 @@ namespace ProtoMesh::communication::Routing {
         return resultingNodes;
     }
 
-    vector<cryptography::UUID> IARP::RoutingTable::getBordercastNodes() {
+    vector<cryptography::UUID> RoutingTable::getBordercastNodes() {
         return this->getBordercastNodes({});
     }
 
@@ -115,11 +115,11 @@ namespace ProtoMesh::communication::Routing {
 
             cryptography::asymmetric::KeyPair pair(cryptography::asymmetric::generateKeyPair());
 
-            Routing::IARP::Advertisement adv = IARP::Advertisement::build(uuid, pair);
-            Routing::IARP::Advertisement adv2 = IARP::Advertisement::build(uuid, pair);
+            Advertisement adv = Advertisement::build(uuid, pair);
+            Advertisement adv2 = Advertisement::build(uuid, pair);
 
             REL_TIME_PROV_T timeProvider(new DummyRelativeTimeProvider(0));
-            Routing::IARP::RoutingTable table(timeProvider);
+            RoutingTable table(timeProvider);
 
             adv.addHop(hop1);
             adv.addHop(hop2);
@@ -128,7 +128,7 @@ namespace ProtoMesh::communication::Routing {
             WHEN("the advertisement is added to the routing table") {
                 table.processAdvertisement(adv);
                 THEN("a route to the advertiser should be available") {
-                    vector<cryptography::UUID> route = table.getRouteTo(uuid).unwrap();
+                    vector<cryptography::UUID> route = table.getRouteTo(uuid).unwrap().route;
                     vector<cryptography::UUID> expectedRoute({hop3, hop2, hop1});
                     REQUIRE(route == expectedRoute);
                 }
@@ -168,7 +168,7 @@ namespace ProtoMesh::communication::Routing {
                     table.processAdvertisement(adv2);
 
                     THEN("the route to the advertiser should be the shorter of the two") {
-                        vector<cryptography::UUID> route = table.getRouteTo(uuid).unwrap();
+                        vector<cryptography::UUID> route = table.getRouteTo(uuid).unwrap().route;
                         vector<cryptography::UUID> expectedRoute({hop2, hop1});
                         REQUIRE(route == expectedRoute);
                     }
@@ -188,14 +188,14 @@ namespace ProtoMesh::communication::Routing {
             //  H               I
             cryptography::UUID a, b, c, d, f, g, h, i;
             cryptography::asymmetric::KeyPair pair(cryptography::asymmetric::generateKeyPair());
-            Routing::IARP::Advertisement adv_a = IARP::Advertisement::build(a, pair);
-            Routing::IARP::Advertisement adv_b = IARP::Advertisement::build(b, pair);
-            Routing::IARP::Advertisement adv_c = IARP::Advertisement::build(c, pair);
-            Routing::IARP::Advertisement adv_d = IARP::Advertisement::build(d, pair);
-            Routing::IARP::Advertisement adv_f = IARP::Advertisement::build(f, pair);
-            Routing::IARP::Advertisement adv_g = IARP::Advertisement::build(g, pair);
-            Routing::IARP::Advertisement adv_h = IARP::Advertisement::build(h, pair);
-            Routing::IARP::Advertisement adv_i = IARP::Advertisement::build(i, pair);
+            Advertisement adv_a = Advertisement::build(a, pair);
+            Advertisement adv_b = Advertisement::build(b, pair);
+            Advertisement adv_c = Advertisement::build(c, pair);
+            Advertisement adv_d = Advertisement::build(d, pair);
+            Advertisement adv_f = Advertisement::build(f, pair);
+            Advertisement adv_g = Advertisement::build(g, pair);
+            Advertisement adv_h = Advertisement::build(h, pair);
+            Advertisement adv_i = Advertisement::build(i, pair);
 
             adv_a.addHop(c);
             adv_b.addHop(d);
@@ -203,7 +203,7 @@ namespace ProtoMesh::communication::Routing {
             adv_i.addHop(g);
 
             REL_TIME_PROV_T timeProvider(new DummyRelativeTimeProvider(0));
-            Routing::IARP::RoutingTable table(timeProvider);
+            RoutingTable table(timeProvider);
 
             WHEN("the advertisements are added to the table") {
                 table.processAdvertisement(adv_a);

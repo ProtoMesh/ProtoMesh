@@ -16,10 +16,11 @@ namespace ProtoMesh::communication::Routing::IARP {
     class RoutingTableEntry {
     public:
         long validUntil;
+        cryptography::asymmetric::PublicKey publicKey;
         vector<cryptography::UUID> route;
 
         RoutingTableEntry(Advertisement adv, long currentTime)
-                : validUntil(currentTime + adv.interval), route(adv.route) {
+                : validUntil(currentTime + adv.interval), publicKey(adv.pubKey), route(adv.route) {
             std::reverse(this->route.begin(), this->route.end());
         };
     };
@@ -39,7 +40,7 @@ namespace ProtoMesh::communication::Routing::IARP {
     public:
         explicit RoutingTable(REL_TIME_PROV_T timeProvider, uint zoneRadius = 2) : timeProvider(move(timeProvider)), zoneRadius(zoneRadius) {};
 
-        Result<vector<cryptography::UUID>, RouteDiscoveryError> getRouteTo(cryptography::UUID uuid);
+        Result<RoutingTableEntry, RouteDiscoveryError> getRouteTo(cryptography::UUID uuid);
 
         void processAdvertisement(Advertisement adv);
 
