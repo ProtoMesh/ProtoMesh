@@ -8,6 +8,22 @@
 
 namespace ProtoMesh::communication {
 
+    Result<vector<uint8_t>, Message::MessageDecryptionError>
+    Message::decryptPayload(cryptography::asymmetric::PublicKey sender, cryptography::asymmetric::KeyPair recipient) {
+
+        /// Calculate the shared secret
+        vector<uint8_t> sharedSecret = cryptography::asymmetric::generateSharedSecret(sender, recipient.priv);
+
+        /// Decrypt the value
+        vector<uint8_t> decryptedPayload = cryptography::symmetric::decrypt(this->payload, sharedSecret);
+
+        /// Validate the signature
+        if (!cryptography::asymmetric::verify(decryptedPayload, this->signature, &sender))
+            return Err(MessageDecryptionError::InvalidSignature);
+
+        return Ok(decryptedPayload);
+    }
+
     vector<uint8_t> Message::serialize() {
 
         using namespace scheme::communication;
@@ -35,6 +51,24 @@ namespace ProtoMesh::communication {
         uint8_t *buf = builder.GetBufferPointer();
 
         return {buf, buf + builder.GetSize()};
+    }
+
+    Message Message::build(const vector<uint8_t> &payload, cryptography::UUID from, vector<cryptography::UUID> via,
+                           cryptography::UUID to, cryptography::asymmetric::PublicKey destinationKey,
+                           cryptography::asymmetric::KeyPair signer) {
+        /// Add the origin and destination to the route
+        via.insert(via.begin(), from);
+        via.push_back(to);
+
+        /// Sign the payload
+        SIGNATURE_T signature(cryptography::asymmetric::sign(payload, signer.priv));
+
+        /// Generate the shared secret and encrypt the payload
+        vector<uint8_t> sharedSecret = cryptography::asymmetric::generateSharedSecret(destinationKey, signer.priv);
+        // Note that since the IV is randomly generated its size can't mismatch so we can call unwrap
+        vector<uint8_t> encryptedPayload = cryptography::symmetric::encrypt(payload, sharedSecret).unwrap();
+
+        return Message(via, encryptedPayload, signature);
     }
 
     Result<Message, Message::MessageDeserializationError> Message::fromBuffer(vector<uint8_t> buffer) {
@@ -78,6 +112,7 @@ namespace ProtoMesh::communication {
 
         GIVEN("A message") {
             cryptography::asymmetric::KeyPair keyPair(cryptography::asymmetric::generateKeyPair());
+            cryptography::asymmetric::KeyPair destinationKeyPair(cryptography::asymmetric::generateKeyPair());
             cryptography::UUID origin;
             cryptography::UUID hop1;
             cryptography::UUID hop2;
@@ -85,7 +120,8 @@ namespace ProtoMesh::communication {
 
             vector<cryptography::UUID> route = {hop1, hop2};
 
-            Message msg = Message::build({1, 2, 3}, origin, route, destination, keyPair);
+            vector<uint8_t> payload = {1, 2, 3};
+            Message msg = Message::build(payload, origin, route, destination, destinationKeyPair.pub, keyPair);
 
             WHEN("it is serialized") {
                 vector<uint8_t> serializedMsg = msg.serialize();
@@ -95,14 +131,37 @@ namespace ProtoMesh::communication {
                                                              scheme::communication::MessageDatagramIdentifier()));
                 }
 
-                AND_WHEN("it is deserialized and reserialized again") {
+                AND_WHEN("it is deserialized") {
                     Message deserializedMsg = Message::fromBuffer(serializedMsg).unwrap();
-                    vector<uint8_t> reSerializedMsg = deserializedMsg.serialize();
 
-                    THEN("both bytestreams should be equal") {
-                        REQUIRE(reSerializedMsg == serializedMsg);
+                    THEN("the payload should be encrypted") {
+                        REQUIRE(deserializedMsg.payload != payload);
+
+                        AND_WHEN("the payload is decrypted with the correct public key") {
+                            vector<uint8_t> decryptedPayload = deserializedMsg.decryptPayload(keyPair.pub, destinationKeyPair).unwrap();
+                            THEN("the decrypted payload should match the original one") {
+                                REQUIRE(decryptedPayload == payload);
+                            }
+                        }
+
+                        AND_WHEN("the payload is decrypted with the wrong public key") {
+                            auto decryptedPayload = deserializedMsg.decryptPayload(destinationKeyPair.pub, keyPair);
+                            THEN("the decrypted payload should throw an InvalidSignature error") {
+                                REQUIRE(decryptedPayload.isErr());
+                                REQUIRE(decryptedPayload.unwrapErr() == Message::MessageDecryptionError::InvalidSignature);
+                            }
+                        }
+                    }
+
+                    AND_WHEN("it is reserialized again") {
+                        vector<uint8_t> reSerializedMsg = deserializedMsg.serialize();
+                        THEN("both bytestreams should be equal") {
+                            REQUIRE(reSerializedMsg == serializedMsg);
+                        }
                     }
                 }
+
+                // TODO Write a test and function to check encryption and signature
             }
         }
     }
