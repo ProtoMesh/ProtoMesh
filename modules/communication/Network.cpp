@@ -177,8 +177,24 @@ namespace ProtoMesh::communication {
 
         /// Check whether or not the message is meant for us
         if (message.route.back() == this->deviceID) {
-            // TODO Decrypt message
-            // TODO To decrypt we need to know the sender
+            /// Attempt to retrieve the senders key
+            auto keyResult = this->credentials.getKey(message.route.front());
+
+            if (keyResult.isOk()) {
+                cryptography::asymmetric::PublicKey key = keyResult.unwrap();
+
+                /// Calculate the shared secret and decrypt the payload
+                vector<uint8_t> secret = cryptography::asymmetric::generateSharedSecret(key, this->deviceKeys.priv);
+                vector<uint8_t> plaintext = cryptography::symmetric::decrypt(message.payload, secret);
+
+                /// Verify the signature and process the decrypted payload
+                if (cryptography::asymmetric::verify(plaintext, message.signature, &key))
+                    return this->processDatagram(plaintext);
+                // TODO Print a warning when a mismatching signature is received
+            } else {
+                // TODO Log that the public key to decrypt was unavailable
+            }
+
             return {};
         }
 
