@@ -21,6 +21,7 @@ table RouteDiscoveryDatagram {
     // ***
     // * List of nodes traversed
     // * Keeps track of the route to be used.
+    // * Contains the origin's UUID at index 0.
     // ***
     route: [cryptography.UUID];
 

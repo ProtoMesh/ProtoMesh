@@ -29,6 +29,88 @@ namespace ProtoMesh::communication {
         return { {MessageTarget::broadcast(), advertisement.serialize()} };
     }
 
+    Datagrams Network::dispatchRouteDiscoveryAcknowledgement(Routing::IERP::RouteDiscovery routeDiscovery) {
+        cryptography::UUID firstBorder = routeDiscovery.route.back();
+        auto routeToFirstBorderResult = this->routingTable.getRouteTo(firstBorder);
+
+        if (routeToFirstBorderResult.isOk()) {
+            // TODO Store the route for later use (requires an IERP routing table equivalent)
+
+            using namespace scheme::communication::ierp;
+            flatbuffers::FlatBufferBuilder builder;
+
+            /// Serialize the route
+            vector<scheme::cryptography::UUID> routeEntries;
+            for (auto hop : routeDiscovery.route)
+                routeEntries.push_back(hop.toScheme());
+
+            auto routeVector = builder.CreateVectorOfStructs(routeEntries);
+
+            /// Serialize our public key
+            auto pubKey = this->deviceKeys.pub.toBuffer(&builder);
+
+            auto routeDiscoveryAcknowledgement = CreateRouteDiscoveryAcknowledgementDatagram(builder, routeVector,
+                                                                                             pubKey);
+
+            /// Convert it to a byte array
+            builder.Finish(routeDiscoveryAcknowledgement, RouteDiscoveryAcknowledgementDatagramIdentifier());
+            uint8_t *buf = builder.GetBufferPointer();
+            vector<uint8_t> routeDiscoveryAcknowledgementDatagram({buf, buf + builder.GetSize()});
+
+            /// Build the message to the first hop
+            auto routeToFirstBorder = routeToFirstBorderResult.unwrap();
+            Message message = Message::build(
+                    routeDiscoveryAcknowledgementDatagram,
+                    this->deviceID,
+                    routeToFirstBorder.route,
+                    firstBorder,
+                    routeToFirstBorder.publicKey,
+                    this->deviceKeys);
+
+            return { {MessageTarget::single(firstBorder), message.serialize()} };
+        } else {
+            // TODO Log out that the route in the routeDiscovery datagram is unknown/invalid
+        }
+
+        return {};
+    }
+
+    Datagrams Network::rebroadcastRouteDiscovery(Routing::IERP::RouteDiscovery routeDiscovery) {
+        /// Get the list of bordercast nodes (destinations to which this should be forwarded) excluding the coveredNodes
+        vector<cryptography::UUID> bordercastNodes = this->routingTable.getBordercastNodes(routeDiscovery.coveredNodes);
+
+        /// Add the bordercast nodes to the list of covered nodes
+        routeDiscovery.addCoveredNodes(bordercastNodes);
+
+        /// Iterate all forwarding destinations
+        Datagram serializedDiscovery = routeDiscovery.serialize();
+        Datagrams outgoingDatagrams = {};
+        for (auto bordercastNode : bordercastNodes) {
+
+            /// Check if there is a route to the bordercast node
+            auto bordercastRouteResult = this->routingTable.getRouteTo(bordercastNode);
+            if (bordercastRouteResult.isOk()) {
+
+                /// Unwrap the route and build a message traversing it
+                auto bordercastRoute = bordercastRouteResult.unwrap();
+                Message message = Message::build(
+                        serializedDiscovery,
+                        this->deviceID,
+                        bordercastRoute.route,
+                        bordercastNode,
+                        bordercastRoute.publicKey,
+                        this->deviceKeys);
+
+                /// Add the message to the queue
+                outgoingDatagrams.emplace_back(MessageTarget::single(bordercastRoute.route[0]), message.serialize());
+            } else {
+                // TODO Log out that there was no route to the bordercast node
+            }
+        }
+
+        return outgoingDatagrams;
+    }
+
     Datagrams Network::processRouteDiscovery(const Datagram &datagram) {
         using namespace Routing::IERP;
 
@@ -39,47 +121,12 @@ namespace ProtoMesh::communication {
 
         /// Check if this is meant for us
         if (routeDiscovery.destination == this->deviceID) {
-            cryptography::UUID firstBorder = routeDiscovery.route.back();
-            auto routeToFirstBorderResult = this->routingTable.getRouteTo(firstBorder);
+            /// Store the public key in the credentials store
+            this->credentials.insertKey(routeDiscovery.route.front(), routeDiscovery.origin);
+            // TODO Prompt the user when there are conflicting credentials stored
 
-            if (routeToFirstBorderResult.isOk()) {
-                // TODO Store the route for later use (requires an IERP routing table equivalent)
-
-                using namespace scheme::communication::ierp;
-                flatbuffers::FlatBufferBuilder builder;
-
-                /// Serialize the route
-                vector<scheme::cryptography::UUID> routeEntries;
-                for (auto hop : routeDiscovery.route)
-                    routeEntries.push_back(hop.toScheme());
-
-                auto routeVector = builder.CreateVectorOfStructs(routeEntries);
-
-                /// Serialize our public key
-                auto pubKey = this->deviceKeys.pub.toBuffer(&builder);
-
-                auto routeDiscoveryAcknowledgement = CreateRouteDiscoveryAcknowledgementDatagram(builder, routeVector,
-                                                                                                 pubKey);
-
-                /// Convert it to a byte array
-                builder.Finish(routeDiscoveryAcknowledgement, RouteDiscoveryAcknowledgementDatagramIdentifier());
-                uint8_t *buf = builder.GetBufferPointer();
-                vector<uint8_t> routeDiscoveryAcknowledgementDatagram({buf, buf + builder.GetSize()});
-
-                /// Build the message to the first hop
-                auto routeToFirstBorder = routeToFirstBorderResult.unwrap();
-                Message message = Message::build(
-                        routeDiscoveryAcknowledgementDatagram,
-                        this->deviceID,
-                        routeToFirstBorder.route,
-                        firstBorder,
-                        routeToFirstBorder.publicKey,
-                        this->deviceKeys);
-
-                return { {MessageTarget::single(firstBorder), message.serialize()} };
-            } else {
-                // TODO Log out that the route in the routeDiscovery datagram is unknown/invalid
-            }
+            /// Dispatch an acknowledgement and store the route
+            return this->dispatchRouteDiscoveryAcknowledgement(routeDiscovery);
         }
 
         /// Add ourselves to the route
@@ -109,38 +156,12 @@ namespace ProtoMesh::communication {
             return {};
         }
 
+        /// Rebroadcast the routeDiscovery to all neighbors
+        return this->rebroadcastRouteDiscovery(routeDiscovery);
+    }
 
-        /// Get the list of bordercast nodes (destinations to which this should be forwarded) excluding the coveredNodes
-        vector<cryptography::UUID> bordercastNodes = this->routingTable.getBordercastNodes(routeDiscovery.coveredNodes);
-        routeDiscovery.addCoveredNodes(bordercastNodes);
-
-        /// Iterate all forwarding destinations
-        Datagram serializedDiscovery = routeDiscovery.serialize();
-        Datagrams outgoingDatagrams = {};
-        for (auto bordercastNode : bordercastNodes) {
-
-            /// Check if there is a route to the bordercast node
-            auto bordercastRouteResult = this->routingTable.getRouteTo(bordercastNode);
-            if (bordercastRouteResult.isOk()) {
-
-                /// Unwrap the route and build a message for it
-                auto bordercastRoute = bordercastRouteResult.unwrap();
-                Message message = Message::build(
-                        serializedDiscovery,
-                        this->deviceID,
-                        bordercastRoute.route,
-                        bordercastNode,
-                        bordercastRoute.publicKey,
-                        this->deviceKeys);
-
-                /// Add the message to the queue
-                outgoingDatagrams.emplace_back(MessageTarget::single(bordercastRoute.route[0]), message.serialize());
-            } else {
-                // TODO Log out that there was no route to the bordercast node
-            }
-        }
-
-        return outgoingDatagrams;
+    Datagrams Network::processRouteDiscoveryAcknowledgement(const vector<uint8_t> &) {
+        return {};
     }
 
     Datagrams Network::processDeliveryFailure(const Datagram &datagram) {
@@ -149,24 +170,65 @@ namespace ProtoMesh::communication {
 
     Datagrams Network::processMessageDatagram(const Datagram &datagram) {
 
+        /// Deserialize the route discovery datagram
+        auto messageResult = Message::fromBuffer(datagram);
+        if (messageResult.isErr()) return {};
+        Message message = messageResult.unwrap();
 
+        /// Check whether or not the message is meant for us
+        if (message.route.back() == this->deviceID) {
+            // TODO Decrypt message
+            // TODO To decrypt we need to know the sender
+            return {};
+        }
 
-        return {};
+        /// Get our index in the route to determine the next hop
+        auto it = find(message.route.begin(), message.route.end(), this->deviceID);
+        if (it == message.route.end()) {
+            // TODO Log that we received a message we weren't supposed to receive and discard it
+            return {};
+        }
+
+        /// Get the route to the next hop along the route
+        cryptography::UUID nextHop = *(it+1);
+        auto routeToNextHopResult = this->routingTable.getRouteTo(nextHop);
+        if (routeToNextHopResult.isErr()) {
+            // TODO Dispatch DeliveryFailureDatagram
+            return {};
+        }
+        auto routeToNextHop = routeToNextHopResult.unwrap();
+
+        /// When the route to the next hop is just one in length forward it as is
+        if (routeToNextHop.route.size() == 1)
+            return { {MessageTarget::single(nextHop), message.serialize()} };
+
+        /// Otherwise wrap it in another message following routeToNextHop and dispatch that
+        Message forwardedMessage = Message::build(
+                message.serialize(),
+                this->deviceID,
+                routeToNextHop.route,
+                nextHop,
+                routeToNextHop.publicKey,
+                this->deviceKeys);
+
+        return { {MessageTarget::single(routeToNextHop.route[0]), message.serialize()} };
     }
 
     Datagrams Network::processDatagram(const Datagram &datagram) {
         using namespace flatbuffers;
 
         if (BufferHasIdentifier(datagram.data(), scheme::communication::iarp::AdvertisementDatagramIdentifier()))
-            return processAdvertisement(datagram);
+            return this->processAdvertisement(datagram);
         else if (BufferHasIdentifier(datagram.data(), scheme::communication::ierp::RouteDiscoveryDatagramIdentifier()))
-            return processRouteDiscovery(datagram);
+            return this->processRouteDiscovery(datagram);
+        else if (BufferHasIdentifier(datagram.data(), scheme::communication::ierp::RouteDiscoveryAcknowledgementDatagramIdentifier()))
+            return this->processRouteDiscoveryAcknowledgement(datagram);
         else if (BufferHasIdentifier(datagram.data(), scheme::communication::DeliveryFailureDatagramIdentifier()))
-            return processDeliveryFailure(datagram);
+            return this->processDeliveryFailure(datagram);
         else if (BufferHasIdentifier(datagram.data(), scheme::communication::MessageDatagramIdentifier()))
-            return processMessageDatagram(datagram);
+            return this->processMessageDatagram(datagram);
         else
-            return {};
+            return {}; // TODO Since it is unknown pass it to the parent function as incoming interaction data
     }
 
 }

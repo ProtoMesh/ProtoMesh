@@ -1,6 +1,7 @@
 #ifndef PROTOMESH_NETWORK_HPP
 #define PROTOMESH_NETWORK_HPP
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 #include <tuple>
@@ -12,6 +13,7 @@ using namespace std;
 #include "iarp/Advertisement.hpp"
 #include "ierp/RouteDiscovery.hpp"
 #include "Message.hpp"
+#include "CredentialsStore.hpp"
 
 #include "flatbuffers/flatbuffers.h"
 #include "communication/message_generated.h"
@@ -58,13 +60,18 @@ namespace ProtoMesh::communication {
         cryptography::asymmetric::KeyPair deviceKeys;
         Routing::IARP::RoutingTable routingTable;
 
+        CredentialsStore credentials;
+
+        /// Datagram processing
         Datagrams processAdvertisement(const Datagram &datagram);
-
         Datagrams processRouteDiscovery(const Datagram &datagram);
-
+        Datagrams processRouteDiscoveryAcknowledgement(const Datagram &datagram);
         Datagrams processDeliveryFailure(const Datagram &datagram);
-
         Datagrams processMessageDatagram(const Datagram &datagram);
+
+        /// Helpers
+        Datagrams rebroadcastRouteDiscovery(Routing::IERP::RouteDiscovery routeDiscovery);
+        Datagrams dispatchRouteDiscoveryAcknowledgement(Routing::IERP::RouteDiscovery routeDiscovery);
 
     public:
         explicit Network(cryptography::UUID deviceID, cryptography::asymmetric::KeyPair deviceKeys, REL_TIME_PROV_T timeProvider)
