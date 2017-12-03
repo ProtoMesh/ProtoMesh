@@ -10,6 +10,7 @@
 namespace ProtoMesh::communication {
 
     class CredentialsStore {
+        // TODO Possibly store/cache shared secrets
         unordered_map<cryptography::UUID, cryptography::asymmetric::PublicKey> knownHosts;
 
     public:
