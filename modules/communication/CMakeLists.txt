@@ -7,6 +7,8 @@ set(COMMUNICATION_SOURCES
         ${PROJECT_SOURCE_DIR}/Message.hpp
         ${PROJECT_SOURCE_DIR}/Network.cpp
         ${PROJECT_SOURCE_DIR}/Network.hpp
+        ${PROJECT_SOURCE_DIR}/CredentialsStore.cpp
+        ${PROJECT_SOURCE_DIR}/CredentialsStore.hpp
         ${PROJECT_SOURCE_DIR}/TransmissionHandler.cpp
         ${PROJECT_SOURCE_DIR}/TransmissionHandler.hpp
         ${PROJECT_SOURCE_DIR}/iarp/RoutingTable.cpp
