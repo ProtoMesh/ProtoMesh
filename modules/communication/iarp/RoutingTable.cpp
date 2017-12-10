@@ -129,7 +129,7 @@ namespace ProtoMesh::communication::Routing::IARP {
                 table.processAdvertisement(adv);
                 THEN("a route to the advertiser should be available") {
                     vector<cryptography::UUID> route = table.getRouteTo(uuid).unwrap().route;
-                    vector<cryptography::UUID> expectedRoute({hop3, hop2, hop1});
+                    vector<cryptography::UUID> expectedRoute({hop3, hop2, hop1, uuid});
                     REQUIRE(route == expectedRoute);
                 }
 
@@ -169,7 +169,7 @@ namespace ProtoMesh::communication::Routing::IARP {
 
                     THEN("the route to the advertiser should be the shorter of the two") {
                         vector<cryptography::UUID> route = table.getRouteTo(uuid).unwrap().route;
-                        vector<cryptography::UUID> expectedRoute({hop2, hop1});
+                        vector<cryptography::UUID> expectedRoute({hop2, hop1, uuid});
                         REQUIRE(route == expectedRoute);
                     }
                 }

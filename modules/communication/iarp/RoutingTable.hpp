@@ -21,6 +21,7 @@ namespace ProtoMesh::communication::Routing::IARP {
         RoutingTableEntry(Advertisement adv, long currentTime)
                 : validUntil(currentTime + adv.interval), route(adv.route) {
             std::reverse(this->route.begin(), this->route.end());
+            this->route.push_back(adv.uuid);
         };
     };
 
