@@ -15,8 +15,10 @@ set(COMMUNICATION_SOURCES
         ${PROJECT_SOURCE_DIR}/iarp/RoutingTable.hpp
         ${PROJECT_SOURCE_DIR}/iarp/Advertisement.cpp
         ${PROJECT_SOURCE_DIR}/iarp/Advertisement.hpp
-        ${PROJECT_SOURCE_DIR}/ierp/RouteDiscovery.hpp
         ${PROJECT_SOURCE_DIR}/ierp/RouteDiscovery.cpp
+        ${PROJECT_SOURCE_DIR}/ierp/RouteDiscovery.hpp
+        ${PROJECT_SOURCE_DIR}/ierp/RouteCache.cpp
+        ${PROJECT_SOURCE_DIR}/ierp/RouteCache.hpp
         ${PROJECT_SOURCE_DIR}/RelativeTimeProvider.hpp)
 
 # Add library target

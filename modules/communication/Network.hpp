@@ -6,12 +6,14 @@
 #include <vector>
 #include <tuple>
 #include <list>
+#include <ierp/RouteCache.hpp>
 
 using namespace std;
 
 #include "iarp/RoutingTable.hpp"
 #include "iarp/Advertisement.hpp"
 #include "ierp/RouteDiscovery.hpp"
+#include "ierp/RouteCache.hpp"
 #include "Message.hpp"
 #include "CredentialsStore.hpp"
 
@@ -59,6 +61,7 @@ namespace ProtoMesh::communication {
         cryptography::UUID deviceID;
         cryptography::asymmetric::KeyPair deviceKeys;
         Routing::IARP::RoutingTable routingTable;
+        Routing::IERP::RouteCache routeCache;
 
         CredentialsStore credentials;
 

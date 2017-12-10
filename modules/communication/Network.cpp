@@ -17,9 +17,15 @@ namespace ProtoMesh::communication {
         if (advertisementResult.isErr()) return {};
         Advertisement advertisement = advertisementResult.unwrap();
 
+        /// Discard the advertisement if it originated from us
+        if (advertisement.uuid == this->deviceID) return {};
+
         /// Store the route in the routing table and add ourselves to the list
         this->routingTable.processAdvertisement(advertisement);
         advertisement.addHop(this->deviceID);
+
+        /// Store the key in the credentials store
+        this->credentials.insertKey(advertisement.uuid, advertisement.pubKey);
 
         /// Check if it has already travelled to the border of the zone
         if (advertisement.route.size() > ZONE_RADIUS) return {};
@@ -32,9 +38,12 @@ namespace ProtoMesh::communication {
     Datagrams Network::dispatchRouteDiscoveryAcknowledgement(Routing::IERP::RouteDiscovery routeDiscovery) {
         cryptography::UUID firstBorder = routeDiscovery.route.back();
         auto routeToFirstBorderResult = this->routingTable.getRouteTo(firstBorder);
+        auto firstBorderPublicKey = this->credentials.getKey(firstBorder);
 
-        if (routeToFirstBorderResult.isOk()) {
-            // TODO Store the route for later use (requires an IERP routing table equivalent)
+        if (routeToFirstBorderResult.isOk() && firstBorderPublicKey.isOk()) {
+            // TODO Check if the reversing works as intended
+            vector<cryptography::UUID> reversedRoute(routeDiscovery.route.end(), routeDiscovery.route.begin());
+            this->routeCache.addRoute(routeDiscovery.route.front(), reversedRoute);
 
             using namespace scheme::communication::ierp;
             flatbuffers::FlatBufferBuilder builder;
@@ -64,7 +73,7 @@ namespace ProtoMesh::communication {
                     this->deviceID,
                     routeToFirstBorder.route,
                     firstBorder,
-                    routeToFirstBorder.publicKey,
+                    firstBorderPublicKey.unwrap(),
                     this->deviceKeys);
 
             return { {MessageTarget::single(firstBorder), message.serialize()} };
@@ -89,7 +98,8 @@ namespace ProtoMesh::communication {
 
             /// Check if there is a route to the bordercast node
             auto bordercastRouteResult = this->routingTable.getRouteTo(bordercastNode);
-            if (bordercastRouteResult.isOk()) {
+            auto bordercastNodePublicKey = this->credentials.getKey(bordercastNode);
+            if (bordercastRouteResult.isOk() && bordercastNodePublicKey.isOk()) {
 
                 /// Unwrap the route and build a message traversing it
                 auto bordercastRoute = bordercastRouteResult.unwrap();
@@ -98,7 +108,7 @@ namespace ProtoMesh::communication {
                         this->deviceID,
                         bordercastRoute.route,
                         bordercastNode,
-                        bordercastRoute.publicKey,
+                        bordercastNodePublicKey.unwrap(),
                         this->deviceKeys);
 
                 /// Add the message to the queue
@@ -135,7 +145,8 @@ namespace ProtoMesh::communication {
 
         /// Check if we know the destination and forward it accordingly
         auto routeToDestinationResult = this->routingTable.getRouteTo(routeDiscovery.destination);
-        if (routeToDestinationResult.isOk()) {
+        auto destinationPublicKey = this->credentials.getKey(routeDiscovery.destination);
+        if (routeToDestinationResult.isOk() && destinationPublicKey.isOk()) {
             auto routeToDestination = routeToDestinationResult.unwrap();
 
             Message message = Message::build(
@@ -143,7 +154,7 @@ namespace ProtoMesh::communication {
                     this->deviceID,
                     routeToDestination.route,
                     routeDiscovery.destination,
-                    routeToDestination.publicKey,
+                    destinationPublicKey.unwrap(),
                     this->deviceKeys);
 
             return { {MessageTarget::single(routeToDestination.route[0]), message.serialize()} };
@@ -160,7 +171,39 @@ namespace ProtoMesh::communication {
         return this->rebroadcastRouteDiscovery(routeDiscovery);
     }
 
-    Datagrams Network::processRouteDiscoveryAcknowledgement(const vector<uint8_t> &) {
+    Datagrams Network::processRouteDiscoveryAcknowledgement(const Datagram &datagram) {
+        using namespace scheme::communication::ierp;
+
+        /// Verify the buffer type
+        if (!flatbuffers::BufferHasIdentifier(datagram.data(), RouteDiscoveryAcknowledgementDatagramIdentifier()))
+            return {}; // INVALID_IDENTIFIER
+
+        /// Verify buffer integrity
+        auto verifier = flatbuffers::Verifier(datagram.data(), datagram.size());
+        if (!VerifyRouteDiscoveryAcknowledgementDatagramBuffer(verifier))
+            return {}; // INVALID_BUFFER
+
+        auto acknowledgement = GetRouteDiscoveryAcknowledgementDatagram(datagram.data());
+
+        /// Deserialize route
+        vector<cryptography::UUID> route;
+        auto routeBuffer = acknowledgement->route();
+        for (uint i = 0; i < routeBuffer->Length(); i++)
+            route.emplace_back(routeBuffer->Get(i));
+
+        /// Deserialize public key
+        auto pubKeyBuffer = acknowledgement->targetKey();
+        auto compressedPubKey = pubKeyBuffer->compressed();
+        auto pubKey = cryptography::asymmetric::PublicKey::fromBuffer(compressedPubKey);
+        if (pubKey.isErr())
+            return {}; // INVALID_PUB_KEY
+
+        /// Insert the route into the routeCache and the public key into the credentialsStore
+        this->routeCache.addRoute(route.back(), route);
+        this->credentials.insertKey(route.back(), pubKey.unwrap());
+
+
+        // TODO Possibly dispatch messages in the queue waiting for this
         return {};
     }
 
@@ -208,7 +251,8 @@ namespace ProtoMesh::communication {
         /// Get the route to the next hop along the route
         cryptography::UUID nextHop = *(it+1);
         auto routeToNextHopResult = this->routingTable.getRouteTo(nextHop);
-        if (routeToNextHopResult.isErr()) {
+        auto nextHopPublicKey = this->credentials.getKey(nextHop);
+        if (routeToNextHopResult.isErr() || nextHopPublicKey.isErr()) {
             // TODO Dispatch DeliveryFailureDatagram
             return {};
         }
@@ -224,7 +268,7 @@ namespace ProtoMesh::communication {
                 this->deviceID,
                 routeToNextHop.route,
                 nextHop,
-                routeToNextHop.publicKey,
+                nextHopPublicKey.unwrap(),
                 this->deviceKeys);
 
         return { {MessageTarget::single(routeToNextHop.route[0]), message.serialize()} };
