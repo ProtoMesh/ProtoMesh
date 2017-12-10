@@ -57,11 +57,11 @@ namespace ProtoMesh::communication::Routing::IARP {
             // Possibly add the new route entry
             vector<RoutingTableEntry> &availableRoutes = routes.at(adv.uuid);
             availableRoutes.emplace_back(adv, currentTime);
+        } else {
+            /// Insert the route
+            vector<RoutingTableEntry> availableRoutes({RoutingTableEntry(adv, currentTime)});
+            routes.insert({adv.uuid, availableRoutes});
         }
-
-        /// Insert the route
-        vector<RoutingTableEntry> availableRoutes({RoutingTableEntry(adv, currentTime)});
-        routes.insert({adv.uuid, availableRoutes});
 
         /// Store the nodeID as a bordercast node if it is zoneRadius hops away
         /// Since the route in the advertisement does not contain the advertiser add one to the size
