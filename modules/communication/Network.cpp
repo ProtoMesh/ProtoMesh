@@ -21,8 +21,8 @@ namespace ProtoMesh::communication {
         if (advertisement.uuid == this->deviceID) return {};
 
         /// Store the route in the routing table and add ourselves to the list
-        this->routingTable.processAdvertisement(advertisement);
         advertisement.addHop(this->deviceID);
+        this->routingTable.processAdvertisement(advertisement);
 
         /// Store the key in the credentials store
         this->credentials.insertKey(advertisement.uuid, advertisement.pubKey);
@@ -291,4 +291,72 @@ namespace ProtoMesh::communication {
             return {}; // TODO Since it is unknown pass it to the parent function as incoming interaction data
     }
 
+#ifdef UNIT_TESTING
+
+    SCENARIO("Two devices within the same zone should be able to communicate",
+             "[integration_test][module][communication][network][routing][iarp]") {
+        GIVEN("three devices (keyPair + id + network) A, x, B") {
+            // Zone layout
+            // A <-> X <-> B
+            REL_TIME_PROV_T timeProvider(new DummyRelativeTimeProvider(0));
+
+            cryptography::asymmetric::KeyPair keyA = cryptography::asymmetric::generateKeyPair();
+            cryptography::asymmetric::KeyPair keyB = cryptography::asymmetric::generateKeyPair();
+            cryptography::asymmetric::KeyPair keyX = cryptography::asymmetric::generateKeyPair();
+            cryptography::UUID idA;
+            cryptography::UUID idB;
+            cryptography::UUID idX;
+            Network netA(idA, keyA, timeProvider);
+            Network netB(idB, keyB, timeProvider);
+            Network netX(idX, keyX, timeProvider);
+
+            CAPTURE(idA);
+            CAPTURE(idB);
+            CAPTURE(idX);
+
+            WHEN("an advertisement of A is being processed by X") {
+                vector<cryptography::UUID> expectedRoute = {idX};
+                Datagrams msgs = netX.processDatagram(Routing::IARP::Advertisement::build(idA, keyA).serialize());
+                CAPTURE(msgs);
+
+                THEN("X should have a route to A") {
+                    REQUIRE(netX.routingTable.getRouteTo(idA).isOk());
+                }
+
+                THEN("X should have the public key of A") {
+                    REQUIRE(netX.credentials.getKey(idA).isOk());
+                }
+
+                THEN("X should have forwarded the advertisement") {
+                    REQUIRE(msgs.size() == 1);
+                    Datagram advMsg = std::get<1>(msgs.front());
+
+                    auto advertisementResult = Routing::IARP::Advertisement::fromBuffer(advMsg);
+                    REQUIRE(advertisementResult.isOk());
+                    Routing::IARP::Advertisement advertisement = advertisementResult.unwrap();
+
+                    REQUIRE(advertisement.uuid == idA);
+                    REQUIRE(advertisement.route == expectedRoute);
+
+                    AND_WHEN("the forwarded advertisement is processed by B") {
+                        netB.processDatagram(advMsg);
+
+                        THEN("B should have a route to A") {
+                            vector<cryptography::UUID> expectedBRoute = {idB, idX, idA};
+                            auto routeResult = netB.routingTable.getRouteTo(idA);
+                            REQUIRE(routeResult.isOk());
+                            REQUIRE(routeResult.unwrap().route == expectedBRoute);
+                        }
+
+                        THEN("B should have the public key of A") {
+                            REQUIRE(netB.credentials.getKey(idA).isOk());
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+#endif // UNIT_TESTING
 }

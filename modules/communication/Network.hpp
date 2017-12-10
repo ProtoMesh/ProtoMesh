@@ -58,6 +58,9 @@ namespace ProtoMesh::communication {
 
 
     class Network {
+#ifdef UNIT_TESTING
+    public:
+#endif
         cryptography::UUID deviceID;
         cryptography::asymmetric::KeyPair deviceKeys;
         Routing::IARP::RoutingTable routingTable;
