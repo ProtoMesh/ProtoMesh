@@ -1,6 +1,7 @@
 #ifdef UNIT_TESTING
 
 #include "catch.hpp"
+#include "NetworkSimulator.hpp"
 
 #endif
 
@@ -20,6 +21,10 @@ namespace ProtoMesh::communication {
         /// Discard the advertisement if it originated from us
         if (advertisement.uuid == this->deviceID) return {};
 
+        /// Check if this advertisement already traversed us and discard it
+        if (std::find(advertisement.route.begin(), advertisement.route.end(), this->deviceID) != advertisement.route.end())
+            return {};
+
         /// Store the route in the routing table and add ourselves to the list
         advertisement.addHop(this->deviceID);
         this->routingTable.processAdvertisement(advertisement);
@@ -28,7 +33,8 @@ namespace ProtoMesh::communication {
         this->credentials.insertKey(advertisement.uuid, advertisement.pubKey);
 
         /// Check if it has already travelled to the border of the zone
-        if (advertisement.route.size() > ZONE_RADIUS) return {};
+        /// We have to subtract one since the route already includes us
+        if (advertisement.route.size() >= ZONE_RADIUS - 1) return {};
 
         // TODO Don't rebroadcast to the original sender. Some form of target node white/blacklist maybe
         //      Optionally obviously since not all transmission media might support it.
@@ -42,7 +48,8 @@ namespace ProtoMesh::communication {
 
         if (routeToFirstBorderResult.isOk() && firstBorderPublicKey.isOk()) {
             // TODO Check if the reversing works as intended
-            vector<cryptography::UUID> reversedRoute(routeDiscovery.route.end(), routeDiscovery.route.begin());
+            vector<cryptography::UUID> reversedRoute(routeDiscovery.route.rbegin(), routeDiscovery.route.rend());
+            reversedRoute.push_back(this->deviceID);
             this->routeCache.addRoute(routeDiscovery.route.front(), reversedRoute);
 
             using namespace scheme::communication::ierp;
@@ -52,6 +59,7 @@ namespace ProtoMesh::communication {
             vector<scheme::cryptography::UUID> routeEntries;
             for (auto hop : routeDiscovery.route)
                 routeEntries.push_back(hop.toScheme());
+            routeEntries.push_back(this->deviceID.toScheme());
 
             auto routeVector = builder.CreateVectorOfStructs(routeEntries);
 
@@ -70,13 +78,13 @@ namespace ProtoMesh::communication {
             auto routeToFirstBorder = routeToFirstBorderResult.unwrap();
             Message message = Message::build(
                     routeDiscoveryAcknowledgementDatagram,
-                    this->deviceID,
                     routeToFirstBorder.route,
-                    firstBorder,
                     firstBorderPublicKey.unwrap(),
                     this->deviceKeys);
 
-            return { {MessageTarget::single(firstBorder), message.serialize()} };
+            // TODO IMPORTANT Send it to routeToFirstBorder.route[1] not firstBorder!
+            // This works in the simulator but doesn't in the real world
+            return { {MessageTarget::single(routeToFirstBorder.route[1]), message.serialize()} };
         } else {
             // TODO Log out that the route in the routeDiscovery datagram is unknown/invalid
         }
@@ -105,9 +113,7 @@ namespace ProtoMesh::communication {
                 auto bordercastRoute = bordercastRouteResult.unwrap();
                 Message message = Message::build(
                         serializedDiscovery,
-                        this->deviceID,
                         bordercastRoute.route,
-                        bordercastNode,
                         bordercastNodePublicKey.unwrap(),
                         this->deviceKeys);
 
@@ -139,6 +145,10 @@ namespace ProtoMesh::communication {
             return this->dispatchRouteDiscoveryAcknowledgement(routeDiscovery);
         }
 
+        /// Check if this route discovery already traversed us and discard it
+        if (std::find(routeDiscovery.route.begin(), routeDiscovery.route.end(), this->deviceID) != routeDiscovery.route.end())
+            return {};
+
         /// Add ourselves to the route
         routeDiscovery.addHop(this->deviceID);
 
@@ -151,13 +161,11 @@ namespace ProtoMesh::communication {
 
             Message message = Message::build(
                     routeDiscovery.serialize(),
-                    this->deviceID,
                     routeToDestination.route,
-                    routeDiscovery.destination,
                     destinationPublicKey.unwrap(),
                     this->deviceKeys);
 
-            return { {MessageTarget::single(routeToDestination.route[0]), message.serialize()} };
+            return { {MessageTarget::single(routeToDestination.route[1]), message.serialize()} };
         }
 
 
@@ -191,6 +199,34 @@ namespace ProtoMesh::communication {
         for (uint i = 0; i < routeBuffer->Length(); i++)
             route.emplace_back(routeBuffer->Get(i));
 
+        /// Check if we are the final recipient of this route discovery ack and if not forward it accordingly
+        /// Since the route in a route discovery acknowledgement is reversed we have to look at route[0]
+        auto it = find(route.begin(), route.end(), this->deviceID);
+        if (it != route.end() && it != route.begin()) {
+            // TODO Possibly use this datagram to derive a partial route and cache that instead of ignoring it
+            cryptography::UUID nextBorderNode = *(it-1);
+
+            /// Check if we know the destination and forward it accordingly
+            auto routeToBorderNodeResult = this->routingTable.getRouteTo(nextBorderNode);
+            auto borderNodePublicKey = this->credentials.getKey(nextBorderNode);
+            if (routeToBorderNodeResult.isOk() && borderNodePublicKey.isOk()) {
+                auto routeToBorderNode = routeToBorderNodeResult.unwrap();
+
+                Message message = Message::build(
+                        datagram,
+                        routeToBorderNode.route,
+                        borderNodePublicKey.unwrap(),
+                        this->deviceKeys);
+
+                return { {MessageTarget::single(routeToBorderNode.route[1]), message.serialize()} };
+            } else {
+                // TODO Log that we couldn't find a route to the destination
+                return {};
+            }
+        } else if (it == route.end()) {
+            // TODO Log that we received a route discovery acknowledgement that wasn't meant for us
+        }
+
         /// Deserialize public key
         auto pubKeyBuffer = acknowledgement->targetKey();
         auto compressedPubKey = pubKeyBuffer->compressed();
@@ -213,7 +249,7 @@ namespace ProtoMesh::communication {
 
     Datagrams Network::processMessageDatagram(const Datagram &datagram) {
 
-        /// Deserialize the route discovery datagram
+        /// Deserialize the message
         auto messageResult = Message::fromBuffer(datagram);
         if (messageResult.isErr()) return {};
         Message message = messageResult.unwrap();
@@ -258,16 +294,15 @@ namespace ProtoMesh::communication {
         }
         auto routeToNextHop = routeToNextHopResult.unwrap();
 
-        /// When the route to the next hop is just one in length forward it as is
-        if (routeToNextHop.route.size() == 1)
+        /// When the route to the next hop is just one in length forward it as is.
+        /// Note that we need to subtract one from the size since we are part of the route.
+        if (routeToNextHop.route.size()-1 == 1)
             return { {MessageTarget::single(nextHop), message.serialize()} };
 
         /// Otherwise wrap it in another message following routeToNextHop and dispatch that
         Message forwardedMessage = Message::build(
                 message.serialize(),
-                this->deviceID,
                 routeToNextHop.route,
-                nextHop,
                 nextHopPublicKey.unwrap(),
                 this->deviceKeys);
 
@@ -295,67 +330,93 @@ namespace ProtoMesh::communication {
 
     SCENARIO("Two devices within the same zone should be able to communicate",
              "[integration_test][module][communication][network][routing][iarp]") {
-        GIVEN("three devices (keyPair + id + network) A, x, B") {
+        GIVEN("five devices (keyPair + id + network) A, w, x, B, y") {
             // Zone layout
-            // A <-> X <-> B
-            REL_TIME_PROV_T timeProvider(new DummyRelativeTimeProvider(0));
+            // A <-> w <-> x <-> B <-> y
+            NetworkSimulator simulator;
+            cryptography::UUID A, w, x, B, y;
+            CAPTURE(A);
+            CAPTURE(w);
+            CAPTURE(x);
+            CAPTURE(B);
+            CAPTURE(y);
 
-            cryptography::asymmetric::KeyPair keyA = cryptography::asymmetric::generateKeyPair();
-            cryptography::asymmetric::KeyPair keyB = cryptography::asymmetric::generateKeyPair();
-            cryptography::asymmetric::KeyPair keyX = cryptography::asymmetric::generateKeyPair();
-            cryptography::UUID idA;
-            cryptography::UUID idB;
-            cryptography::UUID idX;
-            Network netA(idA, keyA, timeProvider);
-            Network netB(idB, keyB, timeProvider);
-            Network netX(idX, keyX, timeProvider);
+            auto keyA = simulator.createDevice(A, {w});
+            auto keyW = simulator.createDevice(w, {A, x});
+            auto keyX = simulator.createDevice(x, {w, B});
+            auto keyB = simulator.createDevice(B, {x, y});
+            auto keyY = simulator.createDevice(y, {B});
 
-            CAPTURE(idA);
-            CAPTURE(idB);
-            CAPTURE(idX);
+            WHEN("A sends an advertisement to its neighbors") {
+                REQUIRE(simulator.advertiseNode(A));
 
-            WHEN("an advertisement of A is being processed by X") {
-                vector<cryptography::UUID> expectedRoute = {idX};
-                Datagrams msgs = netX.processDatagram(Routing::IARP::Advertisement::build(idA, keyA).serialize());
-                CAPTURE(msgs);
+                THEN("w, x and B should have a route to A") {
+                    vector<cryptography::UUID> expectedRoute_wA = {w, A};
+                    vector<cryptography::UUID> expectedRoute_xA = {x, w, A};
+                    vector<cryptography::UUID> expectedRoute_BA = {B, x, w, A};
 
-                THEN("X should have a route to A") {
-                    REQUIRE(netX.routingTable.getRouteTo(idA).isOk());
+                    REQUIRE(simulator.getNode(w).unwrap()->network.routingTable.getRouteTo(A).unwrap().route == expectedRoute_wA);
+                    REQUIRE(simulator.getNode(x).unwrap()->network.routingTable.getRouteTo(A).unwrap().route == expectedRoute_xA);
+                    REQUIRE(simulator.getNode(B).unwrap()->network.routingTable.getRouteTo(A).unwrap().route == expectedRoute_BA);
                 }
 
-                THEN("X should have the public key of A") {
-                    REQUIRE(netX.credentials.getKey(idA).isOk());
+                THEN("y should not have a route to A") {
+                    REQUIRE(simulator.getNode(y).unwrap()->network.routingTable.getRouteTo(A).isErr());
                 }
 
-                THEN("X should have forwarded the advertisement") {
-                    REQUIRE(msgs.size() == 1);
-                    Datagram advMsg = std::get<1>(msgs.front());
+                THEN("B should have the public key of A") {
+                    REQUIRE(simulator.getNode(B).unwrap()->network.credentials.getKey(A).isOk());
+                }
+            }
+        }
+    }
 
-                    auto advertisementResult = Routing::IARP::Advertisement::fromBuffer(advMsg);
-                    REQUIRE(advertisementResult.isOk());
-                    Routing::IARP::Advertisement advertisement = advertisementResult.unwrap();
+    SCENARIO("Two devices in different zones should be able to communicate",
+             "[integration_test][module][communication][network][routing][ierp]") {
+        GIVEN("seven devices (keyPair + id + network) A, w, x, B, y, z, C") {
+            // Zone layout
+            // A <-> w <-> x <-> B <-> y <-> z <-> C
+            NetworkSimulator simulator;
+            cryptography::UUID A, w, x, B, y, z, C;
+            vector<cryptography::UUID> nodes = {A, w, x, B, y, z, C};
+            CAPTURE(A);
+            CAPTURE(w);
+            CAPTURE(x);
+            CAPTURE(B);
+            CAPTURE(y);
+            CAPTURE(z);
+            CAPTURE(C);
 
-                    REQUIRE(advertisement.uuid == idA);
-                    REQUIRE(advertisement.route == expectedRoute);
+            auto keyA = simulator.createDevice(A, {w});
+            auto keyW = simulator.createDevice(w, {A, x});
+            auto keyX = simulator.createDevice(x, {w, B});
+            auto keyB = simulator.createDevice(B, {x, y});
+            auto keyY = simulator.createDevice(y, {B, z});
+            auto keyZ = simulator.createDevice(z, {y, C});
+            auto keyC = simulator.createDevice(C, {z});
 
-                    AND_WHEN("the forwarded advertisement is processed by B") {
-                        netB.processDatagram(advMsg);
+            WHEN("All devices advertise themselves") {
+                for (auto node : nodes)
+                    REQUIRE(simulator.advertiseNode(node));
 
-                        THEN("B should have a route to A") {
-                            vector<cryptography::UUID> expectedBRoute = {idB, idX, idA};
-                            auto routeResult = netB.routingTable.getRouteTo(idA);
-                            REQUIRE(routeResult.isOk());
-                            REQUIRE(routeResult.unwrap().route == expectedBRoute);
-                        }
+                THEN("C should have B as its bordercast node") {
+                    vector<cryptography::UUID> expectedBordercastNodes = {B};
+                    REQUIRE(simulator.getNode(C).unwrap()->network.routingTable.getBordercastNodes() == expectedBordercastNodes);
 
-                        THEN("B should have the public key of A") {
-                            REQUIRE(netB.credentials.getKey(idA).isOk());
+                    AND_WHEN("C sends a route discovery in search of A") {
+                        Routing::IERP::RouteDiscovery routeDiscovery = Routing::IERP::RouteDiscovery::discover(A, keyC.pub, C, 0);
+
+                        // TODO Build a function in the network that dispatches a routeDiscovery to all bordercast nodes in reach.
+                        Message discoveryMessage = Message::build(routeDiscovery.serialize(), {C, z, y, B}, keyB.pub, keyC);
+                        simulator.sendMessageTo(z, discoveryMessage.serialize(), C);
+
+                        THEN("C should have cached a route of A") {
+                            REQUIRE(simulator.getNode(C).unwrap()->network.routeCache.getRouteTo(A).isOk());
                         }
                     }
                 }
             }
         }
-
     }
 
 #endif // UNIT_TESTING

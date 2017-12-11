@@ -19,6 +19,8 @@ set(COMMUNICATION_SOURCES
         ${PROJECT_SOURCE_DIR}/ierp/RouteDiscovery.hpp
         ${PROJECT_SOURCE_DIR}/ierp/RouteCache.cpp
         ${PROJECT_SOURCE_DIR}/ierp/RouteCache.hpp
+        ${PROJECT_SOURCE_DIR}/NetworkSimulator.cpp
+        ${PROJECT_SOURCE_DIR}/NetworkSimulator.hpp
         ${PROJECT_SOURCE_DIR}/RelativeTimeProvider.hpp)
 
 # Add library target

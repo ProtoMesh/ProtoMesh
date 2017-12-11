@@ -27,13 +27,16 @@ using namespace std;
 #define Datagram vector<uint8_t>
 #define Datagrams vector<tuple<MessageTarget, Datagram>>
 
-// Note that the route length is defined in zones so the actual hop count would be MAXIMUM_ROUTE_LENGTH * ZONE_RADIUS
+/// Note that the route length is defined in zones so the actual hop count would be MAXIMUM_ROUTE_LENGTH * ZONE_RADIUS
 #define MAXIMUM_ROUTE_LENGTH 20
-#define ZONE_RADIUS 2
+/// Note that the zone radius is inclusive thus including the origin and destination.
+/// e.g. A -> x -> y -> B would be a radius of 4
+#define ZONE_RADIUS 4
 
 namespace ProtoMesh::communication {
 
     class MessageTarget {
+    public:
         enum class Type {
             SINGLE,
             BROADCAST
@@ -45,7 +48,6 @@ namespace ProtoMesh::communication {
         explicit MessageTarget(Type type, cryptography::UUID target = cryptography::UUID::Empty())
                 : type(type), target(target) {};
 
-    public:
         static MessageTarget broadcast() {
             return MessageTarget(Type::BROADCAST);
         }

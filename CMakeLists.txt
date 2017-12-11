@@ -13,6 +13,7 @@ include(cmake/BuildFlatbuffers.cmake)
 
 # Include unit testing framework and init relevant variables
 include_directories(lib/catch/single_include)
+include_directories(${CMAKE_SOURCE_DIR}/modules/testing)
 set(PROTOMESH_TEST_FILES ${CMAKE_SOURCE_DIR}/modules/testing/test.cpp)
 set(PROTOMESH_TEST_DEPS)
 

@@ -41,8 +41,7 @@ namespace ProtoMesh::communication {
         vector<uint8_t> serialize();
 
         /// Constructors
-        static Message build(const vector<uint8_t> &payload,
-                             cryptography::UUID from, vector<cryptography::UUID> via, cryptography::UUID to,
+        static Message build(const vector<uint8_t> &payload, vector<cryptography::UUID> route,
                              cryptography::asymmetric::PublicKey destinationKey, cryptography::asymmetric::KeyPair signer);
 
         static Result<Message, MessageDeserializationError> fromBuffer(vector<uint8_t> buffer);

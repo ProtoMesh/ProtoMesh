@@ -119,7 +119,7 @@ namespace ProtoMesh::communication::Routing::IARP {
             Advertisement adv2 = Advertisement::build(uuid, pair);
 
             REL_TIME_PROV_T timeProvider(new DummyRelativeTimeProvider(0));
-            RoutingTable table(timeProvider);
+            RoutingTable table(timeProvider, 2);
 
             adv.addHop(hop1);
             adv.addHop(hop2);
@@ -203,7 +203,7 @@ namespace ProtoMesh::communication::Routing::IARP {
             adv_i.addHop(g);
 
             REL_TIME_PROV_T timeProvider(new DummyRelativeTimeProvider(0));
-            RoutingTable table(timeProvider);
+            RoutingTable table(timeProvider, 2);
 
             WHEN("the advertisements are added to the table") {
                 table.processAdvertisement(adv_a);

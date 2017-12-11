@@ -24,6 +24,7 @@ namespace ProtoMesh::cryptography {
         void generateRandom();
 
         static UUID Empty() { return {0, 0, 0, 0}; }
+        static UUID fromNumber(uint32_t number) { return {number, number, number, number}; }
         UUID(uint32_t a, uint32_t b, uint32_t c, uint32_t d) : a(a), b(b), c(c), d(d) {};
         UUID();
         explicit UUID(const scheme::cryptography::UUID *id);

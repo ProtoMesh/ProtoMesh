@@ -53,13 +53,9 @@ namespace ProtoMesh::communication {
         return {buf, buf + builder.GetSize()};
     }
 
-    Message Message::build(const vector<uint8_t> &payload, cryptography::UUID from, vector<cryptography::UUID> via,
-                           cryptography::UUID to, cryptography::asymmetric::PublicKey destinationKey,
+    Message Message::build(const vector<uint8_t> &payload, vector<cryptography::UUID> route,
+                           cryptography::asymmetric::PublicKey destinationKey,
                            cryptography::asymmetric::KeyPair signer) {
-        /// Add the origin and destination to the route
-        via.insert(via.begin(), from);
-        via.push_back(to);
-
         /// Sign the payload
         SIGNATURE_T signature(cryptography::asymmetric::sign(payload, signer.priv));
 
@@ -68,7 +64,7 @@ namespace ProtoMesh::communication {
         // Note that since the IV is randomly generated its size can't mismatch so we can call unwrap
         vector<uint8_t> encryptedPayload = cryptography::symmetric::encrypt(payload, sharedSecret).unwrap();
 
-        return Message(via, encryptedPayload, signature);
+        return Message(route, encryptedPayload, signature);
     }
 
     Result<Message, Message::MessageDeserializationError> Message::fromBuffer(vector<uint8_t> buffer) {
@@ -118,10 +114,10 @@ namespace ProtoMesh::communication {
             cryptography::UUID hop2;
             cryptography::UUID destination;
 
-            vector<cryptography::UUID> route = {hop1, hop2};
+            vector<cryptography::UUID> route = {origin, hop1, hop2, destination};
 
             vector<uint8_t> payload = {1, 2, 3};
-            Message msg = Message::build(payload, origin, route, destination, destinationKeyPair.pub, keyPair);
+            Message msg = Message::build(payload, route, destinationKeyPair.pub, keyPair);
 
             WHEN("it is serialized") {
                 vector<uint8_t> serializedMsg = msg.serialize();

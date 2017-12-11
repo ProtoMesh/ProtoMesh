@@ -38,7 +38,7 @@ namespace ProtoMesh::communication::Routing::IARP {
         void deleteStaleBordercastNodes();
 
     public:
-        explicit RoutingTable(REL_TIME_PROV_T timeProvider, uint zoneRadius = 2) : timeProvider(move(timeProvider)), zoneRadius(zoneRadius) {};
+        explicit RoutingTable(REL_TIME_PROV_T timeProvider, uint zoneRadius = 4) : timeProvider(move(timeProvider)), zoneRadius(zoneRadius) {};
 
         Result<RoutingTableEntry, RouteDiscoveryError> getRouteTo(cryptography::UUID uuid);
 
