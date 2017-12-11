@@ -86,6 +86,7 @@ namespace ProtoMesh::communication {
                 : deviceID(deviceID), deviceKeys(deviceKeys), routingTable(std::move(timeProvider), ZONE_RADIUS) {};
 
         Datagrams processDatagram(const Datagram &datagram);
+        Datagrams discoverDevice(cryptography::UUID device);
     };
 
 }

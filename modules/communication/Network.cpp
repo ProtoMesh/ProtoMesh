@@ -326,6 +326,28 @@ namespace ProtoMesh::communication {
             return {}; // TODO Since it is unknown pass it to the parent function as incoming interaction data
     }
 
+    Datagrams Network::discoverDevice(cryptography::UUID device) {
+        vector<cryptography::UUID> bordercastNodes = this->routingTable.getBordercastNodes();
+
+        // TODO Add a reasonable timestamp
+        Routing::IERP::RouteDiscovery routeDiscovery = Routing::IERP::RouteDiscovery::discover(device, this->deviceKeys.pub, this->deviceID, 0);
+        Datagrams outgoingDatagrams;
+
+        for (cryptography::UUID bordercastNode : bordercastNodes) {
+            auto routeToBorderNodeResult = this->routingTable.getRouteTo(bordercastNode);
+            auto borderNodePublicKey = this->credentials.getKey(bordercastNode);
+            if (routeToBorderNodeResult.isErr() || borderNodePublicKey.isErr()) continue;
+
+            auto routeToBorderNode = routeToBorderNodeResult.unwrap();
+
+            Message discoveryMessage = Message::build(routeDiscovery.serialize(), routeToBorderNode.route, borderNodePublicKey.unwrap(), this->deviceKeys);
+
+            outgoingDatagrams.emplace_back(MessageTarget::single(routeToBorderNode.route[1]), discoveryMessage.serialize());
+        }
+
+        return outgoingDatagrams;
+    }
+
 #ifdef UNIT_TESTING
 
     SCENARIO("Two devices within the same zone should be able to communicate",
@@ -404,11 +426,8 @@ namespace ProtoMesh::communication {
                     REQUIRE(simulator.getNode(C).unwrap()->network.routingTable.getBordercastNodes() == expectedBordercastNodes);
 
                     AND_WHEN("C sends a route discovery in search of A") {
-                        Routing::IERP::RouteDiscovery routeDiscovery = Routing::IERP::RouteDiscovery::discover(A, keyC.pub, C, 0);
-
-                        // TODO Build a function in the network that dispatches a routeDiscovery to all bordercast nodes in reach.
-                        Message discoveryMessage = Message::build(routeDiscovery.serialize(), {C, z, y, B}, keyB.pub, keyC);
-                        simulator.sendMessageTo(z, discoveryMessage.serialize(), C);
+                        Datagrams routeDiscoveryDatagrams = simulator.getNode(C).unwrap()->network.discoverDevice(A);
+                        simulator.processDatagrams(routeDiscoveryDatagrams, C);
 
                         THEN("C should have cached a route of A") {
                             REQUIRE(simulator.getNode(C).unwrap()->network.routeCache.getRouteTo(A).isOk());
