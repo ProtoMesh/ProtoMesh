@@ -27,15 +27,14 @@ namespace ProtoMesh::communication {
         unordered_map<cryptography::UUID, NetworkNode> nodes;
         REL_TIME_PROV_T timeProvider;
 
+        void sendMessageTo(cryptography::UUID target, vector<uint8_t> message);
     public:
         enum class NetworkNodeError {
             NODE_NOT_FOUND
         };
 
 
-        NetworkSimulator() : timeProvider(new DummyRelativeTimeProvider(0)) {
-//            cout << "---- NEW SIMULATOR SESSION INITIALIZED ----" << endl;
-        };
+        NetworkSimulator() : timeProvider(new DummyRelativeTimeProvider(0)) {}
 
 
         cryptography::asymmetric::KeyPair createDevice(cryptography::UUID deviceID, vector<cryptography::UUID> neighbors);
@@ -44,7 +43,7 @@ namespace ProtoMesh::communication {
         bool hasNeighbor(cryptography::UUID node, cryptography::UUID neighbor);
 
         bool advertiseNode(cryptography::UUID nodeID);
-        void sendMessageTo(cryptography::UUID target, vector<uint8_t> message, cryptography::UUID from);
+        void processDatagrams(Datagrams datagrams, cryptography::UUID sender);
     };
 
 }

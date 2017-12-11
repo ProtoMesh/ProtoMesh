@@ -30,32 +30,31 @@ namespace ProtoMesh {
 
     bool NetworkSimulator::advertiseNode(cryptography::UUID nodeID) {
         auto nodeResult = this->getNode(nodeID);
-        if (nodeResult.isErr())
-            return false;
-
+        if (nodeResult.isErr()) return false;
 
         NetworkNode* node = nodeResult.unwrap();
 
         auto advertisement = Routing::IARP::Advertisement::build(node->network.deviceID, node->network.deviceKeys);
 
-//        cout << "Advertising node " << nodeID << " to nodes: " << endl;
-        for (cryptography::UUID neighbor : node->neighbors) {
-//            cout << "\t" << neighbor << endl;
-            this->sendMessageTo(neighbor, advertisement.serialize(), nodeID);
-        }
+        for (cryptography::UUID neighbor : node->neighbors)
+            this->sendMessageTo(neighbor, advertisement.serialize());
 
         return true;
     }
 
-    void NetworkSimulator::sendMessageTo(cryptography::UUID target, vector<uint8_t> message, cryptography::UUID from) {
-//        cout << "Sending message to " << target << endl;
-
+    void NetworkSimulator::sendMessageTo(cryptography::UUID target, vector<uint8_t> message) {
         auto nodeResult = this->getNode(target);
         if (nodeResult.isErr())
             return; // Node is not found so just exit. TODO Print a warning
         auto node = nodeResult.unwrap();
 
-        Datagrams datagrams = node->network.processDatagram(message);
+        this->processDatagrams(node->network.processDatagram(message), target);
+    }
+
+    void NetworkSimulator::processDatagrams(Datagrams datagrams, cryptography::UUID senderID) {
+        auto senderResult = this->getNode(senderID);
+        if (senderResult.isErr()) return;
+        auto sender = senderResult.unwrap();
 
         MessageTarget msgTarget(MessageTarget::Type::SINGLE);
         Datagram datagram;
@@ -64,19 +63,17 @@ namespace ProtoMesh {
 
             switch (msgTarget.type) {
                 case MessageTarget::Type::SINGLE:
-                    if (!this->hasNeighbor(from, target)) {
+                    if (!this->hasNeighbor(senderID, msgTarget.target)) {
                         cout << "ERROR: Attempted to deliver message to a node which wasn't its neighbor!" << endl;
-                        cout << "ERROR: Sender: " << from << endl;
-                        cout << "ERROR: Recipient: " << target << endl;
+                        cout << "ERROR: Sender: " << senderID << endl;
+                        cout << "ERROR: Recipient: " << msgTarget.target << endl;
                     } else {
-//                        cout << "\tResult sent to: " << msgTarget.target << endl;
-                        this->sendMessageTo(msgTarget.target, datagram, target);
+                        this->sendMessageTo(msgTarget.target, datagram);
                     }
                     break;
                 case MessageTarget::Type::BROADCAST:
-//                    cout << "\tResult broadcasted to:" << endl;
-                    for (cryptography::UUID neighbor : node->neighbors)
-                        this->sendMessageTo(neighbor, datagram, target);
+                    for (cryptography::UUID neighbor : sender->neighbors)
+                        this->sendMessageTo(neighbor, datagram);
                     break;
             }
         }
