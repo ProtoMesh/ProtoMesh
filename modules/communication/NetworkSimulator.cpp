@@ -7,12 +7,12 @@ namespace ProtoMesh {
         cryptography::asymmetric::KeyPair key = cryptography::asymmetric::generateKeyPair();
         Network net(deviceID, key, this->timeProvider);
 
-        this->nodes.insert({deviceID, NetworkNode(net, move(neighbors))});
+        this->nodes.insert({deviceID, NetworkSimulationNode(net, move(neighbors))});
 
         return key;
     }
 
-    Result<NetworkNode *, NetworkSimulator::NetworkNodeError> NetworkSimulator::getNode(cryptography::UUID node) {
+    Result<NetworkSimulationNode *, NetworkSimulator::NetworkNodeError> NetworkSimulator::getNode(cryptography::UUID node) {
         if (nodes.find(node) != nodes.end()) {
             return Ok( &(nodes.at(node)) );
         } else
@@ -32,7 +32,7 @@ namespace ProtoMesh {
         auto nodeResult = this->getNode(nodeID);
         if (nodeResult.isErr()) return false;
 
-        NetworkNode* node = nodeResult.unwrap();
+        NetworkSimulationNode* node = nodeResult.unwrap();
 
         auto advertisement = Routing::IARP::Advertisement::build(node->network.deviceID, node->network.deviceKeys);
 

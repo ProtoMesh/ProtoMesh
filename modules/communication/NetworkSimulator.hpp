@@ -15,16 +15,16 @@ using namespace std;
 #include "RelativeTimeProvider.hpp"
 
 namespace ProtoMesh::communication {
-    class NetworkNode {
+    class NetworkSimulationNode {
     public:
         Network network;
         vector<cryptography::UUID> neighbors;
 
-        NetworkNode(Network net, vector<cryptography::UUID> neighbors) : network(move(net)), neighbors(move(neighbors)) {}
+        NetworkSimulationNode(Network net, vector<cryptography::UUID> neighbors) : network(move(net)), neighbors(move(neighbors)) {}
     };
 
     class NetworkSimulator {
-        unordered_map<cryptography::UUID, NetworkNode> nodes;
+        unordered_map<cryptography::UUID, NetworkSimulationNode> nodes;
         REL_TIME_PROV_T timeProvider;
 
         void sendMessageTo(cryptography::UUID target, vector<uint8_t> message);
@@ -39,7 +39,7 @@ namespace ProtoMesh::communication {
 
         cryptography::asymmetric::KeyPair createDevice(cryptography::UUID deviceID, vector<cryptography::UUID> neighbors);
 
-        Result<NetworkNode*, NetworkNodeError> getNode(cryptography::UUID node);
+        Result<NetworkSimulationNode*, NetworkNodeError> getNode(cryptography::UUID node);
         bool hasNeighbor(cryptography::UUID node, cryptography::UUID neighbor);
 
         bool advertiseNode(cryptography::UUID nodeID);
