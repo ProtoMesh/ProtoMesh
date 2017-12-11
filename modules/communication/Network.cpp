@@ -418,19 +418,21 @@ namespace ProtoMesh::communication {
             auto keyC = simulator.createDevice(C, {z});
 
             WHEN("All devices advertise themselves") {
+                NetworkSimulationNode* nodeC = simulator.getNode(C).unwrap();
+
                 for (auto node : nodes)
                     REQUIRE(simulator.advertiseNode(node));
 
                 THEN("C should have B as its bordercast node") {
                     vector<cryptography::UUID> expectedBordercastNodes = {B};
-                    REQUIRE(simulator.getNode(C).unwrap()->network.routingTable.getBordercastNodes() == expectedBordercastNodes);
+                    REQUIRE(nodeC->network.routingTable.getBordercastNodes() == expectedBordercastNodes);
 
                     AND_WHEN("C sends a route discovery in search of A") {
-                        Datagrams routeDiscoveryDatagrams = simulator.getNode(C).unwrap()->network.discoverDevice(A);
+                        Datagrams routeDiscoveryDatagrams = nodeC->network.discoverDevice(A);
                         simulator.processDatagrams(routeDiscoveryDatagrams, C);
 
                         THEN("C should have cached a route of A") {
-                            REQUIRE(simulator.getNode(C).unwrap()->network.routeCache.getRouteTo(A).isOk());
+                            REQUIRE(nodeC->network.routeCache.getRouteTo(A).isOk());
                         }
                     }
                 }
