@@ -25,7 +25,8 @@ using namespace std;
 #include "communication/ierp/routeDiscoveryAcknowledgement_generated.h"
 
 #define Datagram vector<uint8_t>
-#define Datagrams vector<tuple<MessageTarget, Datagram>>
+#define DatagramPacket tuple<MessageTarget, Datagram>
+#define Datagrams vector<DatagramPacket>
 
 /// Note that the route length is defined in zones so the actual hop count would be MAXIMUM_ROUTE_LENGTH * ZONE_RADIUS
 #define MAXIMUM_ROUTE_LENGTH 20
@@ -82,11 +83,17 @@ namespace ProtoMesh::communication {
         Datagrams dispatchRouteDiscoveryAcknowledgement(Routing::IERP::RouteDiscovery routeDiscovery);
 
     public:
+        enum class MessageSendError {
+            TARGET_PUBLIC_KEY_UNKNOWN,
+            TARGET_UNREACHABLE
+        };
+
         explicit Network(cryptography::UUID deviceID, cryptography::asymmetric::KeyPair deviceKeys, REL_TIME_PROV_T timeProvider)
                 : deviceID(deviceID), deviceKeys(deviceKeys), routingTable(std::move(timeProvider), ZONE_RADIUS) {};
 
         Datagrams processDatagram(const Datagram &datagram);
         Datagrams discoverDevice(cryptography::UUID device);
+        Result<DatagramPacket, MessageSendError> sendMessageTo(cryptography::UUID target, const Datagram &payload);
     };
 
 }

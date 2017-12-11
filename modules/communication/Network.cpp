@@ -42,52 +42,35 @@ namespace ProtoMesh::communication {
     }
 
     Datagrams Network::dispatchRouteDiscoveryAcknowledgement(Routing::IERP::RouteDiscovery routeDiscovery) {
-        cryptography::UUID firstBorder = routeDiscovery.route.back();
-        auto routeToFirstBorderResult = this->routingTable.getRouteTo(firstBorder);
-        auto firstBorderPublicKey = this->credentials.getKey(firstBorder);
+        vector<cryptography::UUID> reversedRoute(routeDiscovery.route.rbegin(), routeDiscovery.route.rend());
+        reversedRoute.push_back(this->deviceID);
+        this->routeCache.addRoute(routeDiscovery.route.front(), reversedRoute);
 
-        if (routeToFirstBorderResult.isOk() && firstBorderPublicKey.isOk()) {
-            // TODO Check if the reversing works as intended
-            vector<cryptography::UUID> reversedRoute(routeDiscovery.route.rbegin(), routeDiscovery.route.rend());
-            reversedRoute.push_back(this->deviceID);
-            this->routeCache.addRoute(routeDiscovery.route.front(), reversedRoute);
+        using namespace scheme::communication::ierp;
+        flatbuffers::FlatBufferBuilder builder;
 
-            using namespace scheme::communication::ierp;
-            flatbuffers::FlatBufferBuilder builder;
+        /// Serialize the route
+        vector<scheme::cryptography::UUID> routeEntries;
+        for (auto hop : routeDiscovery.route)
+            routeEntries.push_back(hop.toScheme());
+        routeEntries.push_back(this->deviceID.toScheme());
 
-            /// Serialize the route
-            vector<scheme::cryptography::UUID> routeEntries;
-            for (auto hop : routeDiscovery.route)
-                routeEntries.push_back(hop.toScheme());
-            routeEntries.push_back(this->deviceID.toScheme());
+        auto routeVector = builder.CreateVectorOfStructs(routeEntries);
 
-            auto routeVector = builder.CreateVectorOfStructs(routeEntries);
+        /// Serialize our public key
+        auto pubKey = this->deviceKeys.pub.toBuffer(&builder);
 
-            /// Serialize our public key
-            auto pubKey = this->deviceKeys.pub.toBuffer(&builder);
+        auto routeDiscoveryAcknowledgement = CreateRouteDiscoveryAcknowledgementDatagram(builder, routeVector,
+                                                                                         pubKey);
 
-            auto routeDiscoveryAcknowledgement = CreateRouteDiscoveryAcknowledgementDatagram(builder, routeVector,
-                                                                                             pubKey);
+        /// Convert it to a byte array
+        builder.Finish(routeDiscoveryAcknowledgement, RouteDiscoveryAcknowledgementDatagramIdentifier());
+        uint8_t *buf = builder.GetBufferPointer();
+        vector<uint8_t> routeDiscoveryAcknowledgementDatagram({buf, buf + builder.GetSize()});
 
-            /// Convert it to a byte array
-            builder.Finish(routeDiscoveryAcknowledgement, RouteDiscoveryAcknowledgementDatagramIdentifier());
-            uint8_t *buf = builder.GetBufferPointer();
-            vector<uint8_t> routeDiscoveryAcknowledgementDatagram({buf, buf + builder.GetSize()});
 
-            /// Build the message to the first hop
-            auto routeToFirstBorder = routeToFirstBorderResult.unwrap();
-            Message message = Message::build(
-                    routeDiscoveryAcknowledgementDatagram,
-                    routeToFirstBorder.route,
-                    firstBorderPublicKey.unwrap(),
-                    this->deviceKeys);
-
-            // TODO IMPORTANT Send it to routeToFirstBorder.route[1] not firstBorder!
-            // This works in the simulator but doesn't in the real world
-            return { {MessageTarget::single(routeToFirstBorder.route[1]), message.serialize()} };
-        } else {
-            // TODO Log out that the route in the routeDiscovery datagram is unknown/invalid
-        }
+        auto message = this->sendMessageTo(routeDiscovery.route.back(), routeDiscoveryAcknowledgementDatagram);
+        if (message.isOk()) return { message.unwrap() };
 
         return {};
     }
@@ -103,25 +86,8 @@ namespace ProtoMesh::communication {
         Datagram serializedDiscovery = routeDiscovery.serialize();
         Datagrams outgoingDatagrams = {};
         for (auto bordercastNode : bordercastNodes) {
-
-            /// Check if there is a route to the bordercast node
-            auto bordercastRouteResult = this->routingTable.getRouteTo(bordercastNode);
-            auto bordercastNodePublicKey = this->credentials.getKey(bordercastNode);
-            if (bordercastRouteResult.isOk() && bordercastNodePublicKey.isOk()) {
-
-                /// Unwrap the route and build a message traversing it
-                auto bordercastRoute = bordercastRouteResult.unwrap();
-                Message message = Message::build(
-                        serializedDiscovery,
-                        bordercastRoute.route,
-                        bordercastNodePublicKey.unwrap(),
-                        this->deviceKeys);
-
-                /// Add the message to the queue
-                outgoingDatagrams.emplace_back(MessageTarget::single(bordercastRoute.route[0]), message.serialize());
-            } else {
-                // TODO Log out that there was no route to the bordercast node
-            }
+            auto message = this->sendMessageTo(bordercastNode, serializedDiscovery);
+            if (message.isOk()) return { message.unwrap() };
         }
 
         return outgoingDatagrams;
@@ -154,19 +120,9 @@ namespace ProtoMesh::communication {
 
 
         /// Check if we know the destination and forward it accordingly
-        auto routeToDestinationResult = this->routingTable.getRouteTo(routeDiscovery.destination);
-        auto destinationPublicKey = this->credentials.getKey(routeDiscovery.destination);
-        if (routeToDestinationResult.isOk() && destinationPublicKey.isOk()) {
-            auto routeToDestination = routeToDestinationResult.unwrap();
-
-            Message message = Message::build(
-                    routeDiscovery.serialize(),
-                    routeToDestination.route,
-                    destinationPublicKey.unwrap(),
-                    this->deviceKeys);
-
-            return { {MessageTarget::single(routeToDestination.route[1]), message.serialize()} };
-        }
+        auto message = this->sendMessageTo(routeDiscovery.destination, routeDiscovery.serialize());
+        if (message.isOk())
+            return { message.unwrap() };
 
 
         /// Check whether or not the route discovery has exceeded the maximum route length
@@ -206,23 +162,9 @@ namespace ProtoMesh::communication {
             // TODO Possibly use this datagram to derive a partial route and cache that instead of ignoring it
             cryptography::UUID nextBorderNode = *(it-1);
 
-            /// Check if we know the destination and forward it accordingly
-            auto routeToBorderNodeResult = this->routingTable.getRouteTo(nextBorderNode);
-            auto borderNodePublicKey = this->credentials.getKey(nextBorderNode);
-            if (routeToBorderNodeResult.isOk() && borderNodePublicKey.isOk()) {
-                auto routeToBorderNode = routeToBorderNodeResult.unwrap();
-
-                Message message = Message::build(
-                        datagram,
-                        routeToBorderNode.route,
-                        borderNodePublicKey.unwrap(),
-                        this->deviceKeys);
-
-                return { {MessageTarget::single(routeToBorderNode.route[1]), message.serialize()} };
-            } else {
-                // TODO Log that we couldn't find a route to the destination
-                return {};
-            }
+            auto message = this->sendMessageTo(nextBorderNode, datagram);
+            if (message.isOk())
+                return { message.unwrap() };
         } else if (it == route.end()) {
             // TODO Log that we received a route discovery acknowledgement that wasn't meant for us
         }
@@ -331,21 +273,33 @@ namespace ProtoMesh::communication {
 
         // TODO Add a reasonable timestamp
         Routing::IERP::RouteDiscovery routeDiscovery = Routing::IERP::RouteDiscovery::discover(device, this->deviceKeys.pub, this->deviceID, 0);
+        Datagram payload = routeDiscovery.serialize();
         Datagrams outgoingDatagrams;
 
         for (cryptography::UUID bordercastNode : bordercastNodes) {
-            auto routeToBorderNodeResult = this->routingTable.getRouteTo(bordercastNode);
-            auto borderNodePublicKey = this->credentials.getKey(bordercastNode);
-            if (routeToBorderNodeResult.isErr() || borderNodePublicKey.isErr()) continue;
-
-            auto routeToBorderNode = routeToBorderNodeResult.unwrap();
-
-            Message discoveryMessage = Message::build(routeDiscovery.serialize(), routeToBorderNode.route, borderNodePublicKey.unwrap(), this->deviceKeys);
-
-            outgoingDatagrams.emplace_back(MessageTarget::single(routeToBorderNode.route[1]), discoveryMessage.serialize());
+            auto datagram = this->sendMessageTo(bordercastNode, payload);
+            if (datagram.isOk())
+                outgoingDatagrams.push_back(datagram.unwrap());
         }
 
         return outgoingDatagrams;
+    }
+
+    Result<DatagramPacket, Network::MessageSendError> Network::sendMessageTo(cryptography::UUID target, const Datagram &payload) {
+        auto routeResult = this->routingTable.getRouteTo(target);
+        auto targetPublicKey = this->credentials.getKey(target);
+        if (targetPublicKey.isErr())
+            return Err(Network::MessageSendError::TARGET_PUBLIC_KEY_UNKNOWN);
+        if (routeResult.isErr())
+            return Err(Network::MessageSendError::TARGET_UNREACHABLE);
+
+
+        auto route = routeResult.unwrap();
+
+        Message message = Message::build(payload, route.route, targetPublicKey.unwrap(), this->deviceKeys);
+        DatagramPacket datagram(MessageTarget::single(route.route[1]), message.serialize());
+
+        return Ok(datagram);
     }
 
 #ifdef UNIT_TESTING
