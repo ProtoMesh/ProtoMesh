@@ -44,6 +44,7 @@ namespace ProtoMesh::communication {
 
         bool advertiseNode(cryptography::UUID nodeID);
         void processDatagrams(Datagrams datagrams, cryptography::UUID sender);
+        void processMessageQueueOf(cryptography::UUID nodeID);
     };
 
 }

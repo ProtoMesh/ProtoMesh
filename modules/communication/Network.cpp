@@ -69,7 +69,7 @@ namespace ProtoMesh::communication {
         vector<uint8_t> routeDiscoveryAcknowledgementDatagram({buf, buf + builder.GetSize()});
 
 
-        auto message = this->sendMessageTo(routeDiscovery.route.back(), routeDiscoveryAcknowledgementDatagram);
+        auto message = this->sendMessageLocalTo(routeDiscovery.route.back(), routeDiscoveryAcknowledgementDatagram);
         if (message.isOk()) return { message.unwrap() };
 
         return {};
@@ -86,7 +86,7 @@ namespace ProtoMesh::communication {
         Datagram serializedDiscovery = routeDiscovery.serialize();
         Datagrams outgoingDatagrams = {};
         for (auto bordercastNode : bordercastNodes) {
-            auto message = this->sendMessageTo(bordercastNode, serializedDiscovery);
+            auto message = this->sendMessageLocalTo(bordercastNode, serializedDiscovery);
             if (message.isOk()) return { message.unwrap() };
         }
 
@@ -120,7 +120,7 @@ namespace ProtoMesh::communication {
 
 
         /// Check if we know the destination and forward it accordingly
-        auto message = this->sendMessageTo(routeDiscovery.destination, routeDiscovery.serialize());
+        auto message = this->sendMessageLocalTo(routeDiscovery.destination, routeDiscovery.serialize());
         if (message.isOk())
             return { message.unwrap() };
 
@@ -162,7 +162,7 @@ namespace ProtoMesh::communication {
             // TODO Possibly use this datagram to derive a partial route and cache that instead of ignoring it
             cryptography::UUID nextBorderNode = *(it-1);
 
-            auto message = this->sendMessageTo(nextBorderNode, datagram);
+            auto message = this->sendMessageLocalTo(nextBorderNode, datagram);
             if (message.isOk())
                 return { message.unwrap() };
         } else if (it == route.end()) {
@@ -177,11 +177,21 @@ namespace ProtoMesh::communication {
             return {}; // INVALID_PUB_KEY
 
         /// Insert the route into the routeCache and the public key into the credentialsStore
-        this->routeCache.addRoute(route.back(), route);
-        this->credentials.insertKey(route.back(), pubKey.unwrap());
+        cryptography::UUID discoveredDevice = route.back();
+        this->routeCache.addRoute(discoveredDevice, route);
+        this->credentials.insertKey(discoveredDevice, pubKey.unwrap());
 
 
-        // TODO Possibly dispatch messages in the queue waiting for this
+        /// Dispatch messages in the routing queue
+        if (this->routingQueue.find(discoveredDevice) != this->routingQueue.end()) {
+            vector<Datagram> &queuedPayloads = this->routingQueue.at(discoveredDevice);
+
+            for (Datagram payload : queuedPayloads)
+                this->queueMessageTo(discoveredDevice, payload);
+
+            this->routingQueue.erase(discoveredDevice);
+        }
+
         return {};
     }
 
@@ -248,7 +258,7 @@ namespace ProtoMesh::communication {
                 nextHopPublicKey.unwrap(),
                 this->deviceKeys);
 
-        return { {MessageTarget::single(routeToNextHop.route[0]), message.serialize()} };
+        return { {MessageTarget::single(routeToNextHop.route[1]), message.serialize()} };
     }
 
     Datagrams Network::processDatagram(const Datagram &datagram) {
@@ -264,8 +274,10 @@ namespace ProtoMesh::communication {
             return this->processDeliveryFailure(datagram);
         else if (BufferHasIdentifier(datagram.data(), scheme::communication::MessageDatagramIdentifier()))
             return this->processMessageDatagram(datagram);
-        else
+        else {
+            cout << "UNIMPLEMENTED: Received unknown message." << endl;
             return {}; // TODO Since it is unknown pass it to the parent function as incoming interaction data
+        }
     }
 
     Datagrams Network::discoverDevice(cryptography::UUID device) {
@@ -277,7 +289,7 @@ namespace ProtoMesh::communication {
         Datagrams outgoingDatagrams;
 
         for (cryptography::UUID bordercastNode : bordercastNodes) {
-            auto datagram = this->sendMessageTo(bordercastNode, payload);
+            auto datagram = this->sendMessageLocalTo(bordercastNode, payload);
             if (datagram.isOk())
                 outgoingDatagrams.push_back(datagram.unwrap());
         }
@@ -285,7 +297,8 @@ namespace ProtoMesh::communication {
         return outgoingDatagrams;
     }
 
-    Result<DatagramPacket, Network::MessageSendError> Network::sendMessageTo(cryptography::UUID target, const Datagram &payload) {
+    Result<DatagramPacket, Network::MessageSendError> Network::sendMessageLocalTo(cryptography::UUID target,
+                                                                                  const Datagram &payload) {
         auto routeResult = this->routingTable.getRouteTo(target);
         auto targetPublicKey = this->credentials.getKey(target);
         if (targetPublicKey.isErr())
@@ -300,6 +313,48 @@ namespace ProtoMesh::communication {
         DatagramPacket datagram(MessageTarget::single(route.route[1]), message.serialize());
 
         return Ok(datagram);
+    }
+
+    void Network::queueMessageTo(cryptography::UUID target, const Datagram &payload) {
+        /// Attempt to deliver the message within the current zone
+        auto deliveryResult = this->sendMessageLocalTo(target, payload);
+
+        if (deliveryResult.isOk()) {
+            this->outgoingQueue.push_back(deliveryResult.unwrap());
+            return;
+        }
+
+
+        /// Attempt to retrieve a route to the destination outside of this zone
+        auto routeResult = this->routeCache.getRouteTo(target);
+        auto targetKey = this->credentials.getKey(target);
+
+        if (routeResult.isOk() && targetKey.isOk()) {
+            auto route = routeResult.unwrap();
+
+            /// Wrap the payload in a message for intrazone transmission
+            Message message = Message::build(payload, route.route, targetKey.unwrap(), this->deviceKeys);
+
+            /// Send that message wrapped interzone to the first border node
+            auto borderDeliveryResult = this->sendMessageLocalTo(route.route[1], message.serialize());
+            if (borderDeliveryResult.isOk()) {
+                this->outgoingQueue.push_back(borderDeliveryResult.unwrap());
+                return;
+            }
+        }
+
+
+        /// Dispatch a route discovery datagram and queue the message
+        if (this->routingQueue.find(target) != this->routingQueue.end()) {
+            vector<Datagram> &queuedPayloads = this->routingQueue.at(target);
+            queuedPayloads.push_back(payload);
+            // TODO Maybe don't dispatch another route discovery within a set timeframe to prevent spamming
+        } else {
+            this->routingQueue.insert({target, {payload}});
+        }
+
+        for (DatagramPacket packet : this->discoverDevice(target))
+            this->outgoingQueue.push_back(packet);
     }
 
 #ifdef UNIT_TESTING
@@ -353,7 +408,13 @@ namespace ProtoMesh::communication {
             // Zone layout
             // A <-> w <-> x <-> B <-> y <-> z <-> C
             NetworkSimulator simulator;
-            cryptography::UUID A, w, x, B, y, z, C;
+            cryptography::UUID A = cryptography::UUID::fromNumber(0),
+                    w = cryptography::UUID::fromNumber(0x37), // 55
+                    x = cryptography::UUID::fromNumber(0x42), // 66
+                    B = cryptography::UUID::fromNumber(1),
+                    y = cryptography::UUID::fromNumber(0x4d), // 77 -> TODO Message gets stuck right here. Probably not re-wrapped at B
+                    z = cryptography::UUID::fromNumber(0x58), // 88
+                    C = cryptography::UUID::fromNumber(2);
             vector<cryptography::UUID> nodes = {A, w, x, B, y, z, C};
             CAPTURE(A);
             CAPTURE(w);
@@ -372,6 +433,7 @@ namespace ProtoMesh::communication {
             auto keyC = simulator.createDevice(C, {z});
 
             WHEN("All devices advertise themselves") {
+                NetworkSimulationNode* nodeA = simulator.getNode(A).unwrap();
                 NetworkSimulationNode* nodeC = simulator.getNode(C).unwrap();
 
                 for (auto node : nodes)
@@ -387,6 +449,36 @@ namespace ProtoMesh::communication {
 
                         THEN("C should have cached a route of A") {
                             REQUIRE(nodeC->network.routeCache.getRouteTo(A).isOk());
+                        }
+                    }
+                }
+
+                WHEN("A is instructed to send a message to C") {
+                    nodeA->network.queueMessageTo(C, {1, 2, 3, 4, 5});
+
+                    THEN("A should have a message datagram in its outgoingDatagrams buffer") {
+                        REQUIRE(nodeA->network.outgoingQueue.size() == 1);
+                        REQUIRE(nodeA->network.routingQueue.size() == 1);
+                        DatagramPacket discovery = nodeA->network.outgoingQueue.back();
+                        Datagram discoveryData = get<1>(discovery);
+
+                        CAPTURE(discoveryData);
+
+                        bool isMessageDatagram = flatbuffers::BufferHasIdentifier(
+                                discoveryData.data(), scheme::communication::MessageDatagramIdentifier());
+                        REQUIRE(isMessageDatagram);
+
+                        WHEN("the route discovery is processed by the network") {
+                            simulator.processMessageQueueOf(A);
+
+                            THEN("A should wrap the payload in a message and move it into the outgoingQueue") {
+                                REQUIRE(nodeA->network.routingQueue.empty());
+                                REQUIRE(nodeA->network.outgoingQueue.size() == 1);
+
+                                WHEN("the original message is now being dispatched") {
+                                    simulator.processMessageQueueOf(A);
+                                }
+                            }
                         }
                     }
                 }

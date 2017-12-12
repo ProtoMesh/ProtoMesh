@@ -71,6 +71,16 @@ namespace ProtoMesh::communication {
 
         CredentialsStore credentials;
 
+        /// Datagrams waiting to be dispatched (wrapped in a Message)
+        vector<DatagramPacket> outgoingQueue;
+        /// Payloads waiting for a queue to be available (not wrapped in a Message yet)
+        unordered_map<cryptography::UUID, vector<Datagram>> routingQueue;
+
+        enum class MessageSendError {
+            TARGET_PUBLIC_KEY_UNKNOWN,
+            TARGET_UNREACHABLE
+        };
+
         /// Datagram processing
         Datagrams processAdvertisement(const Datagram &datagram);
         Datagrams processRouteDiscovery(const Datagram &datagram);
@@ -78,22 +88,23 @@ namespace ProtoMesh::communication {
         Datagrams processDeliveryFailure(const Datagram &datagram);
         Datagrams processMessageDatagram(const Datagram &datagram);
 
-        /// Helpers
+        /// Processing helpers
         Datagrams rebroadcastRouteDiscovery(Routing::IERP::RouteDiscovery routeDiscovery);
         Datagrams dispatchRouteDiscoveryAcknowledgement(Routing::IERP::RouteDiscovery routeDiscovery);
 
+        /// Others
+        Datagrams discoverDevice(cryptography::UUID device);
+        Result<DatagramPacket, MessageSendError> sendMessageLocalTo(cryptography::UUID target, const Datagram &payload);
+
     public:
-        enum class MessageSendError {
-            TARGET_PUBLIC_KEY_UNKNOWN,
-            TARGET_UNREACHABLE
-        };
 
         explicit Network(cryptography::UUID deviceID, cryptography::asymmetric::KeyPair deviceKeys, REL_TIME_PROV_T timeProvider)
                 : deviceID(deviceID), deviceKeys(deviceKeys), routingTable(std::move(timeProvider), ZONE_RADIUS) {};
 
         Datagrams processDatagram(const Datagram &datagram);
-        Datagrams discoverDevice(cryptography::UUID device);
-        Result<DatagramPacket, MessageSendError> sendMessageTo(cryptography::UUID target, const Datagram &payload);
+
+        // Note that the payload is not yet wrapped in a message
+        void queueMessageTo(cryptography::UUID target, const Datagram &payload);
     };
 
 }

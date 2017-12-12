@@ -78,4 +78,16 @@ namespace ProtoMesh {
             }
         }
     }
+
+    void NetworkSimulator::processMessageQueueOf(cryptography::UUID nodeID) {
+        auto nodeResult = this->getNode(nodeID);
+        if (nodeResult.isErr()) return;
+        auto node = nodeResult.unwrap();
+
+        // TODO Replace this with a network.take() function or smth similar
+        Datagrams datagrams(node->network.outgoingQueue.begin(), node->network.outgoingQueue.end());
+        node->network.outgoingQueue.clear();
+
+        this->processDatagrams(datagrams, nodeID);
+    }
 }
