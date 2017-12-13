@@ -71,6 +71,8 @@ namespace ProtoMesh::communication {
 
         CredentialsStore credentials;
 
+        /// Incoming payloads that are not part of the communication layer
+        vector<Datagram> incomingBuffer;
         /// Datagrams waiting to be dispatched (wrapped in a Message)
         vector<DatagramPacket> outgoingQueue;
         /// Payloads waiting for a queue to be available (not wrapped in a Message yet)

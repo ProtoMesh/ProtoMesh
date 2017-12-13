@@ -252,13 +252,13 @@ namespace ProtoMesh::communication {
             return { {MessageTarget::single(nextHop), message.serialize()} };
 
         /// Otherwise wrap it in another message following routeToNextHop and dispatch that
-        Message forwardedMessage = Message::build(
+        Message rewrappedMessage = Message::build(
                 message.serialize(),
                 routeToNextHop.route,
                 nextHopPublicKey.unwrap(),
                 this->deviceKeys);
 
-        return { {MessageTarget::single(routeToNextHop.route[1]), message.serialize()} };
+        return { {MessageTarget::single(routeToNextHop.route[1]), rewrappedMessage.serialize()} };
     }
 
     Datagrams Network::processDatagram(const Datagram &datagram) {
@@ -274,10 +274,10 @@ namespace ProtoMesh::communication {
             return this->processDeliveryFailure(datagram);
         else if (BufferHasIdentifier(datagram.data(), scheme::communication::MessageDatagramIdentifier()))
             return this->processMessageDatagram(datagram);
-        else {
-            cout << "UNIMPLEMENTED: Received unknown message." << endl;
-            return {}; // TODO Since it is unknown pass it to the parent function as incoming interaction data
-        }
+
+        this->incomingBuffer.push_back(datagram);
+        // TODO Call a callback to process the incomingBuffer
+        return {};
     }
 
     Datagrams Network::discoverDevice(cryptography::UUID device) {
@@ -454,7 +454,8 @@ namespace ProtoMesh::communication {
                 }
 
                 WHEN("A is instructed to send a message to C") {
-                    nodeA->network.queueMessageTo(C, {1, 2, 3, 4, 5});
+                    Datagram payload = {1, 2, 3, 4, 5};
+                    nodeA->network.queueMessageTo(C, payload);
 
                     THEN("A should have a message datagram in its outgoingDatagrams buffer") {
                         REQUIRE(nodeA->network.outgoingQueue.size() == 1);
@@ -477,6 +478,11 @@ namespace ProtoMesh::communication {
 
                                 WHEN("the original message is now being dispatched") {
                                     simulator.processMessageQueueOf(A);
+
+                                    THEN("the incoming buffer of C should contain the message sent by A") {
+                                        REQUIRE(nodeC->network.incomingBuffer.size() == 1);
+                                        REQUIRE(nodeC->network.incomingBuffer.back() == payload);
+                                    }
                                 }
                             }
                         }
