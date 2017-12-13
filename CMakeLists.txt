@@ -40,7 +40,7 @@ set(AES_SOURCES
 add_subdirectory(schemes)
 
 # Include project modules
-set(PROTOMESH_MODULES communication cryptography)
+set(PROTOMESH_MODULES cryptography communication interaction)
 foreach(MODULE ${PROTOMESH_MODULES})
     add_subdirectory(modules/${MODULE})
     include_directories(modules/${MODULE})

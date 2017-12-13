@@ -1,0 +1,10 @@
+#ifndef PROTOMESH_ENDPOINT_HPP
+#define PROTOMESH_ENDPOINT_HPP
+
+
+class Endpoint {
+
+};
+
+
+#endif //PROTOMESH_ENDPOINT_HPP
