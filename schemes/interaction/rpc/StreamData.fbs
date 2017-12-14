@@ -1,0 +1,18 @@
+namespace ProtoMesh.scheme.interaction.rpc;
+
+table StreamData {
+    // ***
+    // * Transaction identifier
+    // * Used to correlate to the request.
+    // ***
+    transactionID: ubyte;
+
+    // ***
+    // * Payload
+    // * Contains the actual data.
+    // ***
+    payload: [ubyte];
+}
+
+file_identifier "STRD";
+root_type StreamData;

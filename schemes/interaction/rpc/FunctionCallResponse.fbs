@@ -1,0 +1,23 @@
+namespace ProtoMesh.scheme.interaction.rpc;
+
+table FunctionCallResponse {
+    // ***
+    // * Transaction identifier
+    // * Used to correlate to the request.
+    // ***
+    transactionID: ubyte;
+
+    // ***
+    // * Status of the call
+    // * Used to determine whether or not the call succeeded.
+    // ***
+    statusCode: ubyte;
+
+    // ***
+    // * Serialized return value
+    // ***
+    returnValue: [ubyte];
+}
+
+file_identifier "FNCR";
+root_type FunctionCallResponse;

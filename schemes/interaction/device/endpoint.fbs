@@ -1,0 +1,43 @@
+namespace ProtoMesh.scheme.interaction.device;
+
+// ***
+// * Magic numbers for endpoint types
+// * Meaning is defined in online database.
+// ***
+enum EndpointTypeID : long {
+    Metadata = 0,
+    Color = 1,
+    Temperature = 2,
+    Brightness = 3,
+    Authorization = 4
+}
+
+table Endpoint {
+    // ***
+    // * Available functions
+    // * IDs of the functions from the type this endpoint supports
+    // ***
+    availableFunctions: [ubyte];
+
+    // ***
+    // * Type identifier
+    // * Uniquely identifies the endpoints type.
+    // * Implicitly defines the available functions.
+    // ***
+    type: EndpointTypeID;
+
+    // ***
+    // * Identification for the endpoint
+    // * Unique within the device.
+    // ***
+    identifier: uint;
+
+    // ***
+    // * Name of endpoint
+    // * Can be set through the special set_name(name: string) function.
+    // ***
+    name: string;
+}
+
+file_identifier "ENDP";
+root_type Endpoint;

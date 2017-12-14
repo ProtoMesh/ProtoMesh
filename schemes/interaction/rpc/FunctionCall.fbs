@@ -1,0 +1,38 @@
+include "../../cryptography/asymmetric.fbs";
+
+namespace ProtoMesh.scheme.interaction.rpc;
+
+table FunctionCall {
+    // ***
+    // * Endpoint identifier
+    // * Unique to the device.
+    // ***
+    endpointID: ushort;
+
+    // ***
+    // * Function identifier
+    // * Unique to the endpoint.
+    // * Implicitly defines the parameter and return value serialization.
+    // ***
+    function: ubyte;
+
+    // ***
+    // * Transaction identifier
+    // * Used to correlate to the response.
+    // ***
+    transactionID: ubyte;
+
+    // ***
+    // * Serialized parameters
+    // ***
+    parameter: [ubyte];
+
+    // ***
+    // * Signature
+    // * Used to determine permission.
+    // ***
+    signature: cryptography.Signature;
+}
+
+file_identifier "FNCL";
+root_type FunctionCall;
