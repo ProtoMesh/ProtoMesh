@@ -4,7 +4,9 @@ project(module_interaction)
 set(INTERACTION_DEPENDENCIES schemes_interaction)
 set(INTERACTION_SOURCES
         ${PROJECT_SOURCE_DIR}/Endpoint.cpp
-        ${PROJECT_SOURCE_DIR}/Endpoint.hpp)
+        ${PROJECT_SOURCE_DIR}/Endpoint.hpp
+        ${PROJECT_SOURCE_DIR}/EndpointTypes/Metadata.cpp
+        ${PROJECT_SOURCE_DIR}/EndpointTypes/Metadata.hpp)
 
 # Add library target
 add_library(${PROJECT_NAME} STATIC ${INTERACTION_SOURCES})
