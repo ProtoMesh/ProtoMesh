@@ -1,6 +1,10 @@
 #ifndef PROTOMESH_ENDPOINT_HPP
 #define PROTOMESH_ENDPOINT_HPP
 
+#include <memory>
+
+#define ENDPOINT_T std::shared_ptr<Endpoint_Base>
+
 namespace ProtoMesh::interaction {
 
     /// All possible endpoint types
@@ -12,18 +16,18 @@ namespace ProtoMesh::interaction {
         Authorization
     };
 
-
     /// Generic endpoint base class
-    template<EndpointType T>
     class Endpoint_Base {
     public:
-        EndpointType type();
+        virtual EndpointType type()= 0;
     };
 
 
     /// Primary template instance
     template<EndpointType T>
-    class Endpoint : public Endpoint_Base<T> {
+    class Endpoint : public Endpoint_Base {
+    public:
+        EndpointType type() override { return T; }
     };
 
 }

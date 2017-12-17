@@ -6,8 +6,10 @@
 namespace ProtoMesh::interaction {
 
     template<>
-    class Endpoint<EndpointType::Metadata> : public Endpoint_Base<EndpointType::Metadata> {
+    class Endpoint<EndpointType::Metadata> : public Endpoint_Base {
     public:
+        EndpointType type() override { return EndpointType::Metadata; }
+
         void someMetadataFunction();
     };
 
