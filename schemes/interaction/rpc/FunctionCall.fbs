@@ -31,7 +31,7 @@ table FunctionCall {
     // * Signature
     // * Used to determine permission.
     // ***
-    signature: cryptography.Signature;
+    signature: [ubyte];
 }
 
 file_identifier "FNCL";
