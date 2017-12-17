@@ -5,12 +5,14 @@
 
 #include "uuid.hpp"
 #include "asymmetric.hpp"
+#include "Serializable.hpp"
 
 #include "flatbuffers/flatbuffers.h"
 #include "communication/iarp/advertisement_generated.h"
 
 namespace ProtoMesh::communication::Routing::IARP {
-    class Advertisement {
+
+    class Advertisement : public Serializable<Advertisement> {
     public:
         cryptography::UUID uuid;
         cryptography::asymmetric::PublicKey pubKey;
@@ -32,14 +34,15 @@ namespace ProtoMesh::communication::Routing::IARP {
 
         void addHop(cryptography::UUID uuid);
 
-        vector<uint8_t> serialize() const;
-
         static Advertisement build(cryptography::UUID uuid, cryptography::asymmetric::KeyPair key) {
             return Advertisement(uuid, key.pub);
         }
 
-        static Result<Advertisement, AdvertisementDeserializationError> fromBuffer(vector<uint8_t> buffer);
+        /// Serializable overrides
+        static Result<Advertisement, DeserializationError> fromBuffer(vector<uint8_t> buffer);
+        vector<uint8_t> serialize() const;
     };
+
 }
 
 

@@ -36,6 +36,9 @@ set(AES_SOURCES
         ${CMAKE_SOURCE_DIR}/lib/AES/aes.h
         ${CMAKE_SOURCE_DIR}/lib/AES/aes.c)
 
+# Add common classes
+include_directories(modules/common)
+
 # Include the schemes
 add_subdirectory(schemes)
 

@@ -6,6 +6,8 @@
 
 #include "Message.hpp"
 
+#include <utility>
+
 namespace ProtoMesh::communication {
 
     Result<vector<uint8_t>, Message::MessageDecryptionError>
@@ -24,7 +26,7 @@ namespace ProtoMesh::communication {
         return Ok(decryptedPayload);
     }
 
-    vector<uint8_t> Message::serialize() {
+    vector<uint8_t> Message::serialize() const {
 
         using namespace scheme::communication;
         flatbuffers::FlatBufferBuilder builder;
@@ -64,21 +66,21 @@ namespace ProtoMesh::communication {
         // Note that since the IV is randomly generated its size can't mismatch so we can call unwrap
         vector<uint8_t> encryptedPayload = cryptography::symmetric::encrypt(payload, sharedSecret).unwrap();
 
-        return Message(route, encryptedPayload, signature);
+        return Message(std::move(route), encryptedPayload, signature);
     }
 
-    Result<Message, Message::MessageDeserializationError> Message::fromBuffer(vector<uint8_t> buffer) {
+    Result<Message, DeserializationError> Message::fromBuffer(vector<uint8_t> buffer) {
 
         using namespace scheme::communication;
 
         /// Verify the buffer type
         if (!flatbuffers::BufferHasIdentifier(buffer.data(), MessageDatagramIdentifier()))
-            return Err(MessageDeserializationError::INVALID_IDENTIFIER);
+            return Err(DeserializationError::INVALID_IDENTIFIER);
 
         /// Verify buffer integrity
         auto verifier = flatbuffers::Verifier(buffer.data(), buffer.size());
         if (!VerifyMessageDatagramBuffer(verifier))
-            return Err(MessageDeserializationError::INVALID_BUFFER);
+            return Err(DeserializationError::INVALID_BUFFER);
 
         auto msg = GetMessageDatagram(buffer.data());
 
@@ -93,7 +95,7 @@ namespace ProtoMesh::communication {
 
         /// Deserialize signature
         if (msg->signature()->size() != SIGNATURE_SIZE)
-            return Err(MessageDeserializationError::SIGNATURE_SIZE_MISMATCH);
+            return Err(DeserializationError::SIGNATURE_SIZE_MISMATCH);
         SIGNATURE_T signature{};
         // TODO Make this more memory efficient.
         copy(msg->signature()->begin(), msg->signature()->end(), signature.begin());

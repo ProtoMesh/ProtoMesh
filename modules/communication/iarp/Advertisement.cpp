@@ -35,19 +35,19 @@ namespace ProtoMesh::communication::Routing::IARP {
         return {buf, buf + builder.GetSize()};
     }
 
-    Result<Advertisement, Advertisement::AdvertisementDeserializationError>
+    Result<Advertisement, DeserializationError>
     Advertisement::fromBuffer(vector<uint8_t> buffer) {
 
         using namespace scheme::communication::iarp;
 
         /// Verify the buffer type
         if (!flatbuffers::BufferHasIdentifier(buffer.data(), AdvertisementDatagramIdentifier()))
-            return Err(AdvertisementDeserializationError::INVALID_IDENTIFIER);
+            return Err(DeserializationError::INVALID_IDENTIFIER);
 
         /// Verify buffer integrity
         auto verifier = flatbuffers::Verifier(buffer.data(), buffer.size());
         if (!VerifyAdvertisementDatagramBuffer(verifier))
-            return Err(AdvertisementDeserializationError::INVALID_BUFFER);
+            return Err(DeserializationError::INVALID_BUFFER);
 
         auto adv = GetAdvertisementDatagram(buffer.data());
 
@@ -56,7 +56,7 @@ namespace ProtoMesh::communication::Routing::IARP {
         auto compressedPubKey = pubKeyBuffer->compressed();
         auto pubKey = cryptography::asymmetric::PublicKey::fromBuffer(compressedPubKey);
         if (pubKey.isErr())
-            return Err(AdvertisementDeserializationError::INVALID_PUB_KEY);
+            return Err(DeserializationError::INVALID_PUB_KEY);
 
         /// Deserialize route
         vector<cryptography::UUID> route;

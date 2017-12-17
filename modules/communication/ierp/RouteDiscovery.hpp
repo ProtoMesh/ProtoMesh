@@ -3,6 +3,7 @@
 
 #include <utility>
 
+#include "Serializable.hpp"
 #include "RelativeTimeProvider.hpp"
 #include "uuid.hpp"
 #include "asymmetric.hpp"
@@ -11,7 +12,8 @@
 #include "communication/ierp/routeDiscovery_generated.h"
 
 namespace ProtoMesh::communication::Routing::IERP {
-    class RouteDiscovery {
+
+    class RouteDiscovery : public Serializable<RouteDiscovery> {
     public:
         vector<cryptography::UUID> coveredNodes;
 
@@ -22,12 +24,6 @@ namespace ProtoMesh::communication::Routing::IERP {
 
         long sentTimestamp;
 
-        enum class RouteDiscoveryDeserializationError {
-            INVALID_IDENTIFIER,
-            INVALID_BUFFER,
-            INVALID_ORIGIN_KEY
-        };
-
         RouteDiscovery(cryptography::asymmetric::PublicKey origin, cryptography::UUID destination, long sentTimestamp,
                        vector<cryptography::UUID> route, vector<cryptography::UUID> coveredNodes)
                 : coveredNodes(std::move(coveredNodes)), origin(origin), destination(destination),
@@ -36,16 +32,17 @@ namespace ProtoMesh::communication::Routing::IERP {
         void addHop(cryptography::UUID hop);
         void addCoveredNodes(const vector<cryptography::UUID> &nodes);
 
-        vector<uint8_t> serialize() const;
-
         static inline RouteDiscovery
         discover(cryptography::UUID target, cryptography::asymmetric::PublicKey selfKey, cryptography::UUID self,
                  long timestamp) {
             return RouteDiscovery(selfKey, target, timestamp, {self}, {self});
         };
 
-        static Result<RouteDiscovery, RouteDiscoveryDeserializationError> fromBuffer(vector<uint8_t> buffer);
+        /// Serializable overrides
+        static Result<RouteDiscovery, DeserializationError> fromBuffer(vector<uint8_t> buffer);
+        vector<uint8_t> serialize() const;
     };
+
 }
 
 

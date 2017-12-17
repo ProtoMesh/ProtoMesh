@@ -48,18 +48,18 @@ namespace ProtoMesh::communication::Routing::IERP {
         return {buf, buf + builder.GetSize()};
     }
 
-    Result<RouteDiscovery, RouteDiscovery::RouteDiscoveryDeserializationError>
+    Result<RouteDiscovery, DeserializationError>
     RouteDiscovery::fromBuffer(vector<uint8_t> buffer) {
         using namespace scheme::communication::ierp;
 
         /// Verify the buffer type
         if (!flatbuffers::BufferHasIdentifier(buffer.data(), RouteDiscoveryDatagramIdentifier()))
-            return Err(RouteDiscoveryDeserializationError::INVALID_IDENTIFIER);
+            return Err(DeserializationError::INVALID_IDENTIFIER);
 
         /// Verify buffer integrity
         auto verifier = flatbuffers::Verifier(buffer.data(), buffer.size());
         if (!VerifyRouteDiscoveryDatagramBuffer(verifier))
-            return Err(RouteDiscoveryDeserializationError::INVALID_BUFFER);
+            return Err(DeserializationError::INVALID_BUFFER);
 
         auto adv = GetRouteDiscoveryDatagram(buffer.data());
 
@@ -74,7 +74,7 @@ namespace ProtoMesh::communication::Routing::IERP {
         auto compressedOriginKey = originKeyBuffer->compressed();
         auto originKey = cryptography::asymmetric::PublicKey::fromBuffer(compressedOriginKey);
         if (originKey.isErr())
-            return Err(RouteDiscoveryDeserializationError::INVALID_ORIGIN_KEY);
+            return Err(DeserializationError::INVALID_ORIGIN_KEY);
 
         /// Deserialize destination UUID
         cryptography::UUID destinationID(adv->destination());
