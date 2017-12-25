@@ -1,5 +1,6 @@
 namespace ProtoMesh.scheme.interaction.rpc;
 
+// TODO Evaluate if a signature is necessary
 table FunctionCallResponse {
     // ***
     // * Transaction identifier
