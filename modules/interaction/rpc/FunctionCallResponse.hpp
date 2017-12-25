@@ -15,13 +15,10 @@ namespace ProtoMesh::interaction::rpc {
         uint8_t transactionID, statusCode;
         vector<uint8_t> returnValue;
 
-#ifdef UNIT_TESTING
     public:
-#endif
         FunctionCallResponse(uint8_t transactionID, uint8_t statusCode, vector<uint8_t> returnValue)
                 : transactionID(transactionID), statusCode(statusCode), returnValue(std::move(returnValue)) {};
 
-    public:
         /// Serializable overrides
         static Result<FunctionCallResponse, DeserializationError> fromBuffer(vector<uint8_t> buffer);
         vector<uint8_t> serialize() const override;
