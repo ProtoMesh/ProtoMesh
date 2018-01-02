@@ -43,7 +43,7 @@ include_directories(modules/common)
 add_subdirectory(schemes)
 
 # Include project modules
-set(PROTOMESH_MODULES cryptography communication interaction)
+set(PROTOMESH_MODULES cryptography communication interaction integration)
 foreach(MODULE ${PROTOMESH_MODULES})
     add_subdirectory(modules/${MODULE})
     include_directories(modules/${MODULE})
