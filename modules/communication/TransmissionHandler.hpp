@@ -13,7 +13,7 @@ namespace ProtoMesh::communication::transmission {
         Timeout
     };
 
-#define NETWORK_T shared_ptr<ProtoMesh::communication::transmission::TransmissionHandler>
+#define TRANSMISSION_HANDLER_T shared_ptr<ProtoMesh::communication::transmission::TransmissionHandler>
 
     class TransmissionHandler {
     public:
