@@ -10,7 +10,7 @@ namespace ProtoMesh::interaction {
 
 #ifdef UNIT_TESTING
 
-    SCENARIO("some scenario") {
+    SCENARIO("An endpoint should be defined", "[unit_test][module][interaction]") {
         Endpoint<EndpointType::Metadata> meta;
         Endpoint<EndpointType::Authorization> auth;
 
