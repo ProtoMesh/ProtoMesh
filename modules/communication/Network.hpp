@@ -105,7 +105,7 @@ namespace ProtoMesh::communication {
 
         Datagrams processDatagram(const Datagram &datagram);
 
-        // Note that the payload is not yet wrapped in a message
+        // Note that the payload parameter may not be wrapped in a message.
         void queueMessageTo(cryptography::UUID target, const Datagram &payload);
     };
 

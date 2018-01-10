@@ -28,8 +28,11 @@ namespace ProtoMesh::communication::transmission {
     class NetworkStub : public TransmissionHandler {
         vector<vector<uint8_t>> queue;
     public:
+        explicit NetworkStub() = default;
 
-        void send(std::vector<uint8_t> message) override { queue.push_back(message); }
+        void addMessageToIncomingQueue(std::vector<uint8_t> message) { queue.push_back(message); }
+
+        void send(std::vector<uint8_t> message) override {}
         ReceiveResult recv(std::vector<uint8_t>* buffer, unsigned int timeout_ms) override {
             if (queue.empty()) return ReceiveResult::NoData;
             *buffer = queue[0];

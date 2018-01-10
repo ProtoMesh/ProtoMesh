@@ -3,7 +3,11 @@ project(module_integration)
 # Define the source files and dependencies for this module
 set(INTEGRATION_SOURCES
         ${PROJECT_SOURCE_DIR}/MeshHandler.cpp
-        ${PROJECT_SOURCE_DIR}/MeshHandler.hpp)
+        ${PROJECT_SOURCE_DIR}/MeshHandler.hpp
+        ${PROJECT_SOURCE_DIR}/Device.cpp
+        ${PROJECT_SOURCE_DIR}/Device.hpp
+        ${PROJECT_SOURCE_DIR}/delegates/DeviceHandlerDelegate.hpp
+        ${PROJECT_SOURCE_DIR}/delegates/DeviceDelegate.hpp)
 
 # Add library target
 add_library(${PROJECT_NAME} STATIC ${INTEGRATION_SOURCES})
