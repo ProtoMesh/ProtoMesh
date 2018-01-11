@@ -2,6 +2,7 @@
 #define PROTOMESH_PROTOMESH_HPP
 
 #include <utility>
+#include <memory>
 
 #include <uuid.hpp>
 #include <asymmetric.hpp>
