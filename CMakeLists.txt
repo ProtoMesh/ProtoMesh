@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.7)
 project(protoMesh)
 
 # C++ compiler settings
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -Wno-unused-parameter")
 
 # Enable the use of the global offset table
