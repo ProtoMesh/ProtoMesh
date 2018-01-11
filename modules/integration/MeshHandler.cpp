@@ -37,7 +37,7 @@ namespace ProtoMesh {
                 };
             };
 
-            handler.deviceDelegate = make_unique<SomeDevDelegate>();
+            handler.deviceDelegate = make_shared<SomeDevDelegate>();
 
             // ((DummyRelativeTimeProvider *) timeProvider.get())->turnTheClockBy(20000);
         }
