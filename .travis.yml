@@ -14,8 +14,8 @@ matrix:
     - os: linux
       env:
          - COMPILER_NAME=clang
-         - CC=gcc-4.9
-         - CXX=g++-4.9
+         - CC=clang
+         - CXX=clang++
     # works on Precise and Trusty
     - os: linux
       addons:
