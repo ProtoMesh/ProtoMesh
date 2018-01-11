@@ -16,9 +16,6 @@ namespace ProtoMesh {
         explicit Device(TRANSMISSION_HANDLER_T transmissionHandler) : transmissionHandler(std::move(transmissionHandler)) {}
 
         void requestMetadata() {};
-
-        typedef function<void(Device)> onMetadataUpdateCallback;
-        void onMetadataUpdate(onMetadataUpdateCallback cb) {};
     };
 
 }
