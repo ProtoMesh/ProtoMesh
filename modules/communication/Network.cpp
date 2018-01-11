@@ -38,7 +38,7 @@ namespace ProtoMesh::communication {
 
         // TODO Don't rebroadcast to the original sender. Some form of target node white/blacklist maybe
         //      Optionally obviously since not all transmission media might support it.
-        return { {MessageTarget::broadcast(), advertisement.serialize()} };
+        return { make_tuple(MessageTarget::broadcast(), advertisement.serialize()) };
     }
 
     Datagrams Network::dispatchRouteDiscoveryAcknowledgement(Routing::IERP::RouteDiscovery routeDiscovery) {
@@ -249,7 +249,7 @@ namespace ProtoMesh::communication {
         /// When the route to the next hop is just one in length forward it as is.
         /// Note that we need to subtract one from the size since we are part of the route.
         if (routeToNextHop.route.size()-1 == 1)
-            return { {MessageTarget::single(nextHop), message.serialize()} };
+            return { make_tuple(MessageTarget::single(nextHop), message.serialize()) };
 
         /// Otherwise wrap it in another message following routeToNextHop and dispatch that
         Message rewrappedMessage = Message::build(
@@ -258,7 +258,7 @@ namespace ProtoMesh::communication {
                 nextHopPublicKey.unwrap(),
                 this->deviceKeys);
 
-        return { {MessageTarget::single(routeToNextHop.route[1]), rewrappedMessage.serialize()} };
+        return { make_tuple(MessageTarget::single(routeToNextHop.route[1]), rewrappedMessage.serialize()) };
     }
 
     Datagrams Network::processDatagram(const Datagram &datagram) {
