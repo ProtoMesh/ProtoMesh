@@ -13,8 +13,8 @@ namespace ProtoMesh::communication::transmission {
             TRANSMISSION_HANDLER_T stub = make_shared<NetworkStub>();
             vector<uint8_t> msg = {1, 2, 3, 4, 5};
 
-            WHEN("a single message is sent") {
-                stub->send(msg);
+            WHEN("a single message is added to the buffer") {
+                ((NetworkStub*) stub.get())->addMessageToIncomingQueue(msg);
                 THEN("it should be receivable again") {
                     vector<uint8_t> buf;
                     REQUIRE(stub->recv(&buf, 1000) == ReceiveResult::OK);
