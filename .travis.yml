@@ -10,4 +10,4 @@ addons:
       - cmake-data
       - cmake
 script:
-  - cmake . && make unit_test && unit_test
+  - cmake . && make unit_test && ./unit_test
