@@ -1,0 +1,13 @@
+language: cpp
+compiler:
+  - clang
+  - gcc
+addons:
+  apt:
+    sources:
+      - george-edison55-precise-backports
+    packages:
+      - cmake-data
+      - cmake
+script:
+  - cmake . && make unit_test && unit_test
