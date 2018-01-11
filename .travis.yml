@@ -23,6 +23,8 @@ matrix:
             - g++-4.9
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+         - CC=gcc-4.9
+         - CXX=g++-4.9
 
     # works on Precise and Trusty
     - os: linux
@@ -34,6 +36,8 @@ matrix:
             - g++-5
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+         - CC=gcc-5
+         - CXX=g++-5
 
     # works on Precise and Trusty
     - os: linux
@@ -45,6 +49,8 @@ matrix:
             - g++-6
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+         - CC=gcc-6
+         - CXX=g++-6
 
     # works on Precise and Trusty
     - os: linux
@@ -56,6 +62,8 @@ matrix:
             - g++-7
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+         - CC=gcc-7
+         - CXX=g++-7
 
-before_install:
-    - eval "${MATRIX_EVAL}"
+#before_install:
+#    - eval "${MATRIX_EVAL}"
