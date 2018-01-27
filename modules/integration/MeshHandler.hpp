@@ -21,7 +21,7 @@ namespace ProtoMesh {
         TRANSMISSION_HANDLER_T transmissionHandler;
         REL_TIME_PROV_T timeProvider;
 
-        communication::Network network;
+        shared_ptr<communication::Network> network;
 
     public:
 
@@ -34,12 +34,12 @@ namespace ProtoMesh {
             vector<uint8_t> buffer;
             this->transmissionHandler->recv(&buffer, timeout);
             if (!buffer.empty()) {
-                this->network.processDatagram(buffer);
+                this->network->processDatagram(buffer);
             }
         }
 
         /// Delegates
-        DEVICE_HANDLER_DELEGATE_T deviceDelegate = nullptr;
+        DEVICE_HANDLER_DELEGATE_T deviceHandlerDelegate = nullptr;
     };
 
 }

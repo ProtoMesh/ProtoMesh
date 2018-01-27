@@ -10,7 +10,7 @@ namespace ProtoMesh {
 
     MeshHandler::MeshHandler(cryptography::UUID deviceID, cryptography::asymmetric::KeyPair deviceKeys,
                              TRANSMISSION_HANDLER_T transmissionHandler, REL_TIME_PROV_T timeProvider)
-            : transmissionHandler(std::move(transmissionHandler)), timeProvider(std::move(timeProvider)), network(deviceID, deviceKeys, timeProvider) {
+            : transmissionHandler(std::move(transmissionHandler)), timeProvider(std::move(timeProvider)), network(make_shared<communication::Network>(deviceID, deviceKeys, timeProvider)) {
 
     }
 
@@ -37,7 +37,7 @@ namespace ProtoMesh {
                 };
             };
 
-            handler.deviceDelegate = make_shared<SomeDevDelegate>();
+            handler.deviceHandlerDelegate = make_shared<SomeDevDelegate>();
 
             // ((DummyRelativeTimeProvider *) timeProvider.get())->turnTheClockBy(20000);
         }
