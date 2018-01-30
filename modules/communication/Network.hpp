@@ -103,9 +103,11 @@ namespace ProtoMesh::communication {
         explicit Network(cryptography::UUID deviceID, cryptography::asymmetric::KeyPair deviceKeys, REL_TIME_PROV_T timeProvider)
                 : deviceID(deviceID), deviceKeys(deviceKeys), routingTable(std::move(timeProvider), ZONE_RADIUS) {};
 
+        cryptography::asymmetric::KeyPair getKeys() { return this->deviceKeys; }
+
         Datagrams processDatagram(const Datagram &datagram);
 
-        // Note that the payload parameter may not be wrapped in a message.
+        /// Note that the payload parameter may not be wrapped in a message.
         void queueMessageTo(cryptography::UUID target, const Datagram &payload);
     };
 
