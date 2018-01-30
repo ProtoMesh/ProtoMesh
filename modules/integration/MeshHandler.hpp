@@ -24,7 +24,6 @@ namespace ProtoMesh {
         shared_ptr<communication::Network> network;
 
     public:
-
         /// Constructors
         explicit MeshHandler(cryptography::UUID deviceID, cryptography::asymmetric::KeyPair deviceKeys, TRANSMISSION_HANDLER_T transmissionHandler, REL_TIME_PROV_T timeProvider);
         static MeshHandler generateNew(TRANSMISSION_HANDLER_T transmissionHandler, REL_TIME_PROV_T timeProvider);

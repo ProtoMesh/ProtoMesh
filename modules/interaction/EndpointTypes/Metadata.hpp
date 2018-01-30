@@ -18,11 +18,12 @@ namespace ProtoMesh::interaction {
     template<>
     class Endpoint<EndpointType::Metadata> : public Endpoint_Base {
     public:
-        Endpoint(const shared_ptr<Network> &network);
+
+        Endpoint(const shared_ptr<Network> &network, const cryptography::UUID &target, uint16_t endpointID);
 
         EndpointType type() override { return EndpointType::Metadata; }
 
-        void requestMetadata();
+        void getMetadata(RequestType requestType = RequestType::GET);
     };
 
 }

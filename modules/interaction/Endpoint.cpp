@@ -16,12 +16,13 @@ namespace ProtoMesh::interaction {
     SCENARIO("An endpoint should be defined", "[unit_test][module][interaction]") {
         REL_TIME_PROV_T timeProvider(new DummyRelativeTimeProvider(0));
         TRANSMISSION_HANDLER_T transmissionHandler(new communication::transmission::NetworkStub());
-        shared_ptr<communication::Network> network = make_shared<communication::Network>(cryptography::UUID(), cryptography::asymmetric::generateKeyPair(), timeProvider);
+        cryptography::UUID deviceID = cryptography::UUID();
+        shared_ptr<communication::Network> network = make_shared<communication::Network>(deviceID, cryptography::asymmetric::generateKeyPair(), timeProvider);
 
-        Endpoint<EndpointType::Metadata> meta(network);
-        Endpoint<EndpointType::Authorization> auth(network);
+        Endpoint<EndpointType::Metadata> meta(network, deviceID, 0);
+        Endpoint<EndpointType::Authorization> auth(network, deviceID, 1);
 
-        meta.requestMetadata();
+        meta.getMetadata();
 
         REQUIRE(meta.type() == EndpointType::Metadata);
         REQUIRE(auth.type() == EndpointType::Authorization);
@@ -30,15 +31,14 @@ namespace ProtoMesh::interaction {
 
         std::vector<ENDPOINT_T> vec;
 
-        vec.emplace_back(new Endpoint<EndpointType::Metadata>(network));
-        vec.emplace_back(new Endpoint<EndpointType::Authorization>(network));
+        vec.emplace_back(new Endpoint<EndpointType::Metadata>(network, deviceID, 0));
+        vec.emplace_back(new Endpoint<EndpointType::Authorization>(network, deviceID, 1));
 
         for (ENDPOINT_T endpoint : vec) {
             switch (endpoint->type()) {
-
                 case EndpointType::Metadata: {
                     auto metadata = dynamic_cast<Endpoint<EndpointType::Metadata> *>(endpoint.get());
-                    metadata->requestMetadata();
+                    metadata->getMetadata();
                     break;
                 }
                 case EndpointType::Color:break;

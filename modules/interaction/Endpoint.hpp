@@ -18,22 +18,32 @@ namespace ProtoMesh::interaction {
         Authorization
     };
 
+    enum class RequestType {
+        GET,
+        SUBSCRIBE,
+        UNSUBSCRIBE
+    };
+
     /// Generic endpoint base class
     class Endpoint_Base {
+    protected:
+        cryptography::UUID target;
+        uint16_t endpointID;
     public:
         shared_ptr<communication::Network> network;
 
-        explicit Endpoint_Base(shared_ptr<Network> network) : network(std::move(network)) {};
+        explicit Endpoint_Base(shared_ptr<Network> network, cryptography::UUID target, uint16_t endpointID)
+                : target(target), endpointID(endpointID), network(std::move(network)) {};
 
         virtual EndpointType type()= 0;
     };
-
 
     /// Primary template instance
     template<EndpointType T>
     class Endpoint : public Endpoint_Base {
     public:
-        explicit Endpoint(const shared_ptr<Network> &network) : Endpoint_Base(network) {};
+        Endpoint(const shared_ptr<Network> &network, const cryptography::UUID &target, uint16_t endpointID)
+                : Endpoint_Base(network, target, endpointID) {}
 
         EndpointType type() override { return T; }
     };
