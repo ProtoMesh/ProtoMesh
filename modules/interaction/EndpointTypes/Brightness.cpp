@@ -9,9 +9,7 @@
 namespace ProtoMesh::interaction {
 
     Endpoint<EndpointType::Brightness>::Endpoint(const shared_ptr<Network> &network, const cryptography::UUID &target,
-                                               uint16_t endpointID) : Endpoint_Base(network, target, endpointID) {
-        brightnessDelegate = make_shared<BrightnessDelegate>();
-    }
+                                               uint16_t endpointID) : Endpoint_Base(network, target, endpointID) {}
 
     void Endpoint<EndpointType::Brightness>::getBrightness(RequestType requestType) {
 //        this->network->processDatagram({1, 2, 3});

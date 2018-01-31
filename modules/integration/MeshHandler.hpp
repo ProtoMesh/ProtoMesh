@@ -38,7 +38,7 @@ namespace ProtoMesh {
         }
 
         /// Delegates
-        DEVICE_HANDLER_DELEGATE_T deviceHandlerDelegate = make_shared<DeviceHandlerDelegate>();
+        DEVICE_HANDLER_DELEGATE_T deviceHandlerDelegate = nullptr;
     };
 
 }
