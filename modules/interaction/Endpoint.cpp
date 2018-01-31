@@ -31,8 +31,8 @@ namespace ProtoMesh::interaction {
 
         std::vector<ENDPOINT_T> vec;
 
-        vec.emplace_back(new Endpoint<EndpointType::Metadata>(network, deviceID, 0));
-        vec.emplace_back(new Endpoint<EndpointType::Brightness>(network, deviceID, 1));
+        vec.push_back(make_shared<Endpoint<EndpointType::Metadata>>(network, deviceID, 0));
+        vec.push_back(make_shared<Endpoint<EndpointType::Brightness>>(network, deviceID, 1));
 
         for (ENDPOINT_T endpoint : vec) {
             switch (endpoint->type()) {
