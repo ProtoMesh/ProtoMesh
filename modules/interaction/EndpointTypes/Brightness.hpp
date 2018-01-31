@@ -14,7 +14,7 @@ namespace ProtoMesh::interaction {
 
     class BrightnessDelegate {
     public:
-        BrightnessDelegate() {};
+        BrightnessDelegate() = default;
         ~BrightnessDelegate() = default;
 
         virtual void didChangeBrightness(brightness_t brightness) {};
@@ -24,7 +24,7 @@ namespace ProtoMesh::interaction {
     class Endpoint<EndpointType::Brightness> : public Endpoint_Base {
     public:
         /// Delegates
-        BRIGHTNESS_DELEGATE_T brightnessDelegate = nullptr;
+//        BRIGHTNESS_DELEGATE_T brightnessDelegate = nullptr;
 
         /// Constructors
         Endpoint(const shared_ptr<Network> &network, const cryptography::UUID &target, uint16_t endpointID);
