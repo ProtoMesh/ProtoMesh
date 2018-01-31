@@ -23,15 +23,18 @@ namespace ProtoMesh::interaction {
     template<>
     class Endpoint<EndpointType::Brightness> : public Endpoint_Base {
     public:
+        /// Delegates
+        BRIGHTNESS_DELEGATE_T brightnessDelegate;
+
+        /// Constructors
         Endpoint(const shared_ptr<Network> &network, const cryptography::UUID &target, uint16_t endpointID);
 
+        /// Superclass functions
         EndpointType type() override { return EndpointType::Brightness; }
 
+        /// Brightness specifics
         void setBrightness(brightness_t brightness);
         void getBrightness(RequestType requestType = RequestType::GET);
-
-        /// Delegates
-        BRIGHTNESS_DELEGATE_T brightnessDelegate = make_shared<BrightnessDelegate>();
     };
 
 }
