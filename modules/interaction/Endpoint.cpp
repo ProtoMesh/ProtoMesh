@@ -20,31 +20,31 @@ namespace ProtoMesh::interaction {
         shared_ptr<communication::Network> network = make_shared<communication::Network>(deviceID, cryptography::asymmetric::generateKeyPair(), timeProvider);
 
         Endpoint<EndpointType::Metadata> meta(network, deviceID, 0);
-        Endpoint<EndpointType::Authorization> auth(network, deviceID, 1);
+        Endpoint<EndpointType::Brightness> auth(network, deviceID, 1);
 
         meta.getMetadata();
 
         REQUIRE(meta.type() == EndpointType::Metadata);
-        REQUIRE(auth.type() == EndpointType::Authorization);
+        REQUIRE(auth.type() == EndpointType::Brightness);
 
         /// -----
 
         std::vector<ENDPOINT_T> vec;
 
         vec.emplace_back(new Endpoint<EndpointType::Metadata>(network, deviceID, 0));
-        vec.emplace_back(new Endpoint<EndpointType::Authorization>(network, deviceID, 1));
+        vec.emplace_back(new Endpoint<EndpointType::Brightness>(network, deviceID, 1));
 
         for (ENDPOINT_T endpoint : vec) {
             switch (endpoint->type()) {
                 case EndpointType::Metadata: {
-                    auto metadata = dynamic_cast<Endpoint<EndpointType::Metadata> *>(endpoint.get());
+                    auto metadata = endpoint_cast<EndpointType::Metadata>(endpoint);
                     metadata->getMetadata();
                     break;
                 }
-                case EndpointType::Color:break;
-                case EndpointType::Temperature:break;
-                case EndpointType::Brightness:break;
-                case EndpointType::Authorization:break;
+                case EndpointType::Brightness:
+                    break;
+                case EndpointType::Temperature:
+                    break;
             }
         }
     }

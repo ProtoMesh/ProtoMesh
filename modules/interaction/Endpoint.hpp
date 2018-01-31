@@ -5,6 +5,8 @@
 #include <Network.hpp>
 #include <utility>
 
+#include "variable_types.hpp"
+
 #define ENDPOINT_T std::shared_ptr<Endpoint_Base>
 
 namespace ProtoMesh::interaction {
@@ -12,10 +14,8 @@ namespace ProtoMesh::interaction {
     /// All possible endpoint types
     enum class EndpointType {
         Metadata = 0,
-        Color,
         Temperature,
-        Brightness,
-        Authorization
+        Brightness
     };
 
     enum class RequestType {
@@ -47,6 +47,11 @@ namespace ProtoMesh::interaction {
 
         EndpointType type() override { return T; }
     };
+
+    template<EndpointType T>
+    Endpoint<T>* endpoint_cast(const ENDPOINT_T &endpoint) {
+        return dynamic_cast<Endpoint<T> *>(endpoint.get());
+    }
 
 }
 
