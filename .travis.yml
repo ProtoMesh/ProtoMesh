@@ -6,12 +6,13 @@ addons:
     packages:
       - cmake-data
       - cmake
+      - valgrind
 
 before_install:
     - eval "${MATRIX_EVAL}"
 
 script:
-  - cmake . && make unit_test && ./unit_test
+  - cmake . && make unit_test && valgrind ./unit_test
 
 matrix:
   include:
