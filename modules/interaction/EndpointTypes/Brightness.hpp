@@ -10,19 +10,17 @@ using namespace std;
 
 namespace ProtoMesh::interaction {
 
-#define BRIGHTNESS_DELEGATE_T shared_ptr<EndpointDelegate<EndpointType::Brightness>>
+#define BRIGHTNESS_DELEGATE_T shared_ptr<BrightnessEndpointDelegate>
 
-    template<>
-    class EndpointDelegate<EndpointType::Brightness> {
+    class BrightnessEndpointDelegate {
     public:
         virtual void didChangeBrightness(brightness_t brightness) {};
     };
 
-    template<>
-    class Endpoint<EndpointType::Brightness> : public Endpoint_Base {
+    class BrightnessEndpoint : public Endpoint {
     public:
         /// Constructors
-        Endpoint(const shared_ptr<Network> &network, const cryptography::UUID &target, uint16_t endpointID);
+        BrightnessEndpoint(const shared_ptr<Network> &network, const cryptography::UUID &target, uint16_t endpointID);
 
         /// Superclass functions
         EndpointType type() override { return EndpointType::Brightness; }

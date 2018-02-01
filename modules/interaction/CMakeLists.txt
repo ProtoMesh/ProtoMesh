@@ -10,8 +10,6 @@ set(INTERACTION_SOURCES
         ${PROJECT_SOURCE_DIR}/variable_types.hpp
         ${PROJECT_SOURCE_DIR}/Endpoint.cpp
         ${PROJECT_SOURCE_DIR}/Endpoint.hpp
-        ${PROJECT_SOURCE_DIR}/EndpointTypes/Metadata.cpp
-        ${PROJECT_SOURCE_DIR}/EndpointTypes/Metadata.hpp
         ${PROJECT_SOURCE_DIR}/EndpointTypes/Brightness.cpp
         ${PROJECT_SOURCE_DIR}/EndpointTypes/Brightness.hpp)
 
