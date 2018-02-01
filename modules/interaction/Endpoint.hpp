@@ -18,6 +18,7 @@ namespace ProtoMesh::interaction {
         Brightness
     };
 
+    /// Endpoint function request type (get/subscription)
     enum class RequestType {
         GET,
         SUBSCRIBE,
@@ -38,16 +39,23 @@ namespace ProtoMesh::interaction {
         virtual EndpointType type()= 0;
     };
 
-    /// Primary template instance
+    /// Endpoint | Delegate
+    template<EndpointType T>
+    class EndpointDelegate {};
+
+    /// Endpoint | Primary template instance
     template<EndpointType T>
     class Endpoint : public Endpoint_Base {
     public:
+        shared_ptr<EndpointDelegate<T>> delegate = nullptr;
+
         Endpoint(const shared_ptr<Network> &network, const cryptography::UUID &target, uint16_t endpointID)
                 : Endpoint_Base(network, target, endpointID) {}
 
         EndpointType type() override { return T; }
     };
 
+    /// Helper to cast generic endpoint pointer to specialized pointer
     template<EndpointType T>
     Endpoint<T>* endpoint_cast(const ENDPOINT_T &endpoint) {
         return dynamic_cast<Endpoint<T> *>(endpoint.get());

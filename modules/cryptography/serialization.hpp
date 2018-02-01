@@ -2,6 +2,8 @@
 #define PROTOMESH_SERIALIZATION_HPP
 
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include <vector>
 
 using namespace std;

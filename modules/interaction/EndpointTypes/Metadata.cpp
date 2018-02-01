@@ -12,7 +12,7 @@ namespace ProtoMesh::interaction {
                                                uint16_t endpointID) : Endpoint_Base(network, target, endpointID) {}
 
     void Endpoint<EndpointType::Metadata>::getMetadata(RequestType requestType) {
-        this->network->processDatagram({1, 2, 3});
+        this->network->processDatagram({1, 2, 3, 4, 5});
     }
 
 }
