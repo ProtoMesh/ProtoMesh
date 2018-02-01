@@ -28,10 +28,11 @@ namespace ProtoMesh::interaction {
 
         for (ENDPOINT_T endpoint : vec) {
             switch (endpoint->type()) {
-                case EndpointType::Brightness:
-                    auto brightness = (BrightnessEndpoint*) brightness_endpoint.get();
+                case EndpointType::Brightness: {
+                    auto brightness = (BrightnessEndpoint *) brightness_endpoint.get();
                     brightness->getBrightness(RequestType::GET);
                     break;
+                }
                 case EndpointType::Metadata:break;
                 case EndpointType::Temperature:break;
             }
