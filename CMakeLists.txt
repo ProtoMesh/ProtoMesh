@@ -54,6 +54,7 @@ endforeach()
 ## Unit testing target
 add_executable(unit_test ${PROTOMESH_TEST_FILES})
 target_compile_definitions(unit_test PRIVATE UNIT_TESTING=1)
+set_target_properties(unit_test PROPERTIES COMPILE_FLAGS "-fsanitize=address -fno-omit-frame-pointer" )
 if (PROTOMESH_TEST_DEPS)
     add_dependencies(unit_test ${PROTOMESH_TEST_DEPS})
 endif()
