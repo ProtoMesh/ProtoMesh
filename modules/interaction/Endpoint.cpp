@@ -32,8 +32,8 @@ namespace ProtoMesh::interaction {
                     auto brightness = (BrightnessEndpoint*) brightness_endpoint.get();
                     brightness->getBrightness(RequestType::GET);
                     break;
-                default:
-                    break;
+                case EndpointType::Metadata:break;
+                case EndpointType::Temperature:break;
             }
         }
     }
