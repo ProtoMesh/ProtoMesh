@@ -1,8 +1,5 @@
 #ifdef UNIT_TESTING
 
-#include "TransmissionHandler.hpp"
-#include "Network.hpp"
-#include "asymmetric.hpp"
 #include "catch.hpp"
 
 #endif
@@ -21,7 +18,6 @@ namespace ProtoMesh::interaction {
 
         std::vector<ENDPOINT_T> vec;
 
-//        vec.push_back(make_shared<Endpoint<EndpointType::Metadata>>(network, deviceID, 0));
         vec.push_back(make_shared<BrightnessEndpoint>(network, deviceID, 1));
 
         ENDPOINT_T brightness_endpoint = make_shared<BrightnessEndpoint>(network, deviceID, 1);

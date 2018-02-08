@@ -6,6 +6,10 @@
 #include <utility>
 
 #include "variable_types.hpp"
+#include "rpc/FunctionCall.hpp"
+#include "TransmissionHandler.hpp"
+#include "Network.hpp"
+#include "asymmetric.hpp"
 
 #define ENDPOINT_T std::shared_ptr<Endpoint>
 

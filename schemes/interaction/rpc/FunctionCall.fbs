@@ -17,12 +17,6 @@ table FunctionCall {
     function: ubyte;
 
     // ***
-    // * Transaction identifier
-    // * Used to correlate to the response.
-    // ***
-    transactionID: ubyte;
-
-    // ***
     // * Serialized parameters
     // ***
     parameter: [ubyte];

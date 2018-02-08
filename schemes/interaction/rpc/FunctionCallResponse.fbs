@@ -3,10 +3,17 @@ namespace ProtoMesh.scheme.interaction.rpc;
 // TODO Evaluate if a signature is necessary
 table FunctionCallResponse {
     // ***
-    // * Transaction identifier
-    // * Used to correlate to the request.
+    // * Endpoint identifier
+    // * Unique to the device.
     // ***
-    transactionID: ubyte;
+    endpointID: ushort;
+
+    // ***
+    // * Function identifier
+    // * Unique to the endpoint.
+    // * Implicitly defines the parameter and return value serialization.
+    // ***
+    function: ubyte;
 
     // ***
     // * Status of the call

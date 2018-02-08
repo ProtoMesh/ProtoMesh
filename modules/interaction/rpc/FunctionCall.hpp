@@ -15,31 +15,41 @@ using namespace std;
 
 namespace ProtoMesh::interaction::rpc {
 
+    class TransactionID {
+        uint8_t transactionID = 0;
+    public:
+        TransactionID() = default;
+
+        uint8_t getNext() {
+            this->transactionID++;
+            return this->transactionID;
+        }
+    };
+
     class FunctionCall : public Serializable<FunctionCall> {
         uint16_t endpointID;
-        uint8_t function, transactionID;
+        uint8_t function;
         vector<uint8_t> parameter;
 
         SIGNATURE_T signature;
 
-        FunctionCall(uint16_t endpointID, uint8_t function, uint8_t transactionID, vector<uint8_t> parameter,
-                     SIGNATURE_T signature) : endpointID(endpointID), function(function), transactionID(transactionID),
+        FunctionCall(uint16_t endpointID, uint8_t function, vector<uint8_t> parameter,
+                     SIGNATURE_T signature) : endpointID(endpointID), function(function),
                                               parameter(std::move(parameter)), signature(signature) {};
 
     public:
-        static FunctionCall create(uint16_t endpointID, uint8_t function, uint8_t transactionID, vector<uint8_t> parameter, cryptography::asymmetric::KeyPair signer) {
+        static FunctionCall create(uint16_t endpointID, uint8_t function, vector<uint8_t> parameter, cryptography::asymmetric::KeyPair signer) {
             vector<uint8_t> signatureText = {
                     (uint8_t) (endpointID & 0xFF),
                     (uint8_t) ((endpointID >> 8) & 0xFF),
-                    function,
-                    transactionID
+                    function
             };
             signatureText.insert(signatureText.end(), parameter.begin(), parameter.end());
 
             /// Sign the payload
             SIGNATURE_T signature(cryptography::asymmetric::sign(signatureText, signer.priv));
 
-            return FunctionCall(endpointID, function, transactionID, parameter, signature);
+            return FunctionCall(endpointID, function, parameter, signature);
         }
 
         /// Serializable overrides

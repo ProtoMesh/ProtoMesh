@@ -26,7 +26,7 @@ namespace ProtoMesh::interaction::rpc {
         /// Deserialize parameters
         vector<uint8_t> returnValue(response->returnValue()->begin(), response->returnValue()->end());
 
-        return Ok(FunctionCallResponse(response->transactionID(), response->statusCode(), returnValue));
+        return Ok(FunctionCallResponse(response->endpointID(), response->function(), response->statusCode(), returnValue));
     }
 
     vector<uint8_t> FunctionCallResponse::serialize() const {
@@ -36,7 +36,7 @@ namespace ProtoMesh::interaction::rpc {
         /// Serialize the return value
         auto returnValue = builder.CreateVector(this->returnValue);
 
-        auto functionCall = CreateFunctionCallResponse(builder, this->transactionID, this->statusCode, returnValue);
+        auto functionCall = CreateFunctionCallResponse(builder, this->endpointID, this->function, this->statusCode, returnValue);
 
         /// Convert it to a byte array
         builder.Finish(functionCall, FunctionCallResponseIdentifier());
@@ -52,7 +52,7 @@ namespace ProtoMesh::interaction::rpc {
              "[unit_test][module][interaction][rpc]") {
 
         GIVEN("A FunctionCallResponse") {
-            FunctionCallResponse response(250, 20, {0, 1, 2, 3, 4});
+            FunctionCallResponse response(250, 0, 0, {0, 1, 2, 3, 4});
 
             WHEN("it is serialized") {
                 vector<uint8_t> serializedResponse = response.serialize();

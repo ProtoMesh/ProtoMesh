@@ -20,8 +20,7 @@ namespace ProtoMesh::interaction::rpc {
         /// Serialize the parameters
         auto parameter = builder.CreateVector(this->parameter);
 
-        auto functionCall = CreateFunctionCall(builder, this->endpointID, this->function, this->transactionID,
-                                               parameter, signature);
+        auto functionCall = CreateFunctionCall(builder, this->endpointID, this->function, parameter, signature);
 
         /// Convert it to a byte array
         builder.Finish(functionCall, FunctionCallIdentifier());
@@ -55,7 +54,7 @@ namespace ProtoMesh::interaction::rpc {
         // TODO Make this more memory efficient.
         copy(call->signature()->begin(), call->signature()->end(), signature.begin());
 
-        return Ok(FunctionCall(call->endpointID(), call->function(), call->transactionID(), parameter, signature));
+        return Ok(FunctionCall(call->endpointID(), call->function(), parameter, signature));
     }
 
 
@@ -67,7 +66,7 @@ namespace ProtoMesh::interaction::rpc {
         GIVEN("A FunctionCall") {
 
             cryptography::asymmetric::KeyPair pair = cryptography::asymmetric::generateKeyPair();
-            FunctionCall call = FunctionCall::create(65011, 250, 20, {0, 1, 2, 3, 4}, pair);
+            FunctionCall call = FunctionCall::create(65011, 250, {0, 1, 2, 3, 4}, pair);
 
             WHEN("it is serialized") {
                 vector<uint8_t> serializedCall = call.serialize();
